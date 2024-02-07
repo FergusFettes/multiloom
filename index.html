@@ -20,6 +20,18 @@
     </style>
 </head>
 <body>
+<script>
+  // On page load, retrieve the API key from localStorage
+  document.addEventListener('DOMContentLoaded', function() {
+      const savedApiKey = localStorage.getItem('apiKey');
+      if (savedApiKey) {
+          const apiKeyInput = document.getElementById('api-key-input');
+          apiKeyInput.value = savedApiKey;
+          apiKey = savedApiKey;
+          apiKeyInput.style.backgroundColor = 'green';
+      }
+  });
+</script>
     <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
         <input type="password" id="api-key-input" placeholder="Enter API Key" style="background-color: pink;">
     </div>
@@ -206,6 +218,7 @@
               }
           }
       });
+
       // Function to render the full text from patches
       function renderFullTextFromPatches(nodeId) {
           let currentNode = data.nodes[nodeId];
@@ -233,9 +246,15 @@
 
           return fullText;
       }
+
       // Event listener for the ENTER key to generate new output
       window.addEventListener('keydown', function(event) {
           if (event.key === 'Enter' || event.keyCode === 13) {
+              const textModal = document.getElementById('textModal');
+              // Check if the modal is open, if so, do not generate new output
+              if (textModal.style.display === 'block') {
+                  return; // Exit the function if the modal is open
+              }
               // Find the node with the largest number (highest ID)
               const largestNodeId = Math.max(...Object.keys(data.nodes).map(Number));
               const nodeToUse = data.nodes[largestNodeId];
@@ -250,17 +269,51 @@
       // Function to generate new output based on the given text and parent ID
       function generateNewOutput(parentId) {
           const fullText = renderFullTextFromPatches(parentId);
+          // Call the function to make an API call for text generation
+          console.log('Generating text from text:', fullText);
+          generateText(fullText, parentId);
+      }
+      // Function to make an API call for text generation
+      function generateText(fullText, parentId) {
+          axios({
+              method: 'post',
+              url: 'https://api.together.xyz/v1/completions',
+              data: {
+                  "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                  "max_tokens": 50,
+                  "prompt": fullText,
+                  "request_type": "language-model-inference",
+                  "temperature": 0.7,
+                  "top_p": 0.7,
+                  "top_k": 50,
+                  "repetition_penalty": 1,
+                  "stream_tokens": false,
+                  "stop": ["</s>"]
+              },
+              headers: {
+                  Authorization: 'Bearer ' + apiKey
+              },
+              responseType: 'text'
+          }).then((response) => {
+              // Remove the "data:" prefix if it exists and parse the JSON
+              const responseData = response.data.replace(/^data: /, '');
+              const jsonResponse = JSON.parse(responseData);
+              const newText = jsonResponse.choices[0].text;
+              console.log('Generated text:', newText);
 
-          // Placeholder for the API call to generate new output
-          // This will be replaced with the actual API call logic
-          console.log('Generating new output based on node:', parentId, 'with full text:', fullText);
-          // The actual API call will go here, and the new node creation will be handled in the response
+              // Create a new node with the generated text
+              createNodeIfTextChanged(fullText, newText, parentId);
+          }).catch((error) => {
+              console.error('Error during API call:', error);
+          });
       }
       // Event listener for API key input to change background color
       document.getElementById('api-key-input').addEventListener('input', function(event) {
           const input = event.target;
           if (input.value.trim() !== '') {
               apiKey = input.value.trim();
+              // Save the API key to localStorage
+              localStorage.setItem('apiKey', apiKey);
               input.style.backgroundColor = 'green';
           } else {
               input.style.backgroundColor = 'pink';
