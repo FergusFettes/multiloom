@@ -45,8 +45,6 @@
 </select>
 </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
-        <!-- <button id="btn-top-down">Top-Down</button> -->
-        <!-- <button id="btn-left-right">Left-Right</button> -->
         <button id="btn-settings">Settings</button>
         <button id="btn-download">Download</button>
     </div>
@@ -139,6 +137,30 @@
         });
       }
 
+      // Function to create a data node with random text
+      function createDataNode() {
+          const dataNodeId = 'data_' + (new Date()).getTime(); // Unique ID based on timestamp
+          const randomText = 'Random Data: ' + Math.random().toString(36).substring(2, 15); // Generate random text
+          nodes.add({
+              id: dataNodeId,
+              label: randomText,
+              title: randomText,
+              group: 'data'
+          });
+      }
+
+      // Call the function to add an example data node to the network
+      createDataNode();
+
+      // Helper function to check if there are any non-data nodes in the network
+      function hasNonDataNodes() {
+          return nodes.get({
+              filter: function (node) {
+                  return node.group !== 'data';
+              }
+          }).length > 0;
+      }
+
       updateVisualization(Object.values(data.nodes));
 
       // Convert the tree data to vis.js format
@@ -182,7 +204,7 @@
       const network = new vis.Network(container, visData, options);
 
       // Check if nodes are empty and display background text
-      if (nodes.length === 0) {
+      if (!hasNonDataNodes()) {
           document.getElementById('background-text').style.display = 'flex';
       } else {
           document.getElementById('background-text').style.display = 'none';
@@ -190,7 +212,7 @@
 
       // Event listener for the background text to open the modal on the first click
       document.getElementById('background-text').addEventListener('click', function () {
-          if (nodes.length === 0) {
+          if (!hasNonDataNodes()) {
               // Open the modal for the first node creation
               document.getElementById('textModal').style.display = 'block';
               // Set default text in the modal's textarea if needed
@@ -210,16 +232,8 @@
           network.setOptions(options);
       }
 
-      <!-- // Event listeners for the layout direction buttons -->
-      <!-- document.getElementById('btn-top-down').addEventListener('click', function() { -->
-      <!--     updateLayoutDirection('UD'); // Top-Down -->
-      <!-- }); -->
-      <!-- document.getElementById('btn-left-right').addEventListener('click', function() { -->
-      <!--     updateLayoutDirection('LR'); // Left-Right -->
-      <!-- }); -->
-
       network.on("click", function (params) {
-          if (params.nodes.length > 0) {
+          if (hasNonDataNodes() && params.nodes[0].group !== 'data') {
               const nodeId = params.nodes[0];
               const fullText = renderFullTextFromPatches(nodeId);
 
@@ -230,7 +244,7 @@
 
       // Event listener for node clicks to show full text in a modal
       network.on("doubleClick", function (params) {
-          if (params.nodes.length > 0) {
+          if (hasNonDataNodes() && params.nodes[0].group !== 'data') {
               const nodeId = params.nodes[0];
               const fullText = renderFullTextFromPatches(nodeId);
 
@@ -245,9 +259,9 @@
 
       // Function to create a new node if the text has changed or if it's the first node
       function createNodeIfTextChanged(originalText, newText, parentId, type) {
-          if (originalText !== newText || nodes.length === 0) {
+          if (originalText !== newText || !hasNonDataNodes()) {
               // Text has changed, or it's the first node, create a new node
-              const newNodeId = nodes.length === 0 ? 1 : Object.keys(data.nodes).length + 1;
+              const newNodeId = !hasNonDataNodes() ? 1 : Object.keys(data.nodes).length + 1;
               const patches = dmp.patch_make(originalText, newText);
               data.nodes[newNodeId] = {
                   id: newNodeId,
