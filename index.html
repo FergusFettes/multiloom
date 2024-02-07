@@ -20,6 +20,9 @@
     </style>
 </head>
 <body>
+    <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
+        <input type="password" id="api-key-input" placeholder="Enter API Key" style="background-color: pink;">
+    </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
         <button id="btn-top-down">Top-Down</button>
         <button id="btn-left-right">Left-Right</button>
@@ -51,6 +54,8 @@
       };
 
       var nodes = new vis.DataSet([]);
+      // Global variable to store the API key
+      var apiKey = '';
       var edges = new vis.DataSet([]);
       
       function cleanText(text) {
@@ -173,17 +178,47 @@
               const textModal = document.getElementById('textModal');
               const fullTextElement = document.getElementById('fullText');
               fullTextElement.value = fullText;
+              textModal.setAttribute('data-node-id', nodeId);
               textModal.style.display = 'block';
           }
       });
 
-      // Event listener to close the modal on right-click
+      // Function to create a new node if the text has changed
+      function createNodeIfTextChanged(originalText, newText, parentId) {
+        if (originalText !== newText) {
+          // Text has changed, create a new node
+          const newNodeId = Object.keys(data.nodes).length + 1;
+          const patches = dmp.patch_make(originalText, newText);
+          data.nodes[newNodeId] = {
+            id: newNodeId,
+            text: newText,
+            patches: patches,
+            parent: parentId
+          };
+
+          updateVisualization([data.nodes[newNodeId]]);
+
+        }
+      }
+
+      // Modify the event listener for the modal to call createNodeIfTextChanged
       window.addEventListener('contextmenu', function(event) {
-          const textModal = document.getElementById('textModal');
-          if (event.target === textModal || event.target === document.getElementById('fullText')) {
-              textModal.style.display = 'none';
-              event.preventDefault(); // Prevent the default context menu from showing
-          }
+        const textModal = document.getElementById('textModal');
+        if (event.target === textModal || event.target === document.getElementById('fullText')) {
+          // Get the current text from the modal
+          const fullTextElement = document.getElementById('fullText');
+          const newText = fullTextElement.value;
+          const nodeId = textModal.getAttribute('data-node-id');
+          const originalNode = data.nodes[nodeId];
+          const originalText = originalNode ? originalNode.text : '';
+
+          // Create a new node if the text has changed
+          createNodeIfTextChanged(originalText, newText, parseInt(nodeId));
+
+          // Close the modal
+          textModal.style.display = 'none';
+          event.preventDefault(); // Prevent the default context menu from showing
+        }
       });
 
       // Event listener to close the modal when pressing the Escape key
@@ -193,6 +228,16 @@
               if (textModal.style.display === 'block') {
                   textModal.style.display = 'none';
               }
+          }
+      });
+      // Event listener for API key input to change background color
+      document.getElementById('api-key-input').addEventListener('input', function(event) {
+          const input = event.target;
+          if (input.value.trim() !== '') {
+              apiKey = input.value.trim();
+              input.style.backgroundColor = 'green';
+          } else {
+              input.style.backgroundColor = 'pink';
           }
       });
 
