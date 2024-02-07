@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Tree Visualization</title>
+    <!-- Load vis.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <!-- Load vis.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <!-- Load diff_match_patch library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch_uncompressed.js"></script>
+    <!-- Load axios library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
+<style>
+#mynetwork {
+    width: 100%;
+    height: 100vh;
+}
+</style>
+    </style>
+</head>
+<body>
+    <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
+        <button id="btn-top-down">Top-Down</button>
+        <button id="btn-left-right">Left-Right</button>
+    </div>
+    <div id="mynetwork"></div>
+    <!-- Modal container for full text display -->
+    <div id="textModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
+        <textarea id="fullText" style="width:100%; height:100%;"></textarea>
+    </div>
+    <script type="text/javascript">
+      var dmp = new diff_match_patch();
+
+      var knownNodeIds = new Set([1]);
+      var nodes = new vis.DataSet([]);
+      var edges = new vis.DataSet([]);
+      
+      // Function to update the visualization with new nodes
+      function updateVisualization(newNodes) {
+        newNodes.forEach(node => {
+          nodes.update({id: node.id, label: node.text, title: node.text, group: node.type});
+          if (node.parent !== null) {
+            edges.update({from: node.parent, to: node.id});
+          }
+          knownNodeIds.add(node.id);
+        });
+      }
+
+      // Function to fetch new or updated nodes from the backend
+      function fetchNewNodes() {
+        fetch('http://localhost:8000/tree/delta', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(Array.from(knownNodeIds))
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Fetched new nodes:', data);
+          if (data.nodes && Object.keys(data.nodes).length > 0) {
+            updateVisualization(Object.values(data.nodes));
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching new nodes:', error);
+        });
+      }
+
+      fetch('http://localhost:8000/tree')
+          .then(response => response.json())
+          .then(data => {
+              console.log("Fetched Tree Data:", data);
+
+              // Convert the tree data to vis.js format
+              const nodesArray = Object.values(data.nodes);
+              nodesArray.shift();
+              updateVisualization(nodesArray);
+
+              console.log("Processed nodes:", nodes);
+              console.log("Processed edges:", edges);
+
+              // Create a network
+              const container = document.getElementById('mynetwork');
+              const visData = {
+                  nodes: nodes,
+                  edges: edges
+              };
+              const options = {
+                layout: {
+                  hierarchical: {
+                    sortMethod: "directed",
+                    levelSeparation: 200,
+                    nodeSpacing: 250,
+                  },
+                },
+                nodes: {
+                  shape: "box",
+                  size: 20,
+                  font: {
+                    size: 20,
+                    multi: true // Enable multi-line text
+                  },
+                  widthConstraint: {
+                    maximum: 150
+                  }
+                },
+                edges: {
+                  smooth: true,
+                  arrows: { to: true },
+                },
+                physics: {enabled: false}
+              };
+              const network = new vis.Network(container, visData, options);
+
+          // Function to update the layout direction
+          function updateLayoutDirection(direction) {
+              const options = {
+                  layout: {
+                      hierarchical: {
+                          direction: direction
+                      }
+                  }
+              };
+              network.setOptions(options);
+          }
+
+          // Event listeners for the layout direction buttons
+          document.getElementById('btn-top-down').addEventListener('click', function() {
+              updateLayoutDirection('UD'); // Top-Down
+          });
+          document.getElementById('btn-left-right').addEventListener('click', function() {
+              updateLayoutDirection('LR'); // Left-Right
+          });
+
+          // Event listener for node clicks to show full text in a modal
+          network.on("click", function (params) {
+              if (params.nodes.length > 0) {
+                  const nodeId = params.nodes[0];
+                  const nodeData = data.nodes[nodeId];
+                  let currentNode = nodeData;
+                  let pathToRoot = [];
+                  let fullText = '';
+
+                  // Traverse up the tree to collect the path to the root
+                  while (currentNode) {
+                      pathToRoot.push(currentNode);
+                      currentNode = data.nodes[currentNode.parent];
+                  }
+
+                  // Reverse the path to start from the root
+                  pathToRoot.reverse();
+
+                  // Apply the patches from the root to the current node
+                  pathToRoot.forEach(node => {
+                      if (node.patches) {
+                          // Apply the patch to the current full text
+                          const patches = node.patches;
+                          const results = dmp.patch_apply(patches, fullText);
+                          fullText = results[0]; // Update the full text with the applied patch
+                      }
+                  });
+
+                  // Display the full text in a modal
+                  const textModal = document.getElementById('textModal');
+                  const fullTextElement = document.getElementById('fullText');
+                  fullTextElement.value = fullText;
+                  textModal.style.display = 'block';
+              }
+          });
+
+          // Event listener to close the modal when clicking outside of the text area
+          window.addEventListener('click', function(event) {
+              const textModal = document.getElementById('textModal');
+              // Check if the click is on the modal background, not the text area itself
+              if (event.target === textModal || event.target === document.getElementById('fullText')) {
+                  textModal.style.display = 'none';
+              }
+          });
+
+          // Event listener to close the modal when pressing the Escape key
+          window.addEventListener('keydown', function(event) {
+              if (event.key === 'Escape' || event.keyCode === 27) {
+                  const textModal = document.getElementById('textModal');
+                  if (textModal.style.display === 'block') {
+                      textModal.style.display = 'none';
+                  }
+              }
+          });
+          }).catch(error => {
+              console.error('Error in processing tree data:', error);
+              console.error('Error fetching tree data:', error);
+          });
+
+          <!-- // Fetch new nodes every 2 seconds -->
+          <!-- setInterval(fetchNewNodes, 2000); -->
+    </script>
+</body>
+</html>
