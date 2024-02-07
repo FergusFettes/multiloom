@@ -32,169 +32,170 @@
     <script type="text/javascript">
       var dmp = new diff_match_patch();
 
-      var knownNodeIds = new Set([1]);
+      // Initialize demo data
+      var data = {
+        nodes: {
+          1: {
+            id: 1,
+            text: 'Root Node',
+            patches: dmp.patch_make('', 'Root Node'),
+            parent: null
+          },
+          2: {
+            id: 2,
+            patches: dmp.patch_make('Root Node', 'Root Node with Child'),
+            text: dmp.patch_toText(dmp.patch_make('Root Node', 'Root Node with Child')),
+            parent: 1
+          }
+        }
+      };
+
       var nodes = new vis.DataSet([]);
       var edges = new vis.DataSet([]);
       
+      function cleanText(text) {
+          // Remove everything up to and including the second plus sign in the text
+          var plusIndex = text.indexOf('+');
+          if (plusIndex >= 0) {
+              text = text.substring(plusIndex + 1);
+          }
+          plusIndex = text.indexOf('+');
+          if (plusIndex >= 0) {
+              text = text.substring(plusIndex + 1);
+          }
+          return text
+      }
+
       // Function to update the visualization with new nodes
       function updateVisualization(newNodes) {
         newNodes.forEach(node => {
-          nodes.update({id: node.id, label: node.text, title: node.text, group: node.type});
+          const cleanedText = cleanText(node.text); // Truncate text to 50 characters
+          nodes.update({id: node.id, label: cleanedText, title: node.text, group: node.type});
           if (node.parent !== null) {
             edges.update({from: node.parent, to: node.id});
           }
-          knownNodeIds.add(node.id);
         });
       }
 
-      // Function to fetch new or updated nodes from the backend
-      function fetchNewNodes() {
-        fetch('http://localhost:8000/tree/delta', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
+      updateVisualization(Object.values(data.nodes));
+
+      // Convert the tree data to vis.js format
+      const nodesArray = Object.values(data.nodes);
+      updateVisualization(nodesArray);
+
+      console.log("Processed nodes:", nodes);
+      console.log("Processed edges:", edges);
+
+      // Create a network
+      const container = document.getElementById('mynetwork');
+      const visData = {
+          nodes: nodes,
+          edges: edges
+      };
+      const options = {
+        layout: {
+          hierarchical: {
+            sortMethod: "directed",
+            levelSeparation: 200,
+            nodeSpacing: 250,
           },
-          body: JSON.stringify(Array.from(knownNodeIds))
-        })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Fetched new nodes:', data);
-          if (data.nodes && Object.keys(data.nodes).length > 0) {
-            updateVisualization(Object.values(data.nodes));
+        },
+        nodes: {
+          shape: "box",
+          size: 20,
+          font: {
+            size: 20,
+            multi: true // Enable multi-line text
+          },
+          widthConstraint: {
+            maximum: 150
           }
-        })
-        .catch(error => {
-          console.error('Error fetching new nodes:', error);
-        });
+        },
+        edges: {
+          smooth: true,
+          arrows: { to: true },
+        },
+        physics: {enabled: false}
+      };
+      const network = new vis.Network(container, visData, options);
+
+      // Function to update the layout direction
+      function updateLayoutDirection(direction) {
+          const options = {
+              layout: {
+                  hierarchical: {
+                      direction: direction
+                  }
+              }
+          };
+          network.setOptions(options);
       }
 
-      fetch('http://localhost:8000/tree')
-          .then(response => response.json())
-          .then(data => {
-              console.log("Fetched Tree Data:", data);
+      // Event listeners for the layout direction buttons
+      document.getElementById('btn-top-down').addEventListener('click', function() {
+          updateLayoutDirection('UD'); // Top-Down
+      });
+      document.getElementById('btn-left-right').addEventListener('click', function() {
+          updateLayoutDirection('LR'); // Left-Right
+      });
 
-              // Convert the tree data to vis.js format
-              const nodesArray = Object.values(data.nodes);
-              nodesArray.shift();
-              updateVisualization(nodesArray);
+      // Event listener for node clicks to show full text in a modal
+      network.on("click", function (params) {
+          if (params.nodes.length > 0) {
+              const nodeId = params.nodes[0];
+              const nodeData = data.nodes[nodeId];
+              let currentNode = nodeData;
+              let pathToRoot = [];
+              let fullText = '';
 
-              console.log("Processed nodes:", nodes);
-              console.log("Processed edges:", edges);
-
-              // Create a network
-              const container = document.getElementById('mynetwork');
-              const visData = {
-                  nodes: nodes,
-                  edges: edges
-              };
-              const options = {
-                layout: {
-                  hierarchical: {
-                    sortMethod: "directed",
-                    levelSeparation: 200,
-                    nodeSpacing: 250,
-                  },
-                },
-                nodes: {
-                  shape: "box",
-                  size: 20,
-                  font: {
-                    size: 20,
-                    multi: true // Enable multi-line text
-                  },
-                  widthConstraint: {
-                    maximum: 150
-                  }
-                },
-                edges: {
-                  smooth: true,
-                  arrows: { to: true },
-                },
-                physics: {enabled: false}
-              };
-              const network = new vis.Network(container, visData, options);
-
-          // Function to update the layout direction
-          function updateLayoutDirection(direction) {
-              const options = {
-                  layout: {
-                      hierarchical: {
-                          direction: direction
-                      }
-                  }
-              };
-              network.setOptions(options);
-          }
-
-          // Event listeners for the layout direction buttons
-          document.getElementById('btn-top-down').addEventListener('click', function() {
-              updateLayoutDirection('UD'); // Top-Down
-          });
-          document.getElementById('btn-left-right').addEventListener('click', function() {
-              updateLayoutDirection('LR'); // Left-Right
-          });
-
-          // Event listener for node clicks to show full text in a modal
-          network.on("click", function (params) {
-              if (params.nodes.length > 0) {
-                  const nodeId = params.nodes[0];
-                  const nodeData = data.nodes[nodeId];
-                  let currentNode = nodeData;
-                  let pathToRoot = [];
-                  let fullText = '';
-
-                  // Traverse up the tree to collect the path to the root
-                  while (currentNode) {
-                      pathToRoot.push(currentNode);
-                      currentNode = data.nodes[currentNode.parent];
-                  }
-
-                  // Reverse the path to start from the root
-                  pathToRoot.reverse();
-
-                  // Apply the patches from the root to the current node
-                  pathToRoot.forEach(node => {
-                      if (node.patches) {
-                          // Apply the patch to the current full text
-                          const patches = node.patches;
-                          const results = dmp.patch_apply(patches, fullText);
-                          fullText = results[0]; // Update the full text with the applied patch
-                      }
-                  });
-
-                  // Display the full text in a modal
-                  const textModal = document.getElementById('textModal');
-                  const fullTextElement = document.getElementById('fullText');
-                  fullTextElement.value = fullText;
-                  textModal.style.display = 'block';
+              // Traverse up the tree to collect the path to the root
+              while (currentNode) {
+                  pathToRoot.push(currentNode);
+                  currentNode = data.nodes[currentNode.parent];
               }
-          });
 
-          // Event listener to close the modal when clicking outside of the text area
-          window.addEventListener('click', function(event) {
+              console.log('Path to root:', pathToRoot);
+
+              // Reverse the path to start from the root
+              pathToRoot.reverse();
+
+              // Apply the patches from the root to the current node
+              pathToRoot.forEach(node => {
+                  if (node.patches) {
+                      // Apply the patch to the current full text
+                      const patches = node.patches;
+                      const results = dmp.patch_apply(patches, fullText);
+                      fullText = results[0]; // Update the full text with the applied patch
+                  }
+              });
+
+              // Display the full text in a modal
               const textModal = document.getElementById('textModal');
-              // Check if the click is on the modal background, not the text area itself
-              if (event.target === textModal || event.target === document.getElementById('fullText')) {
+              const fullTextElement = document.getElementById('fullText');
+              fullTextElement.value = fullText;
+              textModal.style.display = 'block';
+          }
+      });
+
+      // Event listener to close the modal on right-click
+      window.addEventListener('contextmenu', function(event) {
+          const textModal = document.getElementById('textModal');
+          if (event.target === textModal || event.target === document.getElementById('fullText')) {
+              textModal.style.display = 'none';
+              event.preventDefault(); // Prevent the default context menu from showing
+          }
+      });
+
+      // Event listener to close the modal when pressing the Escape key
+      window.addEventListener('keydown', function(event) {
+          if (event.key === 'Escape' || event.keyCode === 27) {
+              const textModal = document.getElementById('textModal');
+              if (textModal.style.display === 'block') {
                   textModal.style.display = 'none';
               }
-          });
+          }
+      });
 
-          // Event listener to close the modal when pressing the Escape key
-          window.addEventListener('keydown', function(event) {
-              if (event.key === 'Escape' || event.keyCode === 27) {
-                  const textModal = document.getElementById('textModal');
-                  if (textModal.style.display === 'block') {
-                      textModal.style.display = 'none';
-                  }
-              }
-          });
-          }).catch(error => {
-              console.error('Error in processing tree data:', error);
-              console.error('Error fetching tree data:', error);
-          });
-
-          <!-- // Fetch new nodes every 2 seconds -->
-          <!-- setInterval(fetchNewNodes, 2000); -->
     </script>
 </body>
 </html>
