@@ -48,14 +48,20 @@
         <button id="btn-left-right">Left-Right</button>
     </div>
     <div id="mynetwork"></div>
-    <div id="background-text" style="display:flex; align-items:center; justify-content:center; height:100vh;">Click to edit!</div>
+    <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0">
+      Hello and welcome to tinyloom! This is a little loom in one file.<br>
+      Click anywhere to create your first node. Right click to exit the editor.<br>
+      Add your together.ai api key, and press 'r' to generate! Happy looming!<br>
+      <br>
+      Double click on nodes to see and edit the full text.<br>
+      Click on nodes to check them out for generation.<br>
+    </div>
     <!-- Modal container for full text display -->
     <div id="textModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
     <script type="text/javascript">
       var dmp = new diff_match_patch();
-
 
       var nodes = new vis.DataSet([]);
       var edges = new vis.DataSet([]);
@@ -165,6 +171,16 @@
           document.getElementById('background-text').style.display = 'none';
       }
 
+      // Event listener for the background text to open the modal on the first click
+      document.getElementById('background-text').addEventListener('click', function () {
+          if (nodes.length === 0) {
+              // Open the modal for the first node creation
+              document.getElementById('textModal').style.display = 'block';
+              // Set default text in the modal's textarea if needed
+              document.getElementById('fullText').value = "(Right click to save and the editor!\nEscape to close without saving!)"
+          }
+      });
+
       // Function to update the layout direction
       function updateLayoutDirection(direction) {
           const options = {
@@ -186,10 +202,7 @@
       });
 
       network.on("click", function (params) {
-          if (nodes.length === 0) {
-              // Open the modal for the first node creation
-              document.getElementById('textModal').style.display = 'block';
-          } else if (params.nodes.length > 0) {
+          if (params.nodes.length > 0) {
               const nodeId = params.nodes[0];
               const fullText = renderFullTextFromPatches(nodeId);
 
@@ -227,6 +240,12 @@
                   type: type // Store the type of the node
               };
 
+              // if the parentId was nan, then the new node is the root and we must set the checked out node
+              if (isNaN(parentId)) {
+                  localStorage.setItem('checkedOutNodeId', newNodeId);
+                  console.log('Checked out node ID:', newNodeId);
+              }
+
               updateVisualization([data.nodes[newNodeId]]);
               // Hide the background text when the first node is created
               document.getElementById('background-text').style.display = 'none';
@@ -252,16 +271,14 @@
       }
       });
 
-      // Event listener to close the modal when pressing the Escape key
+      // Event listener for the Escape key to close the modal regardless of focus
       window.addEventListener('keydown', function(event) {
-          if (event.key === 'Escape' || event.keyCode === 27) {
-              const textModal = document.getElementById('textModal');
-              if (textModal.style.display === 'block') {
-                  textModal.style.display = 'none';
-              }
+          if ((event.key === 'Escape' || event.keyCode === 27) && document.getElementById('textModal').style.display === 'block') {
+              document.getElementById('textModal').style.display = 'none';
           }
       });
-      // Event listener for the '0' key to display the full JSON
+
+      // Event listener for the 'j' key to display the full JSON
       window.addEventListener('keydown', function(event) {
           if (event.key === 'j' || event.keyCode === 74) {
               // Display the full JSON
@@ -282,6 +299,9 @@
       // Function to render the full text from patches
       function renderFullTextFromPatches(nodeId) {
           let currentNode = data.nodes[nodeId];
+          console.log('Current node id:', nodeId)
+          console.log('Current nodes:', data.nodes)
+          console.log('Current node:', currentNode)
           let pathToRoot = [];
           let fullText = '';
 
@@ -318,6 +338,8 @@
               }
               // Retrieve the last clicked node ID from localStorage
               const checkedOutNodeId = localStorage.getItem('checkedOutNodeId');
+              console.log('Checked out node ID:', checkedOutNodeId);
+              console.log(nodes)
               
               if (checkedOutNodeId) {
                   // Generate new output based on the checked-out node
@@ -373,15 +395,16 @@
               input.style.backgroundColor = 'pink';
           }
       });
-// Event listener for model dropdown to change model configuration
-document.getElementById('model-dropdown').addEventListener('change', function(event) {
-    const selectedModelAlias = event.target.value;
-    const selectedModel = modelAliases[selectedModelAlias];
-    if (selectedModel) {
-        modelConfig.model = selectedModel;
-        console.log('Model changed to:', selectedModel);
-    }
-});
+
+      // Event listener for model dropdown to change model configuration
+      document.getElementById('model-dropdown').addEventListener('change', function(event) {
+          const selectedModelAlias = event.target.value;
+          const selectedModel = modelAliases[selectedModelAlias];
+          if (selectedModel) {
+              modelConfig.model = selectedModel;
+              console.log('Model changed to:', selectedModel);
+          }
+      });
 
     </script>
 </body>
