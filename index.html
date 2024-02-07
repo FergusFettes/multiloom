@@ -48,6 +48,7 @@
         <button id="btn-left-right">Left-Right</button>
     </div>
     <div id="mynetwork"></div>
+    <div id="background-text" style="display:flex; align-items:center; justify-content:center; height:100vh;">Click to edit!</div>
     <!-- Modal container for full text display -->
     <div id="textModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
@@ -55,49 +56,39 @@
     <script type="text/javascript">
       var dmp = new diff_match_patch();
 
-      // Initialize demo data
-      var data = {
-        nodes: {
-          1: {
-            id: 1,
-            text: 'Root Node',
-            patches: dmp.patch_make('', 'Root Node'),
-            parent: null
-          },
-          2: {
-            id: 2,
-            patches: dmp.patch_make('Root Node', 'Root Node with Child'),
-            text: dmp.patch_toText(dmp.patch_make('Root Node', 'Root Node with Child')),
-            parent: 1
-          }
-        }
-      };
 
       var nodes = new vis.DataSet([]);
+      var edges = new vis.DataSet([]);
+
+      // Initialize data object to store nodes and edges
+      var data = {
+        nodes: {},
+        edges: {}
+      };
+
       // Global variable to store the API key
       var apiKey = '';
-// Model configuration
-var modelConfig = {
-    "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-    "max_tokens": 50,
-    "request_type": "language-model-inference",
-    "temperature": 0.7,
-    "top_p": 0.7,
-    "top_k": 50,
-    "repetition_penalty": 1,
-    "stream_tokens": false,
-    "stop": ["</s>"]
-};
+      // Model configuration
+      var modelConfig = {
+          "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+          "max_tokens": 50,
+          "request_type": "language-model-inference",
+          "temperature": 0.7,
+          "top_p": 0.7,
+          "top_k": 50,
+          "repetition_penalty": 1,
+          "stream_tokens": false,
+          "stop": ["</s>"]
+      };
 
-// List of model aliases
-var modelAliases = {
-    "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
-    "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-    "mixtral": "mistralai/Mixtral-8x7B-v0.1",
-    "llama2": "togethercomputer/llama-2-70b",
-    "mistral": "mistralai/Mistral-7B-v0.1"
-};
-      var edges = new vis.DataSet([]);
+      // List of model aliases
+      var modelAliases = {
+          "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
+          "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+          "mixtral": "mistralai/Mixtral-8x7B-v0.1",
+          "llama2": "togethercomputer/llama-2-70b",
+          "mistral": "mistralai/Mistral-7B-v0.1"
+      };
       
       function cleanText(text) {
           // Remove everything up to and including the second plus sign in the text
@@ -167,6 +158,13 @@ var modelAliases = {
       };
       const network = new vis.Network(container, visData, options);
 
+      // Check if nodes are empty and display background text
+      if (nodes.length === 0) {
+          document.getElementById('background-text').style.display = 'flex';
+      } else {
+          document.getElementById('background-text').style.display = 'none';
+      }
+
       // Function to update the layout direction
       function updateLayoutDirection(direction) {
           const options = {
@@ -188,7 +186,10 @@ var modelAliases = {
       });
 
       network.on("click", function (params) {
-          if (params.nodes.length > 0) {
+          if (nodes.length === 0) {
+              // Open the modal for the first node creation
+              document.getElementById('textModal').style.display = 'block';
+          } else if (params.nodes.length > 0) {
               const nodeId = params.nodes[0];
               const fullText = renderFullTextFromPatches(nodeId);
 
@@ -212,23 +213,24 @@ var modelAliases = {
           }
       });
 
-      // Function to create a new node if the text has changed
+      // Function to create a new node if the text has changed or if it's the first node
       function createNodeIfTextChanged(originalText, newText, parentId, type) {
-        if (originalText !== newText) {
-          // Text has changed, create a new node
-          const newNodeId = Object.keys(data.nodes).length + 1;
-          console.log(originalText, newText)
-          const patches = dmp.patch_make(originalText, newText);
-          data.nodes[newNodeId] = {
-            id: newNodeId,
-            text: dmp.patch_toText(patches),
-            patches: patches,
-            parent: parentId,
-            type: type // Store the type of the node
-          };
+          if (originalText !== newText || nodes.length === 0) {
+              // Text has changed, or it's the first node, create a new node
+              const newNodeId = nodes.length === 0 ? 1 : Object.keys(data.nodes).length + 1;
+              const patches = dmp.patch_make(originalText, newText);
+              data.nodes[newNodeId] = {
+                  id: newNodeId,
+                  text: dmp.patch_toText(patches),
+                  patches: patches,
+                  parent: parentId,
+                  type: type // Store the type of the node
+              };
 
-          updateVisualization([data.nodes[newNodeId]]);
-        }
+              updateVisualization([data.nodes[newNodeId]]);
+              // Hide the background text when the first node is created
+              document.getElementById('background-text').style.display = 'none';
+          }
       }
 
     // Modify the event listener for the modal to call createNodeIfTextChanged with human type
