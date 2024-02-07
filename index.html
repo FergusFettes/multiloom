@@ -34,13 +34,14 @@
 </script>
     <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
         <input type="password" id="api-key-input" placeholder="Enter API Key" style="background-color: pink;">
-<select id="model-dropdown" style="margin-left: 10px;">
-    <option value="mistral-instruct">Mistral Instruct</option>
-    <option value="mixtral-instruct">Mixtral Instruct</option>
-    <option value="mixtral">Mixtral</option>
-    <option value="llama2">LLaMA2</option>
-    <option value="mistral">Mistral</option>
+<div id="model-checkboxes" style="margin-left: 10px;">
+    <label><input type="checkbox" class="model-checkbox" value="mistral-instruct" checked> Mistral Instruct</label><br>
+    <label><input type="checkbox" class="model-checkbox" value="mixtral-instruct" checked> Mixtral Instruct</label><br>
+    <label><input type="checkbox" class="model-checkbox" value="mixtral" checked> Mixtral</label><br>
+    <label><input type="checkbox" class="model-checkbox" value="llama2" checked> LLaMA2</label><br>
+    <label><input type="checkbox" class="model-checkbox" value="mistral" checked> Mistral</label><br>
     <!-- Additional models can be added here -->
+</div>
 </select>
     </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
@@ -141,7 +142,7 @@
         layout: {
           hierarchical: {
             sortMethod: "directed",
-            levelSeparation: 200,
+            levelSeparation: 400,
             nodeSpacing: 250,
           },
         },
@@ -153,7 +154,7 @@
             multi: true // Enable multi-line text
           },
           widthConstraint: {
-            maximum: 150
+            maximum: 250
           }
         },
         edges: {
@@ -352,10 +353,13 @@
       // Function to generate new output based on the given text and parent ID
       function generateNewOutput(parentId) {
           const fullText = renderFullTextFromPatches(parentId);
-          const selectedModelAlias = document.getElementById('model-dropdown').value;
-          // Call the function to make an API call for text generation
+          // Collect all selected models
+          const selectedModels = Array.from(document.querySelectorAll('.model-checkbox:checked')).map(checkbox => checkbox.value);
+          // Call the function to make an API call for text generation for each selected model
           console.log('Generating text from text:', fullText);
-          generateText(fullText, parentId, selectedModelAlias);
+          selectedModels.forEach(modelAlias => {
+              generateText(fullText, parentId, modelAlias);
+          });
       }
 
       // Function to make an API call for text generation
@@ -396,14 +400,12 @@
           }
       });
 
-      // Event listener for model dropdown to change model configuration
-      document.getElementById('model-dropdown').addEventListener('change', function(event) {
-          const selectedModelAlias = event.target.value;
-          const selectedModel = modelAliases[selectedModelAlias];
-          if (selectedModel) {
-              modelConfig.model = selectedModel;
-              console.log('Model changed to:', selectedModel);
-          }
+      // Event listener for model checkboxes to change model configuration
+      document.querySelectorAll('.model-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('change', function(event) {
+              const selectedModels = Array.from(document.querySelectorAll('.model-checkbox:checked')).map(checkbox => checkbox.value);
+              console.log('Selected models:', selectedModels);
+          });
       });
 
     </script>
