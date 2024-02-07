@@ -32,8 +32,8 @@
       }
   });
 </script>
-    <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
-        <input type="password" id="api-key-input" placeholder="Enter API Key" style="background-color: pink;">
+<div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
+<input type="password" id="api-key-input" placeholder="Enter API Key" style="background-color: pink;">
 <div id="model-checkboxes" style="margin-left: 10px;">
     <label><input type="checkbox" class="model-checkbox" value="mistral-instruct" checked> Mistral Instruct</label><br>
     <label><input type="checkbox" class="model-checkbox" value="mixtral-instruct" checked> Mixtral Instruct</label><br>
@@ -43,10 +43,12 @@
     <!-- Additional models can be added here -->
 </div>
 </select>
-    </div>
+</div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
-        <button id="btn-top-down">Top-Down</button>
-        <button id="btn-left-right">Left-Right</button>
+        <!-- <button id="btn-top-down">Top-Down</button> -->
+        <!-- <button id="btn-left-right">Left-Right</button> -->
+        <button id="btn-settings">Settings</button>
+        <button id="btn-download">Download</button>
     </div>
     <div id="mynetwork"></div>
     <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0">
@@ -61,6 +63,23 @@
     <div id="textModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
+    <!-- Settings modal for model configuration -->
+    <div id="settingsModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
+        <h2>Model Configuration</h2>
+        <label for="max-tokens-input">Max Tokens:</label>
+        <input type="number" id="max-tokens-input" value="50"><br>
+        <label for="temperature-input">Temperature:</label>
+        <input type="number" step="0.1" id="temperature-input" value="0.7"><br>
+        <label for="top-p-input">Top P:</label>
+        <input type="number" step="0.1" id="top-p-input" value="0.7"><br>
+        <label for="top-k-input">Top K:</label>
+        <input type="number" id="top-k-input" value="50"><br>
+        <label for="repetition-penalty-input">Repetition Penalty:</label>
+        <input type="number" step="0.1" id="repetition-penalty-input" value="1"><br>
+        <label for="stop-sequence-input">Stop Sequence:</label>
+        <input type="text" id="stop-sequence-input" value="</s>"><br>
+        <button id="save-settings-btn">Save Settings</button>
+    </div>
     <script type="text/javascript">
       var dmp = new diff_match_patch();
 
@@ -68,10 +87,7 @@
       var edges = new vis.DataSet([]);
 
       // Initialize data object to store nodes and edges
-      var data = {
-        nodes: {},
-        edges: {}
-      };
+      var data = { nodes: {}, edges: {} };
 
       // Global variable to store the API key
       var apiKey = '';
@@ -194,13 +210,13 @@
           network.setOptions(options);
       }
 
-      // Event listeners for the layout direction buttons
-      document.getElementById('btn-top-down').addEventListener('click', function() {
-          updateLayoutDirection('UD'); // Top-Down
-      });
-      document.getElementById('btn-left-right').addEventListener('click', function() {
-          updateLayoutDirection('LR'); // Left-Right
-      });
+      <!-- // Event listeners for the layout direction buttons -->
+      <!-- document.getElementById('btn-top-down').addEventListener('click', function() { -->
+      <!--     updateLayoutDirection('UD'); // Top-Down -->
+      <!-- }); -->
+      <!-- document.getElementById('btn-left-right').addEventListener('click', function() { -->
+      <!--     updateLayoutDirection('LR'); // Left-Right -->
+      <!-- }); -->
 
       network.on("click", function (params) {
           if (params.nodes.length > 0) {
@@ -365,6 +381,8 @@
       // Function to make an API call for text generation
       function generateText(fullText, parentId, type) {
           modelConfig.prompt = fullText;
+          // type is the model alias. set the name
+          modelConfig.model = modelAliases[type];
           axios({
               method: 'post',
               url: 'https://api.together.xyz/v1/completions',
@@ -387,6 +405,24 @@
           });
       }
 
+      function downloadHTML() {
+        var htmlContent = document.documentElement.outerHTML;
+        htmlContent = htmlContent.replace('var data = { nodes: {}, edges: {} };', 'var data = ' + JSON.stringify(data) + ';');
+
+        var blob = new Blob([htmlContent], {type: "text/html"});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "index.html";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      // Event listener for the "Download" button
+      document.getElementById('btn-download').addEventListener('click', downloadHTML);
+
       // Event listener for API key input to change background color
       document.getElementById('api-key-input').addEventListener('input', function(event) {
           const input = event.target;
@@ -406,6 +442,25 @@
               const selectedModels = Array.from(document.querySelectorAll('.model-checkbox:checked')).map(checkbox => checkbox.value);
               console.log('Selected models:', selectedModels);
           });
+      });
+
+      // Event listener for the settings button to toggle the settings modal
+      document.getElementById('btn-settings').addEventListener('click', function() {
+          const settingsModal = document.getElementById('settingsModal');
+          settingsModal.style.display = settingsModal.style.display === 'block' ? 'none' : 'block';
+      });
+
+      // Event listener for the save settings button to update the model configuration
+      document.getElementById('save-settings-btn').addEventListener('click', function() {
+          modelConfig.max_tokens = parseInt(document.getElementById('max-tokens-input').value);
+          modelConfig.temperature = parseFloat(document.getElementById('temperature-input').value);
+          modelConfig.top_p = parseFloat(document.getElementById('top-p-input').value);
+          modelConfig.top_k = parseInt(document.getElementById('top-k-input').value);
+          modelConfig.repetition_penalty = parseFloat(document.getElementById('repetition-penalty-input').value);
+          modelConfig.stop = [document.getElementById('stop-sequence-input').value];
+          // Close the settings modal
+          document.getElementById('settingsModal').style.display = 'none';
+          console.log('Model configuration updated:', modelConfig);
       });
 
     </script>
