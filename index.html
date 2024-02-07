@@ -148,31 +148,7 @@
       network.on("click", function (params) {
           if (params.nodes.length > 0) {
               const nodeId = params.nodes[0];
-              const nodeData = data.nodes[nodeId];
-              let currentNode = nodeData;
-              let pathToRoot = [];
-              let fullText = '';
-
-              // Traverse up the tree to collect the path to the root
-              while (currentNode) {
-                  pathToRoot.push(currentNode);
-                  currentNode = data.nodes[currentNode.parent];
-              }
-
-              console.log('Path to root:', pathToRoot);
-
-              // Reverse the path to start from the root
-              pathToRoot.reverse();
-
-              // Apply the patches from the root to the current node
-              pathToRoot.forEach(node => {
-                  if (node.patches) {
-                      // Apply the patch to the current full text
-                      const patches = node.patches;
-                      const results = dmp.patch_apply(patches, fullText);
-                      fullText = results[0]; // Update the full text with the applied patch
-                  }
-              });
+              const fullText = renderFullTextFromPatches(nodeId);
 
               // Display the full text in a modal
               const textModal = document.getElementById('textModal');
@@ -230,6 +206,56 @@
               }
           }
       });
+      // Function to render the full text from patches
+      function renderFullTextFromPatches(nodeId) {
+          let currentNode = data.nodes[nodeId];
+          let pathToRoot = [];
+          let fullText = '';
+
+          // Traverse up the tree to collect the path to the root
+          while (currentNode) {
+              pathToRoot.push(currentNode);
+              currentNode = data.nodes[currentNode.parent];
+          }
+
+          // Reverse the path to start from the root
+          pathToRoot.reverse();
+
+          // Apply the patches from the root to the current node
+          pathToRoot.forEach(node => {
+              if (node.patches) {
+                  // Apply the patch to the current full text
+                  const patches = node.patches;
+                  const results = dmp.patch_apply(patches, fullText);
+                  fullText = results[0]; // Update the full text with the applied patch
+              }
+          });
+
+          return fullText;
+      }
+      // Event listener for the ENTER key to generate new output
+      window.addEventListener('keydown', function(event) {
+          if (event.key === 'Enter' || event.keyCode === 13) {
+              // Find the node with the largest number (highest ID)
+              const largestNodeId = Math.max(...Object.keys(data.nodes).map(Number));
+              const nodeToUse = data.nodes[largestNodeId];
+              if (nodeToUse) {
+                  // Generate new output based on the node with the largest number
+                  generateNewOutput(largestNodeId);
+              }
+              event.preventDefault(); // Prevent the default action of the ENTER key
+          }
+      });
+
+      // Function to generate new output based on the given text and parent ID
+      function generateNewOutput(parentId) {
+          const fullText = renderFullTextFromPatches(parentId);
+
+          // Placeholder for the API call to generate new output
+          // This will be replaced with the actual API call logic
+          console.log('Generating new output based on node:', parentId, 'with full text:', fullText);
+          // The actual API call will go here, and the new node creation will be handled in the response
+      }
       // Event listener for API key input to change background color
       document.getElementById('api-key-input').addEventListener('input', function(event) {
           const input = event.target;
