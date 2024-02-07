@@ -26,8 +26,8 @@
       const savedApiKey = localStorage.getItem('apiKey');
       if (savedApiKey) {
           const apiKeyInput = document.getElementById('api-key-input');
-          apiKeyInput.value = savedApiKey;
-          apiKey = savedApiKey;
+          apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, '');
+          apiKey = apiKeyInput.value;
           apiKeyInput.style.backgroundColor = 'green';
       }
   });
@@ -86,8 +86,10 @@
       // Function to update the visualization with new nodes
       function updateVisualization(newNodes) {
         newNodes.forEach(node => {
-          const cleanedText = cleanText(node.text); // Truncate text to 50 characters
-          nodes.update({id: node.id, label: cleanedText, title: node.text, group: node.type});
+          // Use the last patch to set the label, if available
+          const lastPatch = node.patches && node.patches.length > 0 ? node.patches[node.patches.length - 1] : null;
+          const label = lastPatch ? formatDiffsForDisplay(lastPatch.diffs) : node.text;
+          nodes.update({id: node.id, label: label, title: node.text, group: node.type});
           if (node.parent !== null) {
             edges.update({from: node.parent, to: node.id});
           }
@@ -156,8 +158,18 @@
           updateLayoutDirection('LR'); // Left-Right
       });
 
-      // Event listener for node clicks to show full text in a modal
       network.on("click", function (params) {
+          if (params.nodes.length > 0) {
+              const nodeId = params.nodes[0];
+              const fullText = renderFullTextFromPatches(nodeId);
+
+              // Save the last clicked node ID to localStorage
+              localStorage.setItem('checkedOutNodeId', nodeId);
+          }
+      });
+
+      // Event listener for node clicks to show full text in a modal
+      network.on("doubleClick", function (params) {
           if (params.nodes.length > 0) {
               const nodeId = params.nodes[0];
               const fullText = renderFullTextFromPatches(nodeId);
@@ -176,10 +188,11 @@
         if (originalText !== newText) {
           // Text has changed, create a new node
           const newNodeId = Object.keys(data.nodes).length + 1;
+          console.log(originalText, newText)
           const patches = dmp.patch_make(originalText, newText);
           data.nodes[newNodeId] = {
             id: newNodeId,
-            text: newText,
+            text: dmp.patch_toText(patches),
             patches: patches,
             parent: parentId
           };
@@ -196,12 +209,11 @@
           // Get the current text from the modal
           const fullTextElement = document.getElementById('fullText');
           const newText = fullTextElement.value;
-          const nodeId = textModal.getAttribute('data-node-id');
-          const originalNode = data.nodes[nodeId];
-          const originalText = originalNode ? originalNode.text : '';
+          const nodeId = parseInt(textModal.getAttribute('data-node-id'));
+          const originalText = renderFullTextFromPatches(nodeId);
 
           // Create a new node if the text has changed
-          createNodeIfTextChanged(originalText, newText, parseInt(nodeId));
+          createNodeIfTextChanged(originalText, newText, nodeId);
 
           // Close the modal
           textModal.style.display = 'none';
@@ -218,6 +230,23 @@
               }
           }
       });
+      // Event listener for the '0' key to display the full JSON
+      window.addEventListener('keydown', function(event) {
+          if (event.key === 'j' || event.keyCode === 74) {
+              // Display the full JSON
+              console.log('Full JSON data:', JSON.stringify(data, null, 2));
+              event.preventDefault(); // Prevent the default action of the '0' key
+          }
+      });
+
+      // Function to format diffs for display
+      function formatDiffsForDisplay(diffs) {
+          const deletions = diffs.filter(diff => diff[0] === -1).map(diff => diff[1]).join(' ').trim();
+          const additions = diffs.filter(diff => diff[0] === 1).map(diff => diff[1]).join(' ').trim();
+          const delStr = deletions ? `-${deletions}` : '';
+          const addStr = additions ? `+${additions}` : '';
+          return `${delStr} ${addStr}`.trim();
+      }
 
       // Function to render the full text from patches
       function renderFullTextFromPatches(nodeId) {
@@ -241,6 +270,7 @@
                   const patches = node.patches;
                   const results = dmp.patch_apply(patches, fullText);
                   fullText = results[0]; // Update the full text with the applied patch
+                  console.log('Patched text:', fullText)
               }
           });
 
@@ -249,20 +279,19 @@
 
       // Event listener for the ENTER key to generate new output
       window.addEventListener('keydown', function(event) {
-          if (event.key === 'Enter' || event.keyCode === 13) {
+          if (event.key === 'r' || event.keyCode === 82) {
               const textModal = document.getElementById('textModal');
               // Check if the modal is open, if so, do not generate new output
               if (textModal.style.display === 'block') {
                   return; // Exit the function if the modal is open
               }
-              // Find the node with the largest number (highest ID)
-              const largestNodeId = Math.max(...Object.keys(data.nodes).map(Number));
-              const nodeToUse = data.nodes[largestNodeId];
-              if (nodeToUse) {
-                  // Generate new output based on the node with the largest number
-                  generateNewOutput(largestNodeId);
+              // Retrieve the last clicked node ID from localStorage
+              const checkedOutNodeId = localStorage.getItem('checkedOutNodeId');
+              if (checkedOutNodeId) {
+                  // Generate new output based on the checked-out node
+                  generateNewOutput(checkedOutNodeId);
               }
-              event.preventDefault(); // Prevent the default action of the ENTER key
+              event.preventDefault(); // Prevent the default action of the 'r' key
           }
       });
 
@@ -307,11 +336,12 @@
               console.error('Error during API call:', error);
           });
       }
+
       // Event listener for API key input to change background color
       document.getElementById('api-key-input').addEventListener('input', function(event) {
           const input = event.target;
-          if (input.value.trim() !== '') {
-              apiKey = input.value.trim();
+          apiKey = input.value.trim().replace(/^"|"$/g, '');
+          if (apiKey !== '') {
               // Save the API key to localStorage
               localStorage.setItem('apiKey', apiKey);
               input.style.backgroundColor = 'green';
