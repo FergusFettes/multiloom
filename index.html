@@ -65,17 +65,20 @@
     <div id="settingsModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
         <h2>Model Configuration</h2>
         <label for="max-tokens-input">Max Tokens:</label>
-        <input type="number" id="max-tokens-input" value="50"><br>
+        <input type="number" id="max-tokens-input" value="50" step="10"><br>
         <label for="temperature-input">Temperature:</label>
-        <input type="number" step="0.1" id="temperature-input" value="0.7"><br>
+        <input type="number" step="0.5" id="temperature-input" value="0.7"><br>
         <label for="top-p-input">Top P:</label>
-        <input type="number" step="0.1" id="top-p-input" value="0.7"><br>
+        <input type="number" step="0.5" id="top-p-input" value="0.7"><br>
         <label for="top-k-input">Top K:</label>
         <input type="number" id="top-k-input" value="50"><br>
         <label for="repetition-penalty-input">Repetition Penalty:</label>
         <input type="number" step="0.1" id="repetition-penalty-input" value="1"><br>
         <label for="stop-sequence-input">Stop Sequence:</label>
         <input type="text" id="stop-sequence-input" value="</s>"><br>
+        <label for="completions-input">Completions:</label>
+        <input type="number" id="completions-input" value="1">
+        <label for="completions-input">(per model!)</label><br>
         <button id="save-settings-btn">Save Settings</button>
     </div>
     <script type="text/javascript">
@@ -300,6 +303,14 @@
               // Display the full JSON
               console.log('Full JSON data:', JSON.stringify(data, null, 2));
               event.preventDefault(); // Prevent the default action of the '0' key
+          }
+      });
+
+      // Event listener for the 's' key to open settings
+      window.addEventListener('keydown', function(event) {
+          if (event.key === 's' || event.keyCode === 83) {
+              // Toggle the settings modal
+              document.getElementById('settingsModal').style.display = document.getElementById('settingsModal').style.display === 'block' ? 'none' : 'block';
           }
       });
 
