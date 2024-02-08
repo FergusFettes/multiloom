@@ -11,13 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch_uncompressed.js"></script>
     <!-- Load axios library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
-<style>
-#mynetwork {
-    width: 100%;
-    height: 100vh;
-}
-</style>
-    </style>
 </head>
 <body>
 <script>
@@ -49,7 +42,10 @@
         <button id="btn-settings">Settings</button>
         <button id="btn-download">Download</button>
     </div>
-    <div id="mynetwork"></div>
+    <div id="mynetwork" style="width: 100%; height: 100vh; float: left;"></div>
+    <div id="textEditor" style="position: absolute; display: none; width: 50%; height: 100vh; right: 0;">
+        <textarea id="fullText" style="width:100%; height:100%;"></textarea>
+    </div>
     <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0">
       Hello and welcome to tinyloom! This is a little loom in one file.<br>
       Click anywhere to create your first node. Right click to exit the editor.<br>
@@ -57,10 +53,6 @@
       <br>
       Double click on nodes to see and edit the full text.<br>
       Click on nodes to check them out for generation.<br>
-    </div>
-    <!-- Modal container for full text display -->
-    <div id="textModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
-        <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
     <!-- Settings modal for model configuration -->
     <div id="settingsModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
@@ -138,12 +130,28 @@
           const nodeColor = {
             border: getNodeBorderColor(node.type)
           };
-          nodes.update({id: node.id, label: label, title: node.text, color: nodeColor});
+          nodes.update({id: node.id, label: label, title: node.text, color: nodeColor, parent: node.parent});
           if (node.parent !== null) {
             edges.update({from: node.parent, to: node.id});
           }
         });
       }
+
+      <!-- // make example nodes as above -->
+      <!-- var newNodes = new vis.DataSet([ -->
+      <!--   {id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null}, -->
+      <!--   {id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1}, -->
+      <!--   {id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1} -->
+      <!-- ]); -->
+
+
+      <!-- updateVisualization(newNodes) -->
+      <!-- data.nodes[1] = { id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null }; -->
+      <!-- data.nodes[2] = { id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1 }; -->
+      <!-- data.nodes[3] = { id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1 }; -->
+
+
+      updateVisualization(Object.values(data.nodes));
 
       // Helper function to get the border color based on node type
       function getNodeBorderColor(nodeType) {
@@ -172,12 +180,6 @@
           }).length > 0;
       }
 
-      updateVisualization(Object.values(data.nodes));
-
-      // Convert the tree data to vis.js format
-      const nodesArray = Object.values(data.nodes);
-      updateVisualization(nodesArray);
-
       console.log("Processed nodes:", nodes);
       console.log("Processed edges:", edges);
 
@@ -200,10 +202,10 @@
           size: 20,
           color: {
             background: 'white',
-            border: 'black', // Default border color
+            border: 'grey', // Default border color
             highlight: {
               background: 'white',
-              border: 'red'
+              border: 'black'
             }
           },
           font: {
@@ -233,9 +235,8 @@
       // Event listener for the background text to open the modal on the first click
       document.getElementById('background-text').addEventListener('click', function () {
           if (!hasNonDataNodes()) {
-              // Open the modal for the first node creation
-              document.getElementById('textModal').style.display = 'block';
-              // Set default text in the modal's textarea if needed
+              document.getElementById('background-text').style.display = 'none';
+              document.getElementById('textEditor').style.display = 'block';
               document.getElementById('fullText').value = "(Right click to save and the editor!\nEscape to close without saving!)"
           }
       });
@@ -253,9 +254,21 @@
       }
 
       network.on("click", function (params) {
-          if (hasNonDataNodes() && params.nodes[0].group !== 'data') {
-              const nodeId = params.nodes[0];
-              const fullText = renderFullTextFromPatches(nodeId);
+          if (params.nodes.length > 0) {
+              // Check if the text editor is open
+              nodeId = params.nodes[0];
+              const textEditor = document.getElementById('textEditor');
+              if (textEditor.style.display === 'block') {
+                  const fullText = renderFullTextFromPatches(nodeId);
+
+                  // Update the full text in the editor
+                  const fullTextElement = document.getElementById('fullText');
+                  fullTextElement.value = fullText;
+                  fullTextElement.setAttribute('data-node-id', nodeId);
+
+                  // Also, make the text editor no longer the active element.
+                  fullTextElement.blur();
+              }
 
               // Save the last clicked node ID to localStorage
               localStorage.setItem('checkedOutNodeId', nodeId);
@@ -264,16 +277,16 @@
 
       // Event listener for node clicks to show full text in a modal
       network.on("doubleClick", function (params) {
-          if (hasNonDataNodes() && params.nodes[0].group !== 'data') {
+          if (params.nodes.length > 0) {
               const nodeId = params.nodes[0];
               const fullText = renderFullTextFromPatches(nodeId);
 
               // Display the full text in a modal
-              const textModal = document.getElementById('textModal');
               const fullTextElement = document.getElementById('fullText');
               fullTextElement.value = fullText;
-              textModal.setAttribute('data-node-id', nodeId);
-              textModal.style.display = 'block';
+              fullTextElement.setAttribute('data-node-id', nodeId);
+
+              document.getElementById('textEditor').style.display = 'block';
           }
       });
 
@@ -305,27 +318,27 @@
 
     // Modify the event listener for the modal to call createNodeIfTextChanged with human type
     window.addEventListener('contextmenu', function(event) {
-      const textModal = document.getElementById('textModal');
-      if (event.target === textModal || event.target === document.getElementById('fullText')) {
+      const textEditor = document.getElementById('textEditor');
+      const fullTextElement = document.getElementById('fullText');
+      if (event.target === textEditor || event.target === fullTextElement) {
         // Get the current text from the modal
-        const fullTextElement = document.getElementById('fullText');
         const newText = fullTextElement.value;
-        const nodeId = parseInt(textModal.getAttribute('data-node-id'));
+        const nodeId = parseInt(fullTextElement.getAttribute('data-node-id'));
         const originalText = renderFullTextFromPatches(nodeId);
 
         // Create a new node if the text has changed with type as 'human'
         createNodeIfTextChanged(originalText, newText, nodeId, 'human');
 
         // Close the modal
-        textModal.style.display = 'none';
+        textEditor.style.display = 'none';
         event.preventDefault(); // Prevent the default context menu from showing
       }
       });
 
       // Event listener for the Escape key to close the modal regardless of focus
       window.addEventListener('keydown', function(event) {
-          if ((event.key === 'Escape' || event.keyCode === 27) && document.getElementById('textModal').style.display === 'block') {
-              document.getElementById('textModal').style.display = 'none';
+          if ((event.key === 'Escape' || event.keyCode === 27) && document.getElementById('textEditor').style.display === 'block') {
+              document.getElementById('textEditor').style.display = 'none';
           }
       });
 
@@ -338,9 +351,13 @@
           }
       });
 
-      // Event listener for the 's' key to open settings
+      // Event listener for the 'p' key to open settings
       window.addEventListener('keydown', function(event) {
-          if (event.key === 's' || event.keyCode === 83) {
+          if (event.key === 'p' || event.keyCode === 80) {
+              // if the editor is open, do nothing
+              if (document.getElementById('textEditor').style.display === 'block') {
+                  return;
+              }
               // Toggle the settings modal
               document.getElementById('settingsModal').style.display = document.getElementById('settingsModal').style.display === 'block' ? 'none' : 'block';
           }
@@ -387,12 +404,12 @@
           return fullText;
       }
 
-      // Event listener for the ENTER key to generate new output
+      // Event listener for the r key to generate new output
       window.addEventListener('keydown', function(event) {
           if (event.key === 'r' || event.keyCode === 82) {
-              const textModal = document.getElementById('textModal');
-              // Check if the modal is open, if so, do not generate new output
-              if (textModal.style.display === 'block') {
+              const fullTextElement = document.getElementById('fullText');
+              // Check if the modal is open and focussed
+              if (document.activeElement === fullTextElement) {
                   return; // Exit the function if the modal is open
               }
               // Retrieve the last clicked node ID from localStorage
@@ -512,11 +529,80 @@
           document.getElementById('settingsModal').style.display = 'none';
           console.log('Model configuration updated:', modelConfig);
       });
+
       // Event listener for right-click on the settings modal to close it
       document.getElementById('settingsModal').addEventListener('contextmenu', function(event) {
           this.style.display = 'none';
           event.preventDefault(); // Prevent the default context menu
       });
+
+    // Function to find the parent node of the current node
+    function findParentNode(nodeId) {
+        const node = nodes.get(nodeId);
+        console.log('With parent:', node.parent);
+        return node && node.parent ? node.parent : null;
+    }
+
+    // Function to find the left and right sibling nodes of the current node
+    function findSiblingNodes(nodeId) {
+        const parentNodeId = findParentNode(nodeId);
+        if (parentNodeId) {
+            const siblings = nodes.get({
+                filter: function (n) {
+                    return parseInt(n.parent) === parseInt(parentNodeId);
+                }
+            });
+            const index = siblings.findIndex(sibling => parseInt(sibling.id) === parseInt(nodeId));
+            const leftSibling = index > 0 ? siblings[index - 1].id : null;
+            const rightSibling = index < siblings.length - 1 ? siblings[index + 1].id : null;
+            return { leftSibling, rightSibling };
+        }
+        return { leftSibling: null, rightSibling: null };
+    }
+
+    // Function to find the child node with the longest text from the currently selected node's children
+    function findLongestTextChildNode(parentNodeId) {
+        let longestNode = null;
+        let maxLength = 0;
+        nodes.forEach(function (node) {
+            if (parseInt(node.parent) === parseInt(parentNodeId)) {
+                const length = node.label.length;
+                if (length > maxLength) {
+                    longestNode = node.id;
+                    maxLength = length;
+                }
+            }
+        });
+        return longestNode;
+    }
+
+    // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
+    window.addEventListener('keydown', function(event) {
+        if (document.getElementById('textEditor').style.display === 'block') {
+            return; // Do not navigate if the text editor is open
+        }
+        const checkedOutNodeId = localStorage.getItem('checkedOutNodeId');
+        let targetNodeId = null;
+        switch (event.key) {
+            case 'w':
+                targetNodeId = findParentNode(checkedOutNodeId);
+                break;
+            case 'a':
+                targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
+                break;
+            case 'd':
+                targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
+                break;
+            case 's':
+                targetNodeId = findLongestTextChildNode(checkedOutNodeId);
+                break;
+        }
+        console.log('Target node ID:', targetNodeId);
+        if (targetNodeId !== null) {
+            network.focus(targetNodeId, { animation: false }); // Focus on the target node with animation
+            localStorage.setItem('checkedOutNodeId', targetNodeId); // Save the new checked-out node ID
+        }
+    });
 
     </script>
 </body>
