@@ -245,8 +245,23 @@
 
       network.on("click", function (params) {
           if (params.nodes.length > 0) {
+              // Check if the text editor is open
+              nodeId = params.nodes[0];
+              const textEditor = document.getElementById('textEditor');
+              if (textEditor.style.display === 'block') {
+                  const fullText = renderFullTextFromPatches(nodeId);
+
+                  // Update the full text in the editor
+                  const fullTextElement = document.getElementById('fullText');
+                  fullTextElement.value = fullText;
+                  fullTextElement.setAttribute('data-node-id', nodeId);
+
+                  // Also, make the text editor no longer the active element.
+                  fullTextElement.blur();
+              }
+
               // Save the last clicked node ID to localStorage
-              localStorage.setItem('checkedOutNodeId', params.nodes[0]);
+              localStorage.setItem('checkedOutNodeId', nodeId);
           }
       });
 
@@ -382,9 +397,9 @@
       // Event listener for the r key to generate new output
       window.addEventListener('keydown', function(event) {
           if (event.key === 'r' || event.keyCode === 82) {
-              const textEditor = document.getElementById('textEditor');
-              // Check if the modal is open, if so, do not generate new output
-              if (textEditor.style.display === 'block') {
+              const fullTextElement = document.getElementById('fullText');
+              // Check if the modal is open and focussed
+              if (document.activeElement === fullTextElement) {
                   return; // Exit the function if the modal is open
               }
               // Retrieve the last clicked node ID from localStorage
