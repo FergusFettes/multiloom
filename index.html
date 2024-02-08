@@ -43,7 +43,7 @@
         <button id="btn-download">Download</button>
     </div>
     <div id="mynetwork" style="width: 100%; height: 100vh; float: left;"></div>
-    <div id="textEditor" style="display:none; width: 50%; height: 100vh; float: right;">
+    <div id="textEditor" style="position: absolute; display: none; width: 50%; height: 100vh; right: 0;">
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
     <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0">
@@ -227,8 +227,6 @@
           if (!hasNonDataNodes()) {
               document.getElementById('background-text').style.display = 'none';
               document.getElementById('textEditor').style.display = 'block';
-              document.getElementById('mynetwork').style.width = '50%';
-              console.log("Set the editor to block and the network to 50%")
               document.getElementById('fullText').value = "(Right click to save and the editor!\nEscape to close without saving!)"
           }
       });
@@ -246,7 +244,7 @@
       }
 
       network.on("click", function (params) {
-          if (hasNonDataNodes() && params.nodes[0].group !== 'data') {
+          if (params.nodes.length > 0) {
               // Save the last clicked node ID to localStorage
               localStorage.setItem('checkedOutNodeId', params.nodes[0]);
           }
@@ -254,17 +252,16 @@
 
       // Event listener for node clicks to show full text in a modal
       network.on("doubleClick", function (params) {
-          if (hasNonDataNodes() && params.nodes[0].group !== 'data') {
+          if (params.nodes.length > 0) {
               const nodeId = params.nodes[0];
               const fullText = renderFullTextFromPatches(nodeId);
 
               // Display the full text in a modal
               const fullTextElement = document.getElementById('fullText');
               fullTextElement.value = fullText;
-              localStorage.setItem('checkedOutNodeId', nodeId);
+              fullTextElement.setAttribute('data-node-id', nodeId);
 
               document.getElementById('textEditor').style.display = 'block';
-              document.getElementById('mynetwork').style.width = '50%';
           }
       });
 
@@ -301,7 +298,7 @@
       if (event.target === textEditor || event.target === fullTextElement) {
         // Get the current text from the modal
         const newText = fullTextElement.value;
-        const nodeId = parseInt(textEditor.getAttribute('data-node-id'));
+        const nodeId = parseInt(fullTextElement.getAttribute('data-node-id'));
         const originalText = renderFullTextFromPatches(nodeId);
 
         // Create a new node if the text has changed with type as 'human'
@@ -309,7 +306,6 @@
 
         // Close the modal
         textEditor.style.display = 'none';
-        document.getElementById('mynetwork').style.width = '100%';
         event.preventDefault(); // Prevent the default context menu from showing
       }
       });
