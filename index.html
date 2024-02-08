@@ -311,6 +311,11 @@
               }
 
               updateVisualization([data.nodes[newNodeId]]);
+              // if type is human, select the new node
+              if (type === 'human') {
+                  network.selectNodes([newNodeId]);
+                  localStorage.setItem('checkedOutNodeId', newNodeId);
+              }
               // Hide the background text when the first node is created
               document.getElementById('background-text').style.display = 'none';
           }
@@ -599,7 +604,8 @@
         }
         console.log('Target node ID:', targetNodeId);
         if (targetNodeId !== null) {
-            network.focus(targetNodeId, { animation: false }); // Focus on the target node with animation
+            // instead of focusing on it, just make sure it is highlighted
+            network.selectNodes([targetNodeId]);
             localStorage.setItem('checkedOutNodeId', targetNodeId); // Save the new checked-out node ID
         }
     });
