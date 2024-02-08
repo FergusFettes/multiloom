@@ -81,7 +81,7 @@
       var edges = new vis.DataSet([]);
 
       // Initialize data object to store nodes and edges
-      var data = { nodes: {} };
+      var data = { nodes: {}, edges: {} };
 
       // Global variable to store the API key
       var apiKey = '';
@@ -144,12 +144,14 @@
       <!--   {id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1} -->
       <!-- ]); -->
 
-      updateVisualization(newNodes)
 
+      <!-- updateVisualization(newNodes) -->
       <!-- data.nodes[1] = { id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null }; -->
       <!-- data.nodes[2] = { id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1 }; -->
       <!-- data.nodes[3] = { id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1 }; -->
 
+
+      updateVisualization(Object.values(data.nodes));
 
       // Helper function to get the border color based on node type
       function getNodeBorderColor(nodeType) {
