@@ -81,7 +81,7 @@
       var edges = new vis.DataSet([]);
 
       // Initialize data object to store nodes and edges
-      var data = { nodes: {}, edges: {} };
+      var data = { nodes: {} };
 
       // Global variable to store the API key
       var apiKey = '';
@@ -140,10 +140,14 @@
       // make example nodes as above
       var newNodes = new vis.DataSet([
         {id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null},
-        {id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1}
+        {id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1},
+        {id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1}
       ]);
 
       updateVisualization(newNodes)
+      data.nodes[1] = { id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null };
+      data.nodes[2] = { id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1 };
+      data.nodes[3] = { id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1 };
 
 
       // Helper function to get the border color based on node type
@@ -172,12 +176,6 @@
               }
           }).length > 0;
       }
-
-      updateVisualization(Object.values(data.nodes));
-
-      // Convert the tree data to vis.js format
-      const nodesArray = Object.values(data.nodes);
-      updateVisualization(nodesArray);
 
       console.log("Processed nodes:", nodes);
       console.log("Processed edges:", edges);
@@ -537,7 +535,7 @@
 
     // Function to find the parent node of the current node
     function findParentNode(nodeId) {
-        const node = data.nodes[nodeId];
+        const node = nodes.get(nodeId);
         console.log('With parent:', node.parent);
         return node && node.parent ? node.parent : null;
     }
@@ -546,15 +544,12 @@
     function findSiblingNodes(nodeId) {
         const parentNodeId = findParentNode(nodeId);
         if (parentNodeId) {
-            console.log('Searching for siblings of node:', nodeId);
-            console.log('With parent:', parentNodeId);
             const siblings = nodes.get({
                 filter: function (n) {
-                    return n.parent === parentNodeId;
+                    return parseInt(n.parent) === parseInt(parentNodeId);
                 }
             });
-            console.log('Siblings:', siblings);
-            const index = siblings.findIndex(sibling => sibling.id === nodeId);
+            const index = siblings.findIndex(sibling => parseInt(sibling.id) === parseInt(nodeId));
             const leftSibling = index > 0 ? siblings[index - 1].id : null;
             const rightSibling = index < siblings.length - 1 ? siblings[index + 1].id : null;
             return { leftSibling, rightSibling };
@@ -567,7 +562,7 @@
         let longestNode = null;
         let maxLength = 0;
         nodes.forEach(function (node) {
-            if (node.parent === parentNodeId) {
+            if (parseInt(node.parent) === parseInt(parentNodeId)) {
                 const length = node.label.length;
                 if (length > maxLength) {
                     longestNode = node.id;
@@ -584,7 +579,6 @@
             return; // Do not navigate if the text editor is open
         }
         const checkedOutNodeId = localStorage.getItem('checkedOutNodeId');
-        console.log('Checked out node ID:', checkedOutNodeId);
         let targetNodeId = null;
         switch (event.key) {
             case 'w':
@@ -602,7 +596,7 @@
         }
         console.log('Target node ID:', targetNodeId);
         if (targetNodeId !== null) {
-            network.focus(targetNodeId, { animation: true }); // Focus on the target node with animation
+            network.focus(targetNodeId, { animation: false }); // Focus on the target node with animation
             localStorage.setItem('checkedOutNodeId', targetNodeId); // Save the new checked-out node ID
         }
     });
