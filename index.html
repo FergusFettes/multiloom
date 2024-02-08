@@ -137,17 +137,18 @@
         });
       }
 
-      // make example nodes as above
-      var newNodes = new vis.DataSet([
-        {id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null},
-        {id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1},
-        {id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1}
-      ]);
+      <!-- // make example nodes as above -->
+      <!-- var newNodes = new vis.DataSet([ -->
+      <!--   {id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null}, -->
+      <!--   {id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1}, -->
+      <!--   {id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1} -->
+      <!-- ]); -->
 
       updateVisualization(newNodes)
-      data.nodes[1] = { id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null };
-      data.nodes[2] = { id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1 };
-      data.nodes[3] = { id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1 };
+
+      <!-- data.nodes[1] = { id: 1, text: 'Root Node', patches: dmp.patch_make('', 'Root Node'), parent: null }; -->
+      <!-- data.nodes[2] = { id: 2, text: 'Root Node with Child', patches: dmp.patch_make('Root Node', 'Root Node with Child'), parent: 1 }; -->
+      <!-- data.nodes[3] = { id: 3, text: 'Root Node with Siblings', patches: dmp.patch_make('Root Node', 'Root Node with Siblings'), parent: 1 }; -->
 
 
       // Helper function to get the border color based on node type
