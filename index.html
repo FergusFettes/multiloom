@@ -137,21 +137,6 @@
         });
       }
 
-      // Function to create a data node with random text
-      function createDataNode() {
-          const dataNodeId = 'data_' + (new Date()).getTime(); // Unique ID based on timestamp
-          const randomText = 'Random Data: ' + Math.random().toString(36).substring(2, 15); // Generate random text
-          nodes.add({
-              id: dataNodeId,
-              label: randomText,
-              title: randomText,
-              group: 'data'
-          });
-      }
-
-      // Call the function to add an example data node to the network
-      createDataNode();
-
       // Helper function to check if there are any non-data nodes in the network
       function hasNonDataNodes() {
           return nodes.get({
