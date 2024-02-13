@@ -16,6 +16,16 @@
 <script>
   // On page load, retrieve the API key from localStorage
   document.addEventListener('DOMContentLoaded', function() {
+      // Load data from localStorage on page load
+      var savedData = localStorage.getItem('data');
+      if (savedData) {
+          data = JSON.parse(savedData);
+          updateVisualization(Object.values(data.nodes));
+      }
+          // Hide the background text if there are nodes
+          if (Object.keys(data.nodes).length > 0) {
+              document.getElementById('background-text').style.display = 'none';
+          }
       const savedApiKey = localStorage.getItem('apiKey');
       if (savedApiKey) {
           const apiKeyInput = document.getElementById('api-key-input');
@@ -41,6 +51,7 @@
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
         <button id="btn-settings">Settings</button>
         <button id="btn-download">Download</button>
+        <button id="clear-data-btn">Clear Data</button>
     </div>
     <div id="mynetwork" style="width: 100%; height: 100vh; float: left;"></div>
     <div id="textEditor" style="position: absolute; display: none; width: 50%; height: 100vh; right: 0;">
@@ -340,6 +351,8 @@
               }
 
               updateVisualization([data.nodes[newNodeId]]);
+              // Save data to localStorage
+              localStorage.setItem('data', JSON.stringify(data));
               // if type is human, select the new node
               if (type === 'human') {
                   network.selectNodes([newNodeId]);
@@ -541,6 +554,17 @@
               console.log('Selected models:', selectedModels);
           });
       });
+        // Function to clear data from localStorage and reset visualization
+        function clearData() {
+            localStorage.removeItem('data');
+            data = { nodes: {}, edges: {} }; // Reset data object
+            nodes.clear(); // Clear nodes from DataSet
+            edges.clear(); // Clear edges from DataSet
+            document.getElementById('background-text').style.display = 'flex'; // Show background text
+        }
+
+        // Event listener for the 'Clear Data' button
+        document.getElementById('clear-data-btn').addEventListener('click', clearData);
 
       // Event listener for the settings button to toggle the settings modal
       document.getElementById('btn-settings').addEventListener('click', function() {
