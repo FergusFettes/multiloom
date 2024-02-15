@@ -74,9 +74,9 @@
         <label for="max-tokens-input">Max Tokens:</label>
         <input type="number" id="max-tokens-input" value="50" step="10"><br>
         <label for="temperature-input">Temperature:</label>
-        <input type="number" step="0.5" id="temperature-input" value="0.7"><br>
+        <input type="number" step="0.1" id="temperature-input" value="0.7"><br>
         <label for="top-p-input">Top P:</label>
-        <input type="number" step="0.5" id="top-p-input" value="0.7"><br>
+        <input type="number" step="0.1" id="top-p-input" value="0.7"><br>
         <label for="top-k-input">Top K:</label>
         <input type="number" id="top-k-input" value="50"><br>
         <label for="repetition-penalty-input">Repetition Penalty:</label>
@@ -391,15 +391,6 @@
       window.addEventListener('keydown', function(event) {
           if ((event.key === 'Escape' || event.keyCode === 27) && document.getElementById('textEditor').style.display === 'block') {
               document.getElementById('textEditor').style.display = 'none';
-          }
-      });
-
-      // Event listener for the 'j' key to display the full JSON
-      window.addEventListener('keydown', function(event) {
-          if (event.key === 'j' || event.keyCode === 74) {
-              // Display the full JSON
-              console.log('Full JSON data:', JSON.stringify(data, null, 2));
-              event.preventDefault(); // Prevent the default action of the '0' key
           }
       });
 
