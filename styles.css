@@ -1,0 +1,67 @@
+    /* <div id="mynetwork" style="width: 100%; height: 100vh; float: left;"></div> */
+#mynetwork {
+    width: 100%;
+    height: 100vh;
+    border: 1px solid lightgray;
+    float: left;
+} 
+
+    /* <div id="textEditor" style="position: absolute; display: none; width: 50%; height: 100vh; right: 0;"> */
+#textEditor {
+    position: absolute;
+    display: none;
+    width: 50%;
+    height: 100vh;
+    right: 0;
+}
+
+/* <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0"> */
+#background-text {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+
+    /* <div id="settingsModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;"> */
+#settingsModal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 10%;
+    top: 10%;
+    width: 80%;
+    height: 80%;
+    background-color: white;
+    border: 1px solid #ccc;
+    overflow: auto;
+}
+
+#nodeContextMenu {
+    background-color: white; /* Ensure there is a background */
+    color: black; /* Text color */
+    border: 1px solid #ccc; /* Border to make it stand out */
+    padding: 10px; /* Some padding around the content */
+    z-index: 1000; /* High z-index to ensure it's above other elements */
+    position: absolute; /* Position it absolutely */
+    display: none; /* Hide it by default */
+}
+
+#nodeContextMenu ul {
+    list-style: none; /* Remove default list styling */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+}
+
+#nodeContextMenu li {
+    padding: 5px 10px; /* Add some padding to each list item */
+    cursor: pointer; /* Change cursor to pointer to indicate clickable items */
+}
+
+#nodeContextMenu li:hover {
+    background-color: #f0f0f0; /* Add a hover effect for list items */
+}
