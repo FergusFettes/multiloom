@@ -26,6 +26,7 @@ echo "<script>" >> index.html
 
 cat data.js >> index.html
 cat main.js >> index.html
+cat utils.js >> index.html
 cat api.js >> index.html
 cat eventListeners.js >> index.html
 

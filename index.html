@@ -160,19 +160,6 @@ var edges = new vis.DataSet([]);
 // Global variable to track if model colors are enabled
 var useModelColors = true;
 
-function cleanText(text) {
-  // Remove everything up to and including the second plus sign in the text
-  var plusIndex = text.indexOf("+");
-  if (plusIndex >= 0) {
-    text = text.substring(plusIndex + 1);
-  }
-  plusIndex = text.indexOf("+");
-  if (plusIndex >= 0) {
-    text = text.substring(plusIndex + 1);
-  }
-  return text;
-}
-
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
   newNodes.forEach((node) => {
