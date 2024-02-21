@@ -27,14 +27,14 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Initialize data object to store nodes and edges
-var data = { nodes: {}, edges: {} };
+var data = { nodes: {} };
 
 // Function to clear data from localStorage and reset visualization
 function clearData() {
   localStorage.removeItem("data");
-  data = { nodes: {}, edges: {} }; // Reset data object
-  nodes.clear(); // Clear nodes from DataSet
-  edges.clear(); // Clear edges from DataSet
+data = { nodes: {} }; // Reset data object
+edges.clear(); // Clear edges from DataSet
+nodes.clear(); // Clear nodes from DataSet
   document.getElementById("background-text").style.display = "flex"; // Show background text
 }
 
@@ -63,8 +63,7 @@ function importJSON() {
 function downloadHTML() {
   var htmlContent = document.documentElement.outerHTML;
   htmlContent = htmlContent.replace(
-    "var data = { nodes: {}, edges: {} };",
-    "var data = " + JSON.stringify(data) + ";",
+"var data = " + JSON.stringify(data.nodes) + ";",
   );
 
   var blob = new Blob([htmlContent], { type: "text/html" });

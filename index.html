@@ -11,6 +11,75 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch_uncompressed.js"></script>
 <!-- Load axios library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
+<style>
+    /* <div id="mynetwork" style="width: 100%; height: 100vh; float: left;"></div> */
+#mynetwork {
+    width: 100%;
+    height: 100vh;
+    border: 1px solid lightgray;
+    float: left;
+} 
+
+    /* <div id="textEditor" style="position: absolute; display: none; width: 50%; height: 100vh; right: 0;"> */
+#textEditor {
+    position: absolute;
+    display: none;
+    width: 50%;
+    height: 100vh;
+    right: 0;
+}
+/* <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0"> */
+#background-text {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+
+    /* <div id="settingsModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;"> */
+#settingsModal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 10%;
+    top: 10%;
+    width: 80%;
+    height: 80%;
+    background-color: white;
+    border: 1px solid #ccc;
+    overflow: auto;
+}
+
+#nodeContextMenu {
+    background-color: white; /* Ensure there is a background */
+    color: black; /* Text color */
+    border: 1px solid #ccc; /* Border to make it stand out */
+    padding: 10px; /* Some padding around the content */
+    z-index: 1000; /* High z-index to ensure it's above other elements */
+    position: absolute; /* Position it absolutely */
+    display: none; /* Hide it by default */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); /* Add a shadow for better visibility */
+}
+
+#nodeContextMenu ul {
+    list-style: none; /* Remove default list styling */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+}
+
+#nodeContextMenu li {
+    padding: 5px 10px; /* Add some padding to each list item */
+    cursor: pointer; /* Change cursor to pointer to indicate clickable items */
+}
+
+#nodeContextMenu li:hover {
+    background-color: #f0f0f0; /* Add a hover effect for list items */
+}
+</style>
 </head>
 <body>
 <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
@@ -29,17 +98,24 @@
     <!-- Additional models can be added here -->
 </div>
 </select>
+<div id="nodeContextMenu" class="context-menu">
+    <ul>
+        <li id="hideNode">Hide</li>
+        <li id="unhideNode">Unhide</li>
+        <li id="bookmarkNode">Bookmark</li>
+    </ul>
+</div>
 </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
         <button id="btn-settings">Settings</button>
         <button id="btn-download">Download</button>
         <button id="clear-data-btn">Clear Data</button>
     </div>
-    <div id="mynetwork" style="width: 100%; height: 100vh; float: left;"></div>
-    <div id="textEditor" style="position: absolute; display: none; width: 50%; height: 100vh; right: 0;">
+    <div id="mynetwork"></div>
+    <div id="textEditor">
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
-    <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0">
+    <div id="background-text">
       Hello and welcome to tinyloom! This is a little loom in one file.<br>
       Click anywhere to create your first node. Right click to exit the editor.<br>
       Add your together.ai api key, and press 'r' to generate! Happy looming!<br>
@@ -48,7 +124,7 @@
       Click on nodes to check them out for generation.<br>
     </div>
     <!-- Settings modal for model configuration -->
-    <div id="settingsModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
+    <div id="settingsModal">
         <div style="display: flex; justify-content: space-between; height: 50%;">
             <div style="width: 50%; padding-right: 10px;">
                 <h3>Settings</h3>
@@ -112,14 +188,14 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Initialize data object to store nodes and edges
-var data = { nodes: {}, edges: {} };
+var data = { nodes: {} };
 
 // Function to clear data from localStorage and reset visualization
 function clearData() {
   localStorage.removeItem("data");
-  data = { nodes: {}, edges: {} }; // Reset data object
-  nodes.clear(); // Clear nodes from DataSet
-  edges.clear(); // Clear edges from DataSet
+data = { nodes: {} }; // Reset data object
+edges.clear(); // Clear edges from DataSet
+nodes.clear(); // Clear nodes from DataSet
   document.getElementById("background-text").style.display = "flex"; // Show background text
 }
 
@@ -148,8 +224,7 @@ function importJSON() {
 function downloadHTML() {
   var htmlContent = document.documentElement.outerHTML;
   htmlContent = htmlContent.replace(
-    "var data = { nodes: {}, edges: {} };",
-    "var data = " + JSON.stringify(data) + ";",
+"var data = " + JSON.stringify(data.nodes) + ";",
   );
 
   var blob = new Blob([htmlContent], { type: "text/html" });
@@ -188,6 +263,7 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
+      title: '<div class="info-box">Node Info</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -229,8 +305,11 @@ function hasNonDataNodes() {
   );
 }
 
+// Get the context menu element
+var contextMenu = document.getElementById('nodeContextMenu');
 // Create a network
 const container = document.getElementById("mynetwork");
+
 const visData = {
   nodes: nodes,
   edges: edges,
@@ -271,6 +350,47 @@ const options = {
 };
 const network = new vis.Network(container, visData, options);
 
+// Attach context menu to the network
+network.on('oncontext', function (params) {
+    // Prevent default context menu from appearing
+    params.event.preventDefault();
+    // Position the custom context menu at the pointer location
+    contextMenu.style.top = params.pointer.DOM.y + 'px';
+    contextMenu.style.left = params.pointer.DOM.x + 'px';
+    // Display the custom context menu
+    contextMenu.style.display = 'block';
+});
+
+// Hide the context menu when clicking elsewhere
+// Hide the context menu when clicking elsewhere on the page
+network.on('click', function () {
+    if (contextMenu.style.display === 'block') {
+        contextMenu.style.display = 'none';
+    }
+});
+
+// Event listeners for context menu actions
+document.getElementById('hideNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  if (selectedNodes.length > 0) {
+    toggleVisibility(selectedNodes[0]);
+  }
+  contextMenu.style.display = 'none';
+});
+
+document.getElementById('unhideNode').addEventListener('click', function () {
+  // Implement unhide node logic here
+  contextMenu.style.display = 'none';
+});
+
+document.getElementById('bookmarkNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  if (selectedNodes.length > 0) {
+    toggleBookmark(selectedNodes[0]);
+  }
+  contextMenu.style.display = 'none';
+});
+
 // Check if nodes are empty and display background text
 if (!hasNonDataNodes()) {
   document.getElementById("background-text").style.display = "flex";
@@ -291,6 +411,25 @@ function updateLayoutDirection(direction) {
 }
 
 // Function to create a new node if the text has changed or if it's the first node
+// Function to toggle the bookmark state of a node
+function toggleBookmark(nodeId) {
+  const node = data.nodes[nodeId];
+  node.bookmarked = !node.bookmarked;
+  updateVisualization([node]);
+  localStorage.setItem("data", JSON.stringify(data));
+}
+
+// Function to toggle the visibility of a node
+function toggleVisibility(nodeId) {
+  const node = data.nodes[nodeId];
+  node.hidden = !node.hidden;
+  if (node.hidden) {
+    nodes.remove({ id: nodeId });
+  } else {
+    nodes.add(node);
+  }
+  localStorage.setItem("data", JSON.stringify(data));
+}
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
@@ -304,6 +443,8 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
       patches: patches,
       parent: parentId,
       type: type, // Store the type of the node
+      bookmarked: false,
+      hidden: false,
     };
 
     // if the parentId was nan, then the new node is the root and we must set the checked out node

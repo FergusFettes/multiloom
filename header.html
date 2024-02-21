@@ -14,17 +14,24 @@
     <!-- Additional models can be added here -->
 </div>
 </select>
+<div id="nodeContextMenu" class="context-menu">
+    <ul>
+        <li id="hideNode">Hide</li>
+        <li id="unhideNode">Unhide</li>
+        <li id="bookmarkNode">Bookmark</li>
+    </ul>
+</div>
 </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
         <button id="btn-settings">Settings</button>
         <button id="btn-download">Download</button>
         <button id="clear-data-btn">Clear Data</button>
     </div>
-    <div id="mynetwork" style="width: 100%; height: 100vh; float: left;"></div>
-    <div id="textEditor" style="position: absolute; display: none; width: 50%; height: 100vh; right: 0;">
+    <div id="mynetwork"></div>
+    <div id="textEditor">
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
-    <div id="background-text" style="display:none; align-items:center; justify-content:center; height:100vh; position: absolute; width: 100%; top: 0; left: 0">
+    <div id="background-text">
       Hello and welcome to tinyloom! This is a little loom in one file.<br>
       Click anywhere to create your first node. Right click to exit the editor.<br>
       Add your together.ai api key, and press 'r' to generate! Happy looming!<br>
@@ -33,7 +40,7 @@
       Click on nodes to check them out for generation.<br>
     </div>
     <!-- Settings modal for model configuration -->
-    <div id="settingsModal" style="display:none; position:fixed; z-index:10; left:10%; top:10%; width:80%; height:80%; background-color:white; border:1px solid #ccc; overflow:auto;">
+    <div id="settingsModal">
         <div style="display: flex; justify-content: space-between; height: 50%;">
             <div style="width: 50%; padding-right: 10px;">
                 <h3>Settings</h3>

@@ -24,6 +24,7 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
+      title: '<div class="info-box">Node Info</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -65,8 +66,11 @@ function hasNonDataNodes() {
   );
 }
 
+// Get the context menu element
+var contextMenu = document.getElementById('nodeContextMenu');
 // Create a network
 const container = document.getElementById("mynetwork");
+
 const visData = {
   nodes: nodes,
   edges: edges,
@@ -107,6 +111,47 @@ const options = {
 };
 const network = new vis.Network(container, visData, options);
 
+// Attach context menu to the network
+network.on('oncontext', function (params) {
+    // Prevent default context menu from appearing
+    params.event.preventDefault();
+    // Position the custom context menu at the pointer location
+    contextMenu.style.top = params.pointer.DOM.y + 'px';
+    contextMenu.style.left = params.pointer.DOM.x + 'px';
+    // Display the custom context menu
+    contextMenu.style.display = 'block';
+});
+
+// Hide the context menu when clicking elsewhere
+// Hide the context menu when clicking elsewhere on the page
+network.on('click', function () {
+    if (contextMenu.style.display === 'block') {
+        contextMenu.style.display = 'none';
+    }
+});
+
+// Event listeners for context menu actions
+document.getElementById('hideNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  if (selectedNodes.length > 0) {
+    toggleVisibility(selectedNodes[0]);
+  }
+  contextMenu.style.display = 'none';
+});
+
+document.getElementById('unhideNode').addEventListener('click', function () {
+  // Implement unhide node logic here
+  contextMenu.style.display = 'none';
+});
+
+document.getElementById('bookmarkNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  if (selectedNodes.length > 0) {
+    toggleBookmark(selectedNodes[0]);
+  }
+  contextMenu.style.display = 'none';
+});
+
 // Check if nodes are empty and display background text
 if (!hasNonDataNodes()) {
   document.getElementById("background-text").style.display = "flex";
@@ -127,6 +172,25 @@ function updateLayoutDirection(direction) {
 }
 
 // Function to create a new node if the text has changed or if it's the first node
+// Function to toggle the bookmark state of a node
+function toggleBookmark(nodeId) {
+  const node = data.nodes[nodeId];
+  node.bookmarked = !node.bookmarked;
+  updateVisualization([node]);
+  localStorage.setItem("data", JSON.stringify(data));
+}
+
+// Function to toggle the visibility of a node
+function toggleVisibility(nodeId) {
+  const node = data.nodes[nodeId];
+  node.hidden = !node.hidden;
+  if (node.hidden) {
+    nodes.remove({ id: nodeId });
+  } else {
+    nodes.add(node);
+  }
+  localStorage.setItem("data", JSON.stringify(data));
+}
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
@@ -140,6 +204,8 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
       patches: patches,
       parent: parentId,
       type: type, // Store the type of the node
+      bookmarked: false,
+      hidden: false,
     };
 
     // if the parentId was nan, then the new node is the root and we must set the checked out node
