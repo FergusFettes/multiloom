@@ -1,58 +1,10 @@
-// On page load, retrieve the API key from localStorage
-document.addEventListener("DOMContentLoaded", function () {
-  // Load data from localStorage on page load
-  var savedData = localStorage.getItem("data");
-  if (savedData) {
-    data = JSON.parse(savedData);
-    updateVisualization(Object.values(data.nodes));
-  }
-  // Hide the background text if there are nodes
-  if (Object.keys(data.nodes).length > 0) {
-    document.getElementById("background-text").style.display = "none";
-  }
-  const savedApiKey = localStorage.getItem("apiKey");
-  if (savedApiKey) {
-    const apiKeyInput = document.getElementById("api-key-input");
-    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
-    apiKey = apiKeyInput.value;
-    apiKeyInput.style.backgroundColor = "green";
-  }
-});
-
 var dmp = new diff_match_patch();
 
 var nodes = new vis.DataSet([]);
 var edges = new vis.DataSet([]);
 
-// Initialize data object to store nodes and edges
-var data = { nodes: {}, edges: {} };
-
-// Global variable to store the API key
-var apiKey = "";
-// Model configuration
 // Global variable to track if model colors are enabled
 var useModelColors = true;
-var modelConfig = {
-  model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  max_tokens: 50,
-  request_type: "language-model-inference",
-  temperature: 0.7,
-  top_p: 0.7,
-  top_k: 50,
-  repetition_penalty: 1,
-  stream_tokens: false,
-  stop: ["</s>"],
-  n: 1,
-};
-
-// List of model aliases
-var modelAliases = {
-  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  mixtral: "mistralai/Mixtral-8x7B-v0.1",
-  llama2: "togethercomputer/llama-2-70b",
-  mistral: "mistralai/Mistral-7B-v0.1",
-};
 
 function cleanText(text) {
   // Remove everything up to and including the second plus sign in the text
@@ -398,72 +350,6 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-// Function to generate new output based on the given text and parent ID
-function generateNewOutput(parentId) {
-  const fullText = renderFullTextFromPatches(parentId);
-  // Collect all selected models
-  const selectedModels = Array.from(
-    document.querySelectorAll(".model-checkbox:checked"),
-  ).map((checkbox) => checkbox.value);
-  // Determine the number of generations to perform
-  const generations = modelConfig.n || 1;
-  // Call the function to make an API call for text generation for each selected model
-  selectedModels.forEach((modelAlias) => {
-    for (let i = 0; i < generations; i++) {
-      generateText(fullText, parentId, modelAlias);
-    }
-  });
-}
-
-// Function to make an API call for text generation
-function generateText(fullText, parentId, type) {
-  const config = Object.assign({}, modelConfig); // Clone the modelConfig object
-  config.prompt = fullText;
-  // type is the model alias. set the name
-  config.model = modelAliases[type];
-  // Remove the 'n' parameter as it's not supported by the axios call
-  delete config.n;
-  axios({
-    method: "post",
-    url: "https://api.together.xyz/v1/completions",
-    data: config,
-    headers: {
-      Authorization: "Bearer " + apiKey,
-    },
-    responseType: "text",
-  })
-    .then((response) => {
-      // Remove the "data:" prefix if it exists and parse the JSON
-      const responseData = response.data.replace(/^data: /, "");
-      const jsonResponse = JSON.parse(responseData);
-      const newText = " " + jsonResponse.choices[0].text;
-
-      // Create a new node with the generated text and the model type
-      createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
-    })
-    .catch((error) => {
-      console.error("Error during API call:", error);
-    });
-}
-
-function downloadHTML() {
-  var htmlContent = document.documentElement.outerHTML;
-  htmlContent = htmlContent.replace(
-    "var data = { nodes: {}, edges: {} };",
-    "var data = " + JSON.stringify(data) + ";",
-  );
-
-  var blob = new Blob([htmlContent], { type: "text/html" });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = "index.html";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 // Event listener for the "Download" button
 document.getElementById("btn-download").addEventListener("click", downloadHTML);
 
@@ -481,24 +367,6 @@ document
       input.style.backgroundColor = "pink";
     }
   });
-
-// Event listener for model checkboxes to change model configuration
-document.querySelectorAll(".model-checkbox").forEach((checkbox) => {
-  checkbox.addEventListener("change", function (event) {
-    const selectedModels = Array.from(
-      document.querySelectorAll(".model-checkbox:checked"),
-    ).map((checkbox) => checkbox.value);
-    console.log("Selected models:", selectedModels);
-  });
-});
-// Function to clear data from localStorage and reset visualization
-function clearData() {
-  localStorage.removeItem("data");
-  data = { nodes: {}, edges: {} }; // Reset data object
-  nodes.clear(); // Clear nodes from DataSet
-  edges.clear(); // Clear edges from DataSet
-  document.getElementById("background-text").style.display = "flex"; // Show background text
-}
 
 // Event listener for the 'Clear Data' button
 document.getElementById("clear-data-btn").addEventListener("click", clearData);
@@ -541,26 +409,6 @@ document
     );
     // Function to export JSON data to the textarea
   });
-
-function exportJSON() {
-  console.log(data);
-  const jsonData = JSON.stringify(data, null, 2);
-  document.getElementById("json-data-textarea").value = jsonData;
-}
-// Function to import JSON data from the textarea
-function importJSON() {
-  const jsonData = document.getElementById("json-data-textarea").value;
-  try {
-    const parsedData = JSON.parse(jsonData);
-    document.getElementById("background-text").style.display = "none";
-    // Update the data object and visualization with the new data
-    data = parsedData;
-    updateVisualization(Object.values(data.nodes));
-  } catch (error) {
-    console.error("Error parsing JSON:", error);
-    alert("Invalid JSON data.");
-  }
-}
 
 // Event listener for the export JSON button
 document
