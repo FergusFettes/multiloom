@@ -11,10 +11,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch_uncompressed.js"></script>
 <!-- Load axios library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
+<style>
+/* Custom info box styles */
+.node-info-box {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 4px;
+    display: none; /* Initially hidden */
+    z-index: 10;
+}
+.node-info-box.visible {
+    display: block;
+}</style>
 </head>
 <body>
 <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
-<input type="password" id="api-key-input" placeholder="Enter API Key" style="background-color: pink;">
+<input type="password" id="together-api-key-input" placeholder="Enter Together API Key" style="background-color: pink;"><br>
+<input type="password" id="openai-api-key-input" placeholder="Enter Openai API Key" style="background-color: pink;">
 <div id="model-checkboxes" style="margin-left: 10px;">
     <label><input type="checkbox" class="model-checkbox" value="mistral" checked style="accent-color: red;"> Mistral</label><br>
     <label><input type="checkbox" class="model-checkbox" value="mistral-instruct" checked style="accent-color: blue;"> Mistral Instruct</label><br>
@@ -22,6 +39,8 @@
     <label><input type="checkbox" class="model-checkbox" value="mixtral-instruct" checked style="accent-color: green;"> Mixtral Instruct</label><br>
     <label><input type="checkbox" class="model-checkbox" value="llama2" checked style="accent-color: purple;"> LLaMA2</label><br>
     <label><input type="checkbox" class="model-checkbox" value="minihf" style="accent-color: yellow;"> MiniHF</label><br>
+    <label><input type="checkbox" class="model-checkbox" value="gpt3t" checked style="accent-color: #afd7af;"> Gpt4</label><br>
+    <label><input type="checkbox" class="model-checkbox" value="gpt4t" checked style="accent-color: #d7afff;"> Gpt3</label><br>
     <a href="https://docs.together.ai/docs/inference-models" target="_blank" title="Any of the models at the link available on request." style="font-size: smaller;">More?</a><br>
     <!-- Additional models can be added here -->
 </div>
@@ -92,11 +111,18 @@ document.addEventListener("DOMContentLoaded", function () {
   if (Object.keys(data.nodes).length > 0) {
     document.getElementById("background-text").style.display = "none";
   }
-  const savedApiKey = localStorage.getItem("apiKey");
+  var savedApiKey = localStorage.getItem("togetherApiKey");
   if (savedApiKey) {
-    const apiKeyInput = document.getElementById("api-key-input");
+    const apiKeyInput = document.getElementById("together-api-key-input");
     apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
-    apiKey = apiKeyInput.value;
+    togetherApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
+  savedApiKey = localStorage.getItem("openaiApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("openai-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    openaiApiKey = apiKeyInput.value;
     apiKeyInput.style.backgroundColor = "green";
   }
 });
@@ -219,9 +245,6 @@ function hasNonDataNodes() {
   );
 }
 
-console.log("Processed nodes:", nodes);
-console.log("Processed edges:", edges);
-
 // Create a network
 const container = document.getElementById("mynetwork");
 const visData = {
@@ -318,6 +341,9 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
   }
 }
 
+// Close the settings modal
+document.getElementById("settingsModal").style.display = "none";
+console.log("Model configuration updated:", modelConfig);
 // Function to format diffs for display
 function formatDiffsForDisplay(diffs) {
   const deletions = diffs
@@ -362,10 +388,6 @@ function renderFullTextFromPatches(nodeId) {
 
   return fullText;
 }
-
-// Close the settings modal
-document.getElementById("settingsModal").style.display = "none";
-console.log("Model configuration updated:", modelConfig);
 
 // Function to find the parent node of the current node
 function findParentNode(nodeId) {
@@ -433,6 +455,8 @@ var modelAliases = {
   mixtral: "mistralai/Mixtral-8x7B-v0.1",
   llama2: "togethercomputer/llama-2-70b",
   mistral: "mistralai/Mistral-7B-v0.1",
+  gpt3t: "gpt-3.5-turbo",
+  gpt4t: "gpt-4-turbo-preview",
 };
 
 // Function to generate new output based on the given text and parent ID
@@ -452,28 +476,78 @@ function generateNewOutput(parentId) {
   });
 }
 
+const prePrompt = `Return to completion mode. Complete the given sentence as best you can, with no commentary.
+Return only the completion. If the prompt requires creativity, be creative.
+DO NOT SAY 'here are some possible completions'. Just return the completion.
+
+Examples:
+Prompt:
+The quick brown fox
+Completion: jumps over the lazy dog.
+Prompt:
+The capital of France is
+Completion: Paris.
+
+Prompt:
+`;
+
+
 // Function to make an API call for text generation
 function generateText(fullText, parentId, type) {
-  const config = Object.assign({}, modelConfig); // Clone the modelConfig object
+  var config = Object.assign({}, modelConfig); // Clone the modelConfig object
   config.prompt = fullText;
   // type is the model alias. set the name
   config.model = modelAliases[type];
+
+  let apiUrl = "https://api.together.xyz/v1/completions";
+  let headers = {
+    Authorization: "Bearer " + togetherApiKey,
+  };
+
+  // Check if the model alias is for OpenAI and set the appropriate API URL and headers
+  if (type.startsWith('gpt')) {
+    apiUrl = "https://api.openai.com/v1/chat/completions";
+    headers = {
+      'Content-Type': 'application/json',
+      Authorization: "Bearer " + openaiApiKey,
+    };
+    // OpenAI expects the prompt in a different format
+    config = {
+      messages: [
+        {
+          role: "user",
+          content: prePrompt + fullText,
+        },
+      ],
+      max_tokens: modelConfig.max_tokens,
+      temperature: modelConfig.temperature,
+      top_p: modelConfig.top_p,
+      n: modelConfig.n,
+      stop: modelConfig.stop,
+      model: modelAliases[type],
+    };
+  }
+
   // Remove the 'n' parameter as it's not supported by the axios call
   delete config.n;
   axios({
     method: "post",
-    url: "https://api.together.xyz/v1/completions",
+    url: apiUrl,
     data: config,
-    headers: {
-      Authorization: "Bearer " + apiKey,
-    },
+    headers: headers,
     responseType: "text",
   })
     .then((response) => {
       // Remove the "data:" prefix if it exists and parse the JSON
       const responseData = response.data.replace(/^data: /, "");
       const jsonResponse = JSON.parse(responseData);
-      const newText = " " + jsonResponse.choices[0].text;
+      var newText = "";
+      if (type.startsWith('gpt')) {
+        // OpenAI returns the response in a different format
+        newText = " " + jsonResponse.choices[0].message.content;
+      } else {
+        newText = " " + jsonResponse.choices[0].text;
+      }
 
       // Create a new node with the generated text and the model type
       createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
@@ -614,13 +688,28 @@ document.getElementById("btn-download").addEventListener("click", downloadHTML);
 
 // Event listener for API key input to change background color
 document
-  .getElementById("api-key-input")
+  .getElementById("together-api-key-input")
   .addEventListener("input", function (event) {
     const input = event.target;
-    apiKey = input.value.trim().replace(/^"|"$/g, "");
-    if (apiKey !== "") {
+    togetherApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (togetherApiKey !== "") {
       // Save the API key to localStorage
-      localStorage.setItem("apiKey", apiKey);
+      localStorage.setItem("togetherApiKey", togetherApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
+
+// Event listener for API key input to change background color
+document
+  .getElementById("openai-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    openaiApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (openaiApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("openaiApiKey", openaiApiKey);
       input.style.backgroundColor = "green";
     } else {
       input.style.backgroundColor = "pink";

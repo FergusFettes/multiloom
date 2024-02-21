@@ -130,13 +130,28 @@ document.getElementById("btn-download").addEventListener("click", downloadHTML);
 
 // Event listener for API key input to change background color
 document
-  .getElementById("api-key-input")
+  .getElementById("together-api-key-input")
   .addEventListener("input", function (event) {
     const input = event.target;
-    apiKey = input.value.trim().replace(/^"|"$/g, "");
-    if (apiKey !== "") {
+    togetherApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (togetherApiKey !== "") {
       // Save the API key to localStorage
-      localStorage.setItem("apiKey", apiKey);
+      localStorage.setItem("togetherApiKey", togetherApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
+
+// Event listener for API key input to change background color
+document
+  .getElementById("openai-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    openaiApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (openaiApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("openaiApiKey", openaiApiKey);
       input.style.backgroundColor = "green";
     } else {
       input.style.backgroundColor = "pink";

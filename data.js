@@ -10,11 +10,18 @@ document.addEventListener("DOMContentLoaded", function () {
   if (Object.keys(data.nodes).length > 0) {
     document.getElementById("background-text").style.display = "none";
   }
-  const savedApiKey = localStorage.getItem("apiKey");
+  var savedApiKey = localStorage.getItem("togetherApiKey");
   if (savedApiKey) {
-    const apiKeyInput = document.getElementById("api-key-input");
+    const apiKeyInput = document.getElementById("together-api-key-input");
     apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
-    apiKey = apiKeyInput.value;
+    togetherApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
+  savedApiKey = localStorage.getItem("openaiApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("openai-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    openaiApiKey = apiKeyInput.value;
     apiKeyInput.style.backgroundColor = "green";
   }
 });
