@@ -113,13 +113,13 @@ const network = new vis.Network(container, visData, options);
 
 // Attach context menu to the network
 network.on('oncontext', function (params) {
-    // Prevent default context menu from appearing
-    params.event.preventDefault();
-    // Position the custom context menu at the pointer location
-    contextMenu.style.top = params.pointer.DOM.y + 'px';
-    contextMenu.style.left = params.pointer.DOM.x + 'px';
-    // Display the custom context menu
-    contextMenu.style.display = 'block';
+  // Prevent default context menu from appearing
+  params.event.preventDefault();
+  // Position the custom context menu at the pointer location
+  contextMenu.style.top = params.pointer.DOM.y + 'px';
+  contextMenu.style.left = params.pointer.DOM.x + 'px';
+  // Display the custom context menu
+  contextMenu.style.display = 'block';
 });
 
 // Hide the context menu when clicking elsewhere
