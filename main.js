@@ -1,5 +1,3 @@
-
-
 var dmp = new diff_match_patch();
 
 var nodes = new vis.DataSet([]);
