@@ -11,10 +11,10 @@ echo "<meta charset='utf-8'>" >> index.html
 echo "<title>TinyLoom</title>" >> index.html
 cat imports.html >> index.html
 
-echo "<style>" >> index.html
-# Include CSS directly into the <style> tag
-cat styles.css >> index.html
-echo "</style>" >> index.html
+# echo "<style>" >> index.html
+# # Include CSS directly into the <style> tag
+# cat styles.css >> index.html
+# echo "</style>" >> index.html
 
 echo "</head>" >> index.html
 echo "<body>" >> index.html
