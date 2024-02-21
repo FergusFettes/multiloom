@@ -10,6 +10,33 @@ document
     }
   });
 
+network.on("click", function (params) {
+  if (params.nodes.length > 0) {
+    // Check if the text editor is open
+    nodeId = params.nodes[0];
+    const textEditor = document.getElementById("textEditor");
+    if (textEditor.style.display === "block") {
+      const fullText = renderFullTextFromPatches(nodeId);
+
+      // Update the full text in the editor
+      const fullTextElement = document.getElementById("fullText");
+      fullTextElement.value = fullText;
+      // Ensure the text editor scrolls to the bottom after updates
+      requestAnimationFrame(() => {
+        fullTextElement.scrollTop = fullTextElement.scrollHeight;
+      });
+      fullTextElement.scrollTop = fullTextElement.scrollHeight;
+      fullTextElement.setAttribute("data-node-id", nodeId);
+
+      // Also, make the text editor no longer the active element.
+      fullTextElement.blur();
+    }
+
+    // Save the last clicked node ID to localStorage
+    localStorage.setItem("checkedOutNodeId", nodeId);
+  }
+});
+
 // Event listener for node clicks to show full text in a modal
 network.on("doubleClick", function (params) {
   if (params.nodes.length > 0) {
@@ -89,7 +116,6 @@ window.addEventListener("keydown", function (event) {
     }
     // Retrieve the last clicked node ID from localStorage
     const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
-    console.log(nodes);
 
     if (checkedOutNodeId) {
       // Generate new output based on the checked-out node
@@ -123,7 +149,6 @@ document.querySelectorAll(".model-checkbox").forEach((checkbox) => {
     const selectedModels = Array.from(
       document.querySelectorAll(".model-checkbox:checked"),
     ).map((checkbox) => checkbox.value);
-    console.log("Selected models:", selectedModels);
   });
 });
 
@@ -178,9 +203,6 @@ document
 document
   .getElementById("import-json-btn")
   .addEventListener("click", importJSON);
-// Close the settings modal
-document.getElementById("settingsModal").style.display = "none";
-console.log("Model configuration updated:", modelConfig);
 
 // Event listener for right-click on the settings modal to close it
 document
@@ -211,7 +233,6 @@ window.addEventListener("keydown", function (event) {
       targetNodeId = findLongestTextChildNode(checkedOutNodeId);
       break;
   }
-  console.log("Target node ID:", targetNodeId);
   if (targetNodeId !== null) {
     // instead of focusing on it, just make sure it is highlighted
     network.selectNodes([targetNodeId]);

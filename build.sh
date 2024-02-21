@@ -24,7 +24,10 @@ cat header.html >> index.html
 
 echo "<script>" >> index.html
 
+cat data.js >> index.html
 cat main.js >> index.html
+cat api.js >> index.html
+cat eventListeners.js >> index.html
 
 echo "</script>" >> index.html
 echo "</body>" >> index.html

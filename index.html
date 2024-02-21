@@ -101,40 +101,64 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// Initialize data object to store nodes and edges
+var data = { nodes: {}, edges: {} };
+
+// Function to clear data from localStorage and reset visualization
+function clearData() {
+  localStorage.removeItem("data");
+  data = { nodes: {}, edges: {} }; // Reset data object
+  nodes.clear(); // Clear nodes from DataSet
+  edges.clear(); // Clear edges from DataSet
+  document.getElementById("background-text").style.display = "flex"; // Show background text
+}
+
+function exportJSON() {
+  console.log(data);
+  const jsonData = JSON.stringify(data, null, 2);
+  document.getElementById("json-data-textarea").value = jsonData;
+}
+
+// Function to import JSON data from the textarea
+function importJSON() {
+  const jsonData = document.getElementById("json-data-textarea").value;
+  try {
+    const parsedData = JSON.parse(jsonData);
+    document.getElementById("background-text").style.display = "none";
+    // Update the data object and visualization with the new data
+    data = parsedData;
+    updateVisualization(Object.values(data.nodes));
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
+    alert("Invalid JSON data.");
+  }
+}
+
+// Function to export a full html with the data embedded
+function downloadHTML() {
+  var htmlContent = document.documentElement.outerHTML;
+  htmlContent = htmlContent.replace(
+    "var data = { nodes: {}, edges: {} };",
+    "var data = " + JSON.stringify(data) + ";",
+  );
+
+  var blob = new Blob([htmlContent], { type: "text/html" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "index.html";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 var dmp = new diff_match_patch();
 
 var nodes = new vis.DataSet([]);
 var edges = new vis.DataSet([]);
 
-// Initialize data object to store nodes and edges
-var data = { nodes: {}, edges: {} };
-
-// Global variable to store the API key
-var apiKey = "";
-// Model configuration
 // Global variable to track if model colors are enabled
 var useModelColors = true;
-var modelConfig = {
-  model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  max_tokens: 50,
-  request_type: "language-model-inference",
-  temperature: 0.7,
-  top_p: 0.7,
-  top_k: 50,
-  repetition_penalty: 1,
-  stream_tokens: false,
-  stop: ["</s>"],
-  n: 1,
-};
-
-// List of model aliases
-var modelAliases = {
-  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  mixtral: "mistralai/Mixtral-8x7B-v0.1",
-  llama2: "togethercomputer/llama-2-70b",
-  mistral: "mistralai/Mistral-7B-v0.1",
-};
 
 function cleanText(text) {
   // Remove everything up to and including the second plus sign in the text
@@ -260,18 +284,6 @@ if (!hasNonDataNodes()) {
   document.getElementById("background-text").style.display = "none";
 }
 
-// Event listener for the background text to open the modal on the first click
-document
-  .getElementById("background-text")
-  .addEventListener("click", function () {
-    if (!hasNonDataNodes()) {
-      document.getElementById("background-text").style.display = "none";
-      document.getElementById("textEditor").style.display = "block";
-      document.getElementById("fullText").value =
-        "(Right click to save and the editor!\nEscape to close without saving!)";
-    }
-  });
-
 // Function to update the layout direction
 function updateLayoutDirection(direction) {
   const options = {
@@ -283,6 +295,217 @@ function updateLayoutDirection(direction) {
   };
   network.setOptions(options);
 }
+
+// Function to create a new node if the text has changed or if it's the first node
+function createNodeIfTextChanged(originalText, newText, parentId, type) {
+  if (originalText !== newText || !hasNonDataNodes()) {
+    // Text has changed, or it's the first node, create a new node
+    const newNodeId = !hasNonDataNodes()
+      ? 1
+      : Object.keys(data.nodes).length + 1;
+    const patches = dmp.patch_make(originalText, newText);
+    data.nodes[newNodeId] = {
+      id: newNodeId,
+      text: dmp.patch_toText(patches),
+      patches: patches,
+      parent: parentId,
+      type: type, // Store the type of the node
+    };
+
+    // if the parentId was nan, then the new node is the root and we must set the checked out node
+    if (isNaN(parentId)) {
+      localStorage.setItem("checkedOutNodeId", newNodeId);
+      console.log("Checked out node ID:", newNodeId);
+    }
+
+    updateVisualization([data.nodes[newNodeId]]);
+    // Save data to localStorage
+    localStorage.setItem("data", JSON.stringify(data));
+    // if type is human, select the new node
+    if (type === "human") {
+      network.selectNodes([newNodeId]);
+      localStorage.setItem("checkedOutNodeId", newNodeId);
+    }
+    // Hide the background text when the first node is created
+    document.getElementById("background-text").style.display = "none";
+  }
+}
+
+// Function to format diffs for display
+function formatDiffsForDisplay(diffs) {
+  const deletions = diffs
+    .filter((diff) => diff[0] === -1)
+    .map((diff) => diff[1])
+    .join(" ")
+    .trim();
+  const additions = diffs
+    .filter((diff) => diff[0] === 1)
+    .map((diff) => diff[1])
+    .join(" ")
+    .trim();
+  const delStr = deletions ? `-${deletions}` : "";
+  const addStr = additions ? `+${additions}` : "";
+  return `${delStr} ${addStr}`.trim();
+}
+
+// Function to render the full text from patches
+function renderFullTextFromPatches(nodeId) {
+  let currentNode = data.nodes[nodeId];
+  let pathToRoot = [];
+  let fullText = "";
+
+  // Traverse up the tree to collect the path to the root
+  while (currentNode) {
+    pathToRoot.push(currentNode);
+    currentNode = data.nodes[currentNode.parent];
+  }
+
+  // Reverse the path to start from the root
+  pathToRoot.reverse();
+
+  // Apply the patches from the root to the current node
+  pathToRoot.forEach((node) => {
+    if (node.patches) {
+      // Apply the patch to the current full text
+      const patches = node.patches;
+      const results = dmp.patch_apply(patches, fullText);
+      fullText = results[0]; // Update the full text with the applied patch
+    }
+  });
+
+  return fullText;
+}
+
+// Close the settings modal
+document.getElementById("settingsModal").style.display = "none";
+console.log("Model configuration updated:", modelConfig);
+
+// Function to find the parent node of the current node
+function findParentNode(nodeId) {
+  const node = nodes.get(nodeId);
+  console.log("With parent:", node.parent);
+  return node && node.parent ? node.parent : null;
+}
+
+// Function to find the left and right sibling nodes of the current node
+function findSiblingNodes(nodeId) {
+  const parentNodeId = findParentNode(nodeId);
+  if (parentNodeId) {
+    const siblings = nodes.get({
+      filter: function (n) {
+        return parseInt(n.parent) === parseInt(parentNodeId);
+      },
+    });
+    const index = siblings.findIndex(
+      (sibling) => parseInt(sibling.id) === parseInt(nodeId),
+    );
+    const leftSibling = index > 0 ? siblings[index - 1].id : null;
+    const rightSibling =
+      index < siblings.length - 1 ? siblings[index + 1].id : null;
+    return { leftSibling, rightSibling };
+  }
+  return { leftSibling: null, rightSibling: null };
+}
+
+// Function to find the child node with the longest text from the currently selected node's children
+function findLongestTextChildNode(parentNodeId) {
+  let longestNode = null;
+  let maxLength = 0;
+  nodes.forEach(function (node) {
+    if (parseInt(node.parent) === parseInt(parentNodeId)) {
+      const length = node.label.length;
+      if (length > maxLength) {
+        longestNode = node.id;
+        maxLength = length;
+      }
+    }
+  });
+  return longestNode;
+}
+// Global variable to store the API key
+var apiKey = "";
+
+// Model configuration
+var modelConfig = {
+  model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  max_tokens: 50,
+  request_type: "language-model-inference",
+  temperature: 0.7,
+  top_p: 0.7,
+  top_k: 50,
+  repetition_penalty: 1,
+  stream_tokens: false,
+  stop: ["</s>"],
+  n: 1,
+};
+
+// List of model aliases
+var modelAliases = {
+  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
+  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  mixtral: "mistralai/Mixtral-8x7B-v0.1",
+  llama2: "togethercomputer/llama-2-70b",
+  mistral: "mistralai/Mistral-7B-v0.1",
+};
+
+// Function to generate new output based on the given text and parent ID
+function generateNewOutput(parentId) {
+  const fullText = renderFullTextFromPatches(parentId);
+  // Collect all selected models
+  const selectedModels = Array.from(
+    document.querySelectorAll(".model-checkbox:checked"),
+  ).map((checkbox) => checkbox.value);
+  // Determine the number of generations to perform
+  const generations = modelConfig.n || 1;
+  // Call the function to make an API call for text generation for each selected model
+  selectedModels.forEach((modelAlias) => {
+    for (let i = 0; i < generations; i++) {
+      generateText(fullText, parentId, modelAlias);
+    }
+  });
+}
+
+// Function to make an API call for text generation
+function generateText(fullText, parentId, type) {
+  const config = Object.assign({}, modelConfig); // Clone the modelConfig object
+  config.prompt = fullText;
+  // type is the model alias. set the name
+  config.model = modelAliases[type];
+  // Remove the 'n' parameter as it's not supported by the axios call
+  delete config.n;
+  axios({
+    method: "post",
+    url: "https://api.together.xyz/v1/completions",
+    data: config,
+    headers: {
+      Authorization: "Bearer " + apiKey,
+    },
+    responseType: "text",
+  })
+    .then((response) => {
+      // Remove the "data:" prefix if it exists and parse the JSON
+      const responseData = response.data.replace(/^data: /, "");
+      const jsonResponse = JSON.parse(responseData);
+      const newText = " " + jsonResponse.choices[0].text;
+
+      // Create a new node with the generated text and the model type
+      createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
+    })
+    .catch((error) => {
+      console.error("Error during API call:", error);
+    });
+}
+// Event listener for the background text to open the modal on the first click
+document
+  .getElementById("background-text")
+  .addEventListener("click", function () {
+    if (!hasNonDataNodes()) {
+      document.getElementById("background-text").style.display = "none";
+      document.getElementById("textEditor").style.display = "block";
+      document.getElementById("fullText").value =
+        "(Right click to save and the editor!\nEscape to close without saving!)";
+    }
+  });
 
 network.on("click", function (params) {
   if (params.nodes.length > 0) {
@@ -330,41 +553,6 @@ network.on("doubleClick", function (params) {
     document.getElementById("textEditor").style.display = "block";
   }
 });
-
-// Function to create a new node if the text has changed or if it's the first node
-function createNodeIfTextChanged(originalText, newText, parentId, type) {
-  if (originalText !== newText || !hasNonDataNodes()) {
-    // Text has changed, or it's the first node, create a new node
-    const newNodeId = !hasNonDataNodes()
-      ? 1
-      : Object.keys(data.nodes).length + 1;
-    const patches = dmp.patch_make(originalText, newText);
-    data.nodes[newNodeId] = {
-      id: newNodeId,
-      text: dmp.patch_toText(patches),
-      patches: patches,
-      parent: parentId,
-      type: type, // Store the type of the node
-    };
-
-    // if the parentId was nan, then the new node is the root and we must set the checked out node
-    if (isNaN(parentId)) {
-      localStorage.setItem("checkedOutNodeId", newNodeId);
-      console.log("Checked out node ID:", newNodeId);
-    }
-
-    updateVisualization([data.nodes[newNodeId]]);
-    // Save data to localStorage
-    localStorage.setItem("data", JSON.stringify(data));
-    // if type is human, select the new node
-    if (type === "human") {
-      network.selectNodes([newNodeId]);
-      localStorage.setItem("checkedOutNodeId", newNodeId);
-    }
-    // Hide the background text when the first node is created
-    document.getElementById("background-text").style.display = "none";
-  }
-}
 
 // Modify the event listener for the modal to call createNodeIfTextChanged with human type
 window.addEventListener("contextmenu", function (event) {
@@ -415,51 +603,6 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-// Function to format diffs for display
-function formatDiffsForDisplay(diffs) {
-  const deletions = diffs
-    .filter((diff) => diff[0] === -1)
-    .map((diff) => diff[1])
-    .join(" ")
-    .trim();
-  const additions = diffs
-    .filter((diff) => diff[0] === 1)
-    .map((diff) => diff[1])
-    .join(" ")
-    .trim();
-  const delStr = deletions ? `-${deletions}` : "";
-  const addStr = additions ? `+${additions}` : "";
-  return `${delStr} ${addStr}`.trim();
-}
-
-// Function to render the full text from patches
-function renderFullTextFromPatches(nodeId) {
-  let currentNode = data.nodes[nodeId];
-  let pathToRoot = [];
-  let fullText = "";
-
-  // Traverse up the tree to collect the path to the root
-  while (currentNode) {
-    pathToRoot.push(currentNode);
-    currentNode = data.nodes[currentNode.parent];
-  }
-
-  // Reverse the path to start from the root
-  pathToRoot.reverse();
-
-  // Apply the patches from the root to the current node
-  pathToRoot.forEach((node) => {
-    if (node.patches) {
-      // Apply the patch to the current full text
-      const patches = node.patches;
-      const results = dmp.patch_apply(patches, fullText);
-      fullText = results[0]; // Update the full text with the applied patch
-    }
-  });
-
-  return fullText;
-}
-
 // Event listener for the r key to generate new output
 window.addEventListener("keydown", function (event) {
   if (event.key === "r" || event.keyCode === 82) {
@@ -470,7 +613,6 @@ window.addEventListener("keydown", function (event) {
     }
     // Retrieve the last clicked node ID from localStorage
     const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
-    console.log(nodes);
 
     if (checkedOutNodeId) {
       // Generate new output based on the checked-out node
@@ -479,72 +621,6 @@ window.addEventListener("keydown", function (event) {
     event.preventDefault(); // Prevent the default action of the 'r' key
   }
 });
-
-// Function to generate new output based on the given text and parent ID
-function generateNewOutput(parentId) {
-  const fullText = renderFullTextFromPatches(parentId);
-  // Collect all selected models
-  const selectedModels = Array.from(
-    document.querySelectorAll(".model-checkbox:checked"),
-  ).map((checkbox) => checkbox.value);
-  // Determine the number of generations to perform
-  const generations = modelConfig.n || 1;
-  // Call the function to make an API call for text generation for each selected model
-  selectedModels.forEach((modelAlias) => {
-    for (let i = 0; i < generations; i++) {
-      generateText(fullText, parentId, modelAlias);
-    }
-  });
-}
-
-// Function to make an API call for text generation
-function generateText(fullText, parentId, type) {
-  const config = Object.assign({}, modelConfig); // Clone the modelConfig object
-  config.prompt = fullText;
-  // type is the model alias. set the name
-  config.model = modelAliases[type];
-  // Remove the 'n' parameter as it's not supported by the axios call
-  delete config.n;
-  axios({
-    method: "post",
-    url: "https://api.together.xyz/v1/completions",
-    data: config,
-    headers: {
-      Authorization: "Bearer " + apiKey,
-    },
-    responseType: "text",
-  })
-    .then((response) => {
-      // Remove the "data:" prefix if it exists and parse the JSON
-      const responseData = response.data.replace(/^data: /, "");
-      const jsonResponse = JSON.parse(responseData);
-      const newText = " " + jsonResponse.choices[0].text;
-
-      // Create a new node with the generated text and the model type
-      createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
-    })
-    .catch((error) => {
-      console.error("Error during API call:", error);
-    });
-}
-
-function downloadHTML() {
-  var htmlContent = document.documentElement.outerHTML;
-  htmlContent = htmlContent.replace(
-    "var data = { nodes: {}, edges: {} };",
-    "var data = " + JSON.stringify(data) + ";",
-  );
-
-  var blob = new Blob([htmlContent], { type: "text/html" });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = "index.html";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 
 // Event listener for the "Download" button
 document.getElementById("btn-download").addEventListener("click", downloadHTML);
@@ -570,17 +646,8 @@ document.querySelectorAll(".model-checkbox").forEach((checkbox) => {
     const selectedModels = Array.from(
       document.querySelectorAll(".model-checkbox:checked"),
     ).map((checkbox) => checkbox.value);
-    console.log("Selected models:", selectedModels);
   });
 });
-// Function to clear data from localStorage and reset visualization
-function clearData() {
-  localStorage.removeItem("data");
-  data = { nodes: {}, edges: {} }; // Reset data object
-  nodes.clear(); // Clear nodes from DataSet
-  edges.clear(); // Clear edges from DataSet
-  document.getElementById("background-text").style.display = "flex"; // Show background text
-}
 
 // Event listener for the 'Clear Data' button
 document.getElementById("clear-data-btn").addEventListener("click", clearData);
@@ -624,26 +691,6 @@ document
     // Function to export JSON data to the textarea
   });
 
-function exportJSON() {
-  console.log(data);
-  const jsonData = JSON.stringify(data, null, 2);
-  document.getElementById("json-data-textarea").value = jsonData;
-}
-// Function to import JSON data from the textarea
-function importJSON() {
-  const jsonData = document.getElementById("json-data-textarea").value;
-  try {
-    const parsedData = JSON.parse(jsonData);
-    document.getElementById("background-text").style.display = "none";
-    // Update the data object and visualization with the new data
-    data = parsedData;
-    updateVisualization(Object.values(data.nodes));
-  } catch (error) {
-    console.error("Error parsing JSON:", error);
-    alert("Invalid JSON data.");
-  }
-}
-
 // Event listener for the export JSON button
 document
   .getElementById("export-json-btn")
@@ -653,9 +700,6 @@ document
 document
   .getElementById("import-json-btn")
   .addEventListener("click", importJSON);
-// Close the settings modal
-document.getElementById("settingsModal").style.display = "none";
-console.log("Model configuration updated:", modelConfig);
 
 // Event listener for right-click on the settings modal to close it
 document
@@ -664,49 +708,6 @@ document
     this.style.display = "none";
     event.preventDefault(); // Prevent the default context menu
   });
-
-// Function to find the parent node of the current node
-function findParentNode(nodeId) {
-  const node = nodes.get(nodeId);
-  console.log("With parent:", node.parent);
-  return node && node.parent ? node.parent : null;
-}
-
-// Function to find the left and right sibling nodes of the current node
-function findSiblingNodes(nodeId) {
-  const parentNodeId = findParentNode(nodeId);
-  if (parentNodeId) {
-    const siblings = nodes.get({
-      filter: function (n) {
-        return parseInt(n.parent) === parseInt(parentNodeId);
-      },
-    });
-    const index = siblings.findIndex(
-      (sibling) => parseInt(sibling.id) === parseInt(nodeId),
-    );
-    const leftSibling = index > 0 ? siblings[index - 1].id : null;
-    const rightSibling =
-      index < siblings.length - 1 ? siblings[index + 1].id : null;
-    return { leftSibling, rightSibling };
-  }
-  return { leftSibling: null, rightSibling: null };
-}
-
-// Function to find the child node with the longest text from the currently selected node's children
-function findLongestTextChildNode(parentNodeId) {
-  let longestNode = null;
-  let maxLength = 0;
-  nodes.forEach(function (node) {
-    if (parseInt(node.parent) === parseInt(parentNodeId)) {
-      const length = node.label.length;
-      if (length > maxLength) {
-        longestNode = node.id;
-        maxLength = length;
-      }
-    }
-  });
-  return longestNode;
-}
 
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
 window.addEventListener("keydown", function (event) {
@@ -729,7 +730,6 @@ window.addEventListener("keydown", function (event) {
       targetNodeId = findLongestTextChildNode(checkedOutNodeId);
       break;
   }
-  console.log("Target node ID:", targetNodeId);
   if (targetNodeId !== null) {
     // instead of focusing on it, just make sure it is highlighted
     network.selectNodes([targetNodeId]);
