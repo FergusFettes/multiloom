@@ -1,3 +1,14 @@
+// Helper function to check if there are any non-data nodes in the network
+function hasNonDataNodes() {
+  return (
+    nodes.get({
+      filter: function (node) {
+        return node.group !== "data";
+      },
+    }).length > 0
+  );
+}
+
 // Function to format diffs for display
 function formatDiffsForDisplay(diffs) {
   const deletions = diffs

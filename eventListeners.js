@@ -41,21 +41,24 @@ network.on("click", function (params) {
 network.on("doubleClick", function (params) {
   if (params.nodes.length > 0) {
     const nodeId = params.nodes[0];
-    const fullText = renderFullTextFromPatches(nodeId);
-
-    // Display the full text in a modal
-    const fullTextElement = document.getElementById("fullText");
-    fullTextElement.value = fullText;
-    // Ensure the text editor scrolls to the bottom after updates
-    requestAnimationFrame(() => {
-      fullTextElement.scrollTop = fullTextElement.scrollHeight;
-    });
-    fullTextElement.scrollTop = fullTextElement.scrollHeight;
-    fullTextElement.setAttribute("data-node-id", nodeId);
-
-    document.getElementById("textEditor").style.display = "block";
+    renderAndOpenFullText(nodeId);
   }
 });
+
+
+// Helper function to render and open fulltext
+function renderAndOpenFullText(nodeId) {
+  const fullText = renderFullTextFromPatches(nodeId);
+  const fullTextElement = document.getElementById("fullText");
+  fullTextElement.value = fullText;
+  // Ensure the text editor scrolls to the bottom after updates
+  requestAnimationFrame(() => {
+    fullTextElement.scrollTop = fullTextElement.scrollHeight;
+  });
+  fullTextElement.scrollTop = fullTextElement.scrollHeight;
+  fullTextElement.setAttribute("data-node-id", nodeId);
+  document.getElementById("textEditor").style.display = "block";
+}
 
 // Event listener for the 'e' key to open the editor
 window.addEventListener("keydown", function (event) {
@@ -64,7 +67,28 @@ window.addEventListener("keydown", function (event) {
     if (textEditor.style.display === "block") {
       return; // Do nothing if the editor is already open
     }
-    document.getElementById("textEditor").style.display = "block";
+
+    document.getElementById("background-text").style.display = "none";
+    console.log(document.getElementById("background-text").style.display)
+
+    // Get the selected node
+    const selectedNodeId = network.getSelectedNodes()[0];
+    if (selectedNodeId) {
+      renderAndOpenFullText(selectedNodeId);
+    } else {
+      const fullTextElement = document.getElementById("fullText");
+      fullTextElement.setAttribute("data-node-id", selectedNodeId);
+      document.getElementById("textEditor").style.display = "block";
+    }
+
+    console.log(selectedNodeId)
+
+    // Focus on the full text element
+    document.getElementById("fullText").focus();
+    console.log(document.getElementById("background-text").style.display)
+
+    // Prevent the default action of the 'e' key
+    event.preventDefault();
   }
 });
 
@@ -101,8 +125,8 @@ window.addEventListener("keydown", function (event) {
     document.getElementById("textEditor").style.display = "none";
   }
 
-  // If there are no nodes, show the background text
-  if (Object.keys(data.nodes).length === 0) {
+  // If there are no nodes and the text editor is not open, show the background text
+  if (Object.keys(data.nodes).length === 0 && document.getElementById("textEditor").style.display === "none") {
     document.getElementById("background-text").style.display = "flex";
   }
 });

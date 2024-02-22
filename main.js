@@ -97,17 +97,6 @@ function updateNodeColors() {
   });
 }
 
-// Helper function to check if there are any non-data nodes in the network
-function hasNonDataNodes() {
-  return (
-    nodes.get({
-      filter: function (node) {
-        return node.group !== "data";
-      },
-    }).length > 0
-  );
-}
-
 // Get the context menu element
 var contextMenu = document.getElementById('nodeContextMenu');
 // Create a network
@@ -193,6 +182,7 @@ function toggleVisibility(nodeId) {
 // Function to delete a node and all its descendants
 function deleteNode(nodeId) {
   const node = data.nodes[nodeId];
+  const parentNodeId = findParentNode(nodeId);
   var descendents = findDescendentNodes(nodeId);
   const nodesToDelete = [nodeId].concat(descendents);
   nodesToDelete.forEach((id) => {
@@ -212,9 +202,18 @@ function deleteNode(nodeId) {
   if (!hasNonDataNodes()) {
     document.getElementById("background-text").style.display = "flex";
   }
+
+  // Check out the parent node, and set it to selected
+  if (parentNodeId) {
+    network.selectNodes([parentNodeId]);
+    localStorage.setItem("checkedOutNodeId", parentNodeId);
+  }
+  // And clear the data-node-id attribute
+  document.getElementById("fullText").setAttribute("data-node-id", "");
 }
 
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
+  console.log(parentId, type)
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
     const newNodeId = !hasNonDataNodes()
