@@ -79,7 +79,6 @@ window.addEventListener("keydown", function (event) {
       document.getElementById("textEditor").style.display = "block";
     }
 
-
     // Focus on the full text element
     document.getElementById("fullText").focus();
 
