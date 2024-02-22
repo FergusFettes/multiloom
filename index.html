@@ -436,8 +436,6 @@ function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
   var descendents = findDescendentNodes(nodeId);
-  console.log(nodeId);
-  console.log(descendents);
   updateVisualization([node].concat(descendents.map((id) => data.nodes[id])));
   localStorage.setItem("data", JSON.stringify(data));
 }
@@ -447,6 +445,8 @@ function deleteNode(nodeId) {
   const node = data.nodes[nodeId];
   var descendents = findDescendentNodes(nodeId);
   const nodesToDelete = [nodeId].concat(descendents);
+  console.log(nodeId);
+  console.log(descendents);
   nodesToDelete.forEach((id) => {
     nodes.remove(id);
     delete data.nodes[id];
