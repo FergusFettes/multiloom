@@ -85,3 +85,18 @@ function findLongestTextChildNode(parentNodeId) {
   });
   return longestNode;
 }
+
+// Function to find all the descendents of a node
+function findDescendentNodes(nodeId) {
+  let descendents = [];
+  const children = Object.values(data.nodes).filter(
+    (n) => n.parent === nodeId,
+  );
+  if (children.length > 0) {
+    descendents = children.map((child) => child.id);
+    children.forEach((child) => {
+      descendents = descendents.concat(findDescendentNodes(child.id));
+    });
+  }
+  return descendents;
+}

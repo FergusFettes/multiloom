@@ -75,14 +75,27 @@
 #nodeContextMenu li:hover {
     background-color: #f0f0f0; /* Add a hover effect for list items */
 }
+
+/* Tooltop container. Should be sleek and minimal */
+#info-box {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: black;
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-size: 12px;
+    max-width: 300px;
+}
 </style>
 </head>
 <body>
 <div id="nodeContextMenu" class="context-menu">
     <ul>
-        <li id="hideNode">Hide</li>
-        <li id="unhideNode">Unhide</li>
-        <li id="bookmarkNode">Bookmark</li>
+        <li id="hideNode">Toggle Hide</li>
+        <li id="bookmarkNode">Toggle Bookmark</li>
+        <li id="deleteNode">Delete</li>
     </ul>
 </div>
 <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
@@ -244,23 +257,34 @@ var useModelColors = document.getElementById("toggle-model-colors").checked;
 
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
+  var hiddenChildren = [];
   newNodes.forEach((node) => {
+    if (hiddenChildren.includes(node.id)) {
+      return;
+    }
     // Use the last patch to set the label, if available
     const lastPatch =
       node.patches && node.patches.length > 0
         ? node.patches[node.patches.length - 1]
         : null;
-    const label = lastPatch
+    var label = lastPatch
       ? formatDiffsForDisplay(lastPatch.diffs)
       : node.text;
     const nodeColor = {
       border: getNodeBorderColor(node.type),
     };
+    if (node.hidden) {
+      label = "";
+      findDescendentNodes(node.id).forEach((descendant) => {
+        hiddenChildren.push(descendant);
+      });
+    }
+
     nodes.update({
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '</div>',
+      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '<br><strong>Hidden:</strong> ' + (node.hidden ? 'Yes': 'No') + '</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -302,7 +326,6 @@ function updateNodeColors() {
     const nodeColor = {
       border: getNodeBorderColor(data.nodes[node.id].type),
     };
-    console.log("Node color:", nodeColor);
     nodes.update([{ id: node.id, color: nodeColor }]);
   });
 }
@@ -395,13 +418,29 @@ function toggleBookmark(nodeId) {
 function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
-  if (node.hidden) {
-    nodes.remove({ id: nodeId });
-  } else {
-    nodes.add(node);
-  }
+  updateVisualization([node]);
   localStorage.setItem("data", JSON.stringify(data));
 }
+
+// Function to delete a node and all its descendants
+function deleteNode(nodeId) {
+  const node = data.nodes[nodeId];
+  const descendents = findDescendentNodes(nodeId);
+  const nodesToDelete = [nodeId].concat(descendents);
+  nodesToDelete.forEach((id) => {
+    nodes.remove
+    delete data.nodes[id];
+  });
+  edges.remove(
+    edges.get({
+      filter: function (edge) {
+        return nodesToDelete.includes(edge.from) || nodesToDelete.includes(edge.to);
+      },
+    }),
+  );
+  ocalStorage.setItem("data", JSON.stringify(data));
+}
+
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
@@ -526,6 +565,21 @@ function findLongestTextChildNode(parentNodeId) {
     }
   });
   return longestNode;
+}
+
+// Function to find all the descendents of a node
+function findDescendentNodes(nodeId) {
+  let descendents = [];
+  const children = Object.values(data.nodes).filter(
+    (n) => n.parent === nodeId,
+  );
+  if (children.length > 0) {
+    descendents = children.map((child) => child.id);
+    children.forEach((child) => {
+      descendents = descendents.concat(findDescendentNodes(child.id));
+    });
+  }
+  return descendents;
 }
 // Global variable to store the API key
 var apiKey = "";
@@ -930,21 +984,27 @@ network.on('click', function () {
 // Event listeners for context menu actions
 document.getElementById('hideNode').addEventListener('click', function () {
   const selectedNodes = network.getSelectedNodes();
+  console.log('Hide node:', selectedNodes);
   if (selectedNodes.length > 0) {
     toggleVisibility(selectedNodes[0]);
   }
   contextMenu.style.display = 'none';
 });
 
-document.getElementById('unhideNode').addEventListener('click', function () {
-  // Implement unhide node logic here
+document.getElementById('bookmarkNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  console.log('Bookmark node:', selectedNodes);
+  if (selectedNodes.length > 0) {
+    toggleBookmark(selectedNodes[0]);
+  }
   contextMenu.style.display = 'none';
 });
 
-document.getElementById('bookmarkNode').addEventListener('click', function () {
+document.getElementById('deleteNode').addEventListener('click', function () {
   const selectedNodes = network.getSelectedNodes();
+  console.log('Delete node:', selectedNodes);
   if (selectedNodes.length > 0) {
-    toggleBookmark(selectedNodes[0]);
+    deleteNode(selectedNodes[0]);
   }
   contextMenu.style.display = 'none';
 });

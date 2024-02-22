@@ -276,21 +276,27 @@ network.on('click', function () {
 // Event listeners for context menu actions
 document.getElementById('hideNode').addEventListener('click', function () {
   const selectedNodes = network.getSelectedNodes();
+  console.log('Hide node:', selectedNodes);
   if (selectedNodes.length > 0) {
     toggleVisibility(selectedNodes[0]);
   }
   contextMenu.style.display = 'none';
 });
 
-document.getElementById('unhideNode').addEventListener('click', function () {
-  // Implement unhide node logic here
+document.getElementById('bookmarkNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  console.log('Bookmark node:', selectedNodes);
+  if (selectedNodes.length > 0) {
+    toggleBookmark(selectedNodes[0]);
+  }
   contextMenu.style.display = 'none';
 });
 
-document.getElementById('bookmarkNode').addEventListener('click', function () {
+document.getElementById('deleteNode').addEventListener('click', function () {
   const selectedNodes = network.getSelectedNodes();
+  console.log('Delete node:', selectedNodes);
   if (selectedNodes.length > 0) {
-    toggleBookmark(selectedNodes[0]);
+    deleteNode(selectedNodes[0]);
   }
   contextMenu.style.display = 'none';
 });

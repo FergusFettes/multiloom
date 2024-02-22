@@ -9,23 +9,34 @@ var useModelColors = document.getElementById("toggle-model-colors").checked;
 
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
+  var hiddenChildren = [];
   newNodes.forEach((node) => {
+    if (hiddenChildren.includes(node.id)) {
+      return;
+    }
     // Use the last patch to set the label, if available
     const lastPatch =
       node.patches && node.patches.length > 0
         ? node.patches[node.patches.length - 1]
         : null;
-    const label = lastPatch
+    var label = lastPatch
       ? formatDiffsForDisplay(lastPatch.diffs)
       : node.text;
     const nodeColor = {
       border: getNodeBorderColor(node.type),
     };
+    if (node.hidden) {
+      label = "";
+      findDescendentNodes(node.id).forEach((descendant) => {
+        hiddenChildren.push(descendant);
+      });
+    }
+
     nodes.update({
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '</div>',
+      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '<br><strong>Hidden:</strong> ' + (node.hidden ? 'Yes': 'No') + '</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -159,13 +170,29 @@ function toggleBookmark(nodeId) {
 function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
-  if (node.hidden) {
-    nodes.remove({ id: nodeId });
-  } else {
-    nodes.add(node);
-  }
+  updateVisualization([node]);
   localStorage.setItem("data", JSON.stringify(data));
 }
+
+// Function to delete a node and all its descendants
+function deleteNode(nodeId) {
+  const node = data.nodes[nodeId];
+  const descendents = findDescendentNodes(nodeId);
+  const nodesToDelete = [nodeId].concat(descendents);
+  nodesToDelete.forEach((id) => {
+    nodes.remove
+    delete data.nodes[id];
+  });
+  edges.remove(
+    edges.get({
+      filter: function (edge) {
+        return nodesToDelete.includes(edge.from) || nodesToDelete.includes(edge.to);
+      },
+    }),
+  );
+  ocalStorage.setItem("data", JSON.stringify(data));
+}
+
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
