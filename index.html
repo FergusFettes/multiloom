@@ -242,40 +242,28 @@ var edges = new vis.DataSet([]);
 var useModelColors = true;
 
 // Function to update the visualization with new nodes
-// Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
   newNodes.forEach((node) => {
-    if (node.hidden) {
-      // Replace hidden node with an empty node and do not render its children
-      nodes.update({
-        id: node.id,
-        label: '',
-        color: { border: 'transparent', background: 'transparent' },
-        title: '',
-        parent: node.parent,
-      });
-    } else {
-      // Use the last patch to set the label, if available
-      const lastPatch =
-        node.patches && node.patches.length > 0
-          ? node.patches[node.patches.length - 1]
-          : null;
-      const label = lastPatch
-        ? formatDiffsForDisplay(lastPatch.diffs)
-        : node.text;
-      const nodeColor = {
-        border: getNodeBorderColor(node.type),
-      };
-      nodes.update({
-        id: node.id,
-        label: label,
-        color: nodeColor,
-        title: '<div class="info-box">Node Info</div>',
-        parent: node.parent,
-      });
-      if (node.parent !== null) {
-        edges.update({ from: node.parent, to: node.id });
-      }
+    // Use the last patch to set the label, if available
+    const lastPatch =
+      node.patches && node.patches.length > 0
+        ? node.patches[node.patches.length - 1]
+        : null;
+    const label = lastPatch
+      ? formatDiffsForDisplay(lastPatch.diffs)
+      : node.text;
+    const nodeColor = {
+      border: getNodeBorderColor(node.type),
+    };
+    nodes.update({
+      id: node.id,
+      label: label,
+      color: nodeColor,
+      title: '<div class="info-box">Node Info</div>',
+      parent: node.parent,
+    });
+    if (node.parent !== null) {
+      edges.update({ from: node.parent, to: node.id });
     }
   });
 }
