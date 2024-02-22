@@ -459,6 +459,11 @@ function deleteNode(nodeId) {
     }),
   );
   localStorage.setItem("data", JSON.stringify(data));
+
+  // If there are no mode nodes, set the background text to visible
+  if (!hasNonDataNodes()) {
+    document.getElementById("background-text").style.display = "flex";
+  }
 }
 
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
