@@ -20,7 +20,7 @@
 } 
 
 #textEditor {
-    position: absolute;
+    position: fixed; /* Changed from absolute to fixed */
     display: none;
     width: 60%;
     height: 94%;
@@ -28,6 +28,7 @@
     right: 2%;
     resize: both;
     z-index: 100;
+    cursor: move; /* Indicate that the element is movable */
 }
 
 #background-text {
@@ -234,21 +235,22 @@
         </div>
     </div>
 </div>
+<script src="draggable.js"></script>
 <script>
 // On page load, retrieve the API key from localStorage
 document.addEventListener("DOMContentLoaded", function () {
   // Load the editor size
-  const savedSize = JSON.parse(localStorage.getItem('textEditorSize'));
+  const savedSize = JSON.parse(localStorage.getItem("textEditorSize"));
   const textEditor = document.getElementById("textEditor");
   const fullText = document.getElementById("fullText");
   console.log(savedSize);
   if (savedSize) {
-      console.log("Setting saved size")
-      textEditor.style.display = "block";
-      fullText.style.width = `${savedSize.width}px`;
-      fullText.style.height = `${savedSize.height}px`;
-      textEditor.style.display = "none";
-  };
+    console.log("Setting saved size");
+    textEditor.style.display = "block";
+    fullText.style.width = `${savedSize.width}px`;
+    fullText.style.height = `${savedSize.height}px`;
+    textEditor.style.display = "none";
+  }
 
   // Load data from localStorage on page load
   var savedData = localStorage.getItem("data");
@@ -598,18 +600,18 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
 // Close the settings modal
 document.getElementById("settingsModal").style.display = "none";
 
-const resizeObserver = new ResizeObserver(entries => {
-    for (let entry of entries) {
-        const { width, height } = entry.contentRect;
-        console.log(`Size changed. New size: ${width}px x ${height}px`);
-        const size = { width, height };
-        // if new size is not 0, save it to local storage
-        if (width !== 0 && height !== 0) {
-          localStorage.setItem('textEditorSize', JSON.stringify(size));
-        }
-
-        // On page 
+const resizeObserver = new ResizeObserver((entries) => {
+  for (let entry of entries) {
+    const { width, height } = entry.contentRect;
+    console.log(`Size changed. New size: ${width}px x ${height}px`);
+    const size = { width, height };
+    // if new size is not 0, save it to local storage
+    if (width !== 0 && height !== 0) {
+      localStorage.setItem("textEditorSize", JSON.stringify(size));
     }
+
+    // On page
+  }
 });
 
 const fullText = document.getElementById("fullText");

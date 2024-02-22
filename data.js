@@ -1,17 +1,17 @@
 // On page load, retrieve the API key from localStorage
 document.addEventListener("DOMContentLoaded", function () {
   // Load the editor size
-  const savedSize = JSON.parse(localStorage.getItem('textEditorSize'));
+  const savedSize = JSON.parse(localStorage.getItem("textEditorSize"));
   const textEditor = document.getElementById("textEditor");
   const fullText = document.getElementById("fullText");
   console.log(savedSize);
   if (savedSize) {
-      console.log("Setting saved size")
-      textEditor.style.display = "block";
-      fullText.style.width = `${savedSize.width}px`;
-      fullText.style.height = `${savedSize.height}px`;
-      textEditor.style.display = "none";
-  };
+    console.log("Setting saved size");
+    textEditor.style.display = "block";
+    fullText.style.width = `${savedSize.width}px`;
+    fullText.style.height = `${savedSize.height}px`;
+    textEditor.style.display = "none";
+  }
 
   // Load data from localStorage on page load
   var savedData = localStorage.getItem("data");

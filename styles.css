@@ -6,7 +6,7 @@
 } 
 
 #textEditor {
-    position: absolute;
+    position: fixed; /* Changed from absolute to fixed */
     display: none;
     width: 60%;
     height: 94%;
@@ -14,6 +14,7 @@
     right: 2%;
     resize: both;
     z-index: 100;
+    cursor: move; /* Indicate that the element is movable */
 }
 
 #background-text {
