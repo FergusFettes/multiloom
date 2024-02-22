@@ -108,8 +108,27 @@ function toggleBookmark(nodeId) {
 function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
-  var descendents = findDescendentNodes(nodeId);
-  updateVisualization([node].concat(descendents.map((id) => data.nodes[id])));
+  const descendents = findDescendentNodes(nodeId);
+  // If node was unhidden, send it and all descendents to update
+  if (!node.hidden) {
+    updateVisualization([node].concat(descendents.map((id) => data.nodes[id])));
+  } else {
+    updateVisualization([node]);
+
+    // If node was hidden, delete all its children
+    descendents.forEach((id) => {
+      nodes.remove(id);
+    });
+    edges.remove(
+      edges.get({
+        filter: function (edge) {
+          return (
+            descendents.includes(edge.from) || descendents.includes(edge.to)
+          );
+        },
+      }),
+    );
+  }
   localStorage.setItem("data", JSON.stringify(data));
 }
 

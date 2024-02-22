@@ -32,10 +32,13 @@ function updateNodeInVisualization(node) {
 }
 
 // Helper function to find the root node of a subtree given any node in the set
-function findRootOfSubtree(node, allNodesSet) {
+function findRootOfSubtree(node, allNodes) {
   let currentNode = node;
-  while (currentNode.parent !== null && allNodesSet.has(currentNode.parent)) {
-    currentNode = allNodesSet[currentNode.parent];
+  while (
+    currentNode.parent !== null &&
+    allNodes.find((n) => n.id === currentNode.parent)
+  ) {
+    currentNode = allNodes[currentNode.parent];
   }
   return currentNode;
 }
@@ -54,10 +57,10 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
     while (queue.length > 0 && count < chunkSize) {
       const node = queue.shift(); // Dequeue the next node
       chunk.push(node);
-      // Enqueue child nodes if they are not hidden and are in the allNodesSet
-      const childNodes = findChildNodes(node.id, nodesToProcess).filter(
-        (child) => !child.hidden,
-      );
+      if (node.hidden) {
+        continue; // Skip hidden nodes
+      }
+      const childNodes = findChildNodes(node.id, nodesToProcess);
       queue.push(...childNodes);
       count++;
     }
@@ -67,8 +70,10 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
       updateNodeInVisualization(node); // Process only visible nodes
     });
 
-    // Set the view to the full network
-    network.fit({ animation: true });
+    // If the total length of new nodes is > 100, fit the view to the network
+    if (nodesToProcess.length > 100) {
+      network.fit({ animation: true, locked: false });
+    }
 
     if (queue.length > 0) {
       setTimeout(processNextLevel, 0); // Schedule the next level
@@ -86,6 +91,8 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
 
 // Modified updateVisualization function to use processNodesByLevel
 function updateVisualization(newNodes) {
+  console.log("Updating visualization with", newNodes.length, "new nodes");
+  console.log("New nodes", newNodes);
   if (newNodes.length === 0) {
     return;
   }
