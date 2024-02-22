@@ -22,9 +22,12 @@
 #textEditor {
     position: absolute;
     display: none;
-    width: 50%;
-    height: 100vh;
-    right: 0;
+    width: 60%;
+    height: 94%;
+    top: 2%;
+    right: 2%;
+    resize: both;
+    z-index: 100;
 }
 
 #background-text {
@@ -234,6 +237,19 @@
 <script>
 // On page load, retrieve the API key from localStorage
 document.addEventListener("DOMContentLoaded", function () {
+  // Load the editor size
+  const savedSize = JSON.parse(localStorage.getItem('textEditorSize'));
+  const textEditor = document.getElementById("textEditor");
+  const fullText = document.getElementById("fullText");
+  console.log(savedSize);
+  if (savedSize) {
+      console.log("Setting saved size")
+      textEditor.style.display = "block";
+      fullText.style.width = `${savedSize.width}px`;
+      fullText.style.height = `${savedSize.height}px`;
+      textEditor.style.display = "none";
+  };
+
   // Load data from localStorage on page load
   var savedData = localStorage.getItem("data");
   if (savedData) {
@@ -581,6 +597,23 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
 
 // Close the settings modal
 document.getElementById("settingsModal").style.display = "none";
+
+const resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        console.log(`Size changed. New size: ${width}px x ${height}px`);
+        const size = { width, height };
+        // if new size is not 0, save it to local storage
+        if (width !== 0 && height !== 0) {
+          localStorage.setItem('textEditorSize', JSON.stringify(size));
+        }
+
+        // On page 
+    }
+});
+
+const fullText = document.getElementById("fullText");
+resizeObserver.observe(fullText);
 // Helper function to check if there are any non-data nodes in the network
 function hasNonDataNodes() {
   return (

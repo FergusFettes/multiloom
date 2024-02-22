@@ -8,9 +8,12 @@
 #textEditor {
     position: absolute;
     display: none;
-    width: 50%;
-    height: 100vh;
-    right: 0;
+    width: 60%;
+    height: 94%;
+    top: 2%;
+    right: 2%;
+    resize: both;
+    z-index: 100;
 }
 
 #background-text {

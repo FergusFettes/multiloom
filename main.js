@@ -252,3 +252,20 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
 
 // Close the settings modal
 document.getElementById("settingsModal").style.display = "none";
+
+const resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        console.log(`Size changed. New size: ${width}px x ${height}px`);
+        const size = { width, height };
+        // if new size is not 0, save it to local storage
+        if (width !== 0 && height !== 0) {
+          localStorage.setItem('textEditorSize', JSON.stringify(size));
+        }
+
+        // On page 
+    }
+});
+
+const fullText = document.getElementById("fullText");
+resizeObserver.observe(fullText);
