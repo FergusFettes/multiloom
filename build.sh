@@ -25,6 +25,7 @@ cat header.html >> index.html
 echo "<script>" >> index.html
 
 cat data.js >> index.html
+cat visualize.js >> index.html
 cat main.js >> index.html
 cat utils.js >> index.html
 cat api.js >> index.html

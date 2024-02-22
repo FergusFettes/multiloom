@@ -7,62 +7,6 @@ var edges = new vis.DataSet([]);
 // Get the value from the toffle-model-colors checkbox
 var useModelColors = document.getElementById("toggle-model-colors").checked;
 
-// Function to update the visualization with new nodes
-function updateVisualization(newNodes) {
-  // First, find all the hidden children of the new nodes
-  var hiddenChildren = [];
-  newNodes.forEach((node) => {
-    if (node.hidden) {
-      findDescendentNodes(node.id).forEach((descendant) => {
-        hiddenChildren.push(descendant);
-      });
-    }
-  });
-  newNodes.forEach((node) => {
-    if (hiddenChildren.includes(node.id)) {
-      return;
-    }
-    // Use the last patch to set the label, if available
-    const lastPatch =
-      node.patches && node.patches.length > 0
-        ? node.patches[node.patches.length - 1]
-        : null;
-    var label = lastPatch ? formatDiffsForDisplay(lastPatch.diffs) : node.text;
-    if (node.hidden) {
-      label = "...";
-    }
-    var nodeColor = {
-      border: getNodeBorderColor(node.type),
-    };
-    if (node.hidden) {
-      nodeColor.border = "rgba(0, 0, 0, 0.2)";
-    }
-
-    nodes.update({
-      id: node.id,
-      label: label,
-      color: nodeColor,
-      title:
-        '<div class="info-box">' +
-        (node.bookmarked ? "🌟" : "") +
-        "<strong>Model:</strong> " +
-        node.type +
-        "</div>",
-      parent: node.parent,
-    });
-    if (node.parent !== null) {
-      edges.update({ from: node.parent, to: node.id });
-    }
-  });
-
-  // Remove the hidden children from the visualization
-  nodes.forEach((node) => {
-    if (hiddenChildren.includes(node.id)) {
-      nodes.remove(node.id);
-    }
-  });
-}
-
 updateVisualization(Object.values(data.nodes));
 
 function getNodeBorderColor(nodeType) {
@@ -151,18 +95,6 @@ if (!hasNonDataNodes()) {
   document.getElementById("background-text").style.display = "none";
 }
 
-// Function to update the layout direction
-function updateLayoutDirection(direction) {
-  const options = {
-    layout: {
-      hierarchical: {
-        direction: direction,
-      },
-    },
-  };
-  network.setOptions(options);
-}
-
 // Function to create a new node if the text has changed or if it's the first node
 // Function to toggle the bookmark state of a node
 function toggleBookmark(nodeId) {
@@ -205,6 +137,7 @@ function deleteNode(nodeId) {
   // If there are no mode nodes, set the background text to visible
   if (!hasNonDataNodes()) {
     document.getElementById("background-text").style.display = "flex";
+    localStorage.removeItem("checkedOutNodeId");
   }
 
   // Check out the parent node, and set it to selected
@@ -256,7 +189,6 @@ document.getElementById("settingsModal").style.display = "none";
 const resizeObserver = new ResizeObserver((entries) => {
   for (let entry of entries) {
     const { width, height } = entry.contentRect;
-    console.log(`Size changed. New size: ${width}px x ${height}px`);
     const size = { width, height };
     // if new size is not 0, save it to local storage
     if (width !== 0 && height !== 0) {

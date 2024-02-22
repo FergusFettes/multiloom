@@ -110,6 +110,10 @@ function findDescendentNodes(nodeId) {
   return descendents;
 }
 
+function findChildNodes(nodeId, nodes) {
+  return Object.values(nodes).filter((node) => node.parent === nodeId);
+}
+
 // Function to find all the descendants of a node and their depth
 function findDescendentNodesWithDepth(nodeId, depth = 0) {
   let descendantsWithDepth = [];

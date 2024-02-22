@@ -4,9 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const savedSize = JSON.parse(localStorage.getItem("textEditorSize"));
   const textEditor = document.getElementById("textEditor");
   const fullText = document.getElementById("fullText");
-  console.log(savedSize);
   if (savedSize) {
-    console.log("Setting saved size");
     textEditor.style.display = "block";
     fullText.style.width = `${savedSize.width}px`;
     fullText.style.height = `${savedSize.height}px`;
@@ -17,7 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
   var savedData = localStorage.getItem("data");
   if (savedData) {
     data = JSON.parse(savedData);
-    console.log(data);
     updateVisualization(Object.values(data.nodes));
   }
 
@@ -53,6 +50,7 @@ var data = { nodes: {} };
 // Function to clear data from localStorage and reset visualization
 function clearData() {
   localStorage.removeItem("data");
+  localStorage.removeItem("checkedOutNodeId");
   data = { nodes: {} }; // Reset data object
   edges.clear(); // Clear edges from DataSet
   nodes.clear(); // Clear nodes from DataSet
@@ -60,7 +58,6 @@ function clearData() {
 }
 
 function exportJSON() {
-  console.log(data);
   const jsonData = JSON.stringify(data, null, 2);
   document.getElementById("json-data-textarea").value = jsonData;
 }
@@ -68,14 +65,13 @@ function exportJSON() {
 // Function to import JSON data from the textarea
 function importJSON() {
   const jsonData = document.getElementById("json-data-textarea").value;
-  document.getElementById("json-load-status").innerText =
-    "Loading. For larger trees, this might take a minute.";
   try {
     const parsedData = JSON.parse(jsonData);
     document.getElementById("background-text").style.display = "none";
     // Update the data object and visualization with the new data
     clearData();
     data = parsedData;
+    localStorage.setItem("data", JSON.stringify(data));
 
     // If textarea or settings are open, close them
     document.getElementById("json-data-textarea").value = "";

@@ -68,7 +68,6 @@ window.addEventListener("keydown", function (event) {
     }
 
     document.getElementById("background-text").style.display = "none";
-    console.log(document.getElementById("background-text").style.display);
 
     // Get the selected node
     const selectedNodeId = network.getSelectedNodes()[0];
@@ -80,11 +79,9 @@ window.addEventListener("keydown", function (event) {
       document.getElementById("textEditor").style.display = "block";
     }
 
-    console.log(selectedNodeId);
 
     // Focus on the full text element
     document.getElementById("fullText").focus();
-    console.log(document.getElementById("background-text").style.display);
 
     // Prevent the default action of the 'e' key
     event.preventDefault();
@@ -98,8 +95,18 @@ window.addEventListener("contextmenu", function (event) {
   if (event.target === textEditor || event.target === fullTextElement) {
     // Get the current text from the modal
     const newText = fullTextElement.value;
-    const nodeId = parseInt(fullTextElement.getAttribute("data-node-id"));
+    var nodeId = parseInt(fullTextElement.getAttribute("data-node-id"));
+
+    console.log("Node ID: ", nodeId);
+    // If nodeId is null or NaN
+    if (nodeId === null || isNaN(nodeId)) {
+      nodeId = localStorage.getItem("checkedOutNodeId");
+      console.log("checkedOutNodeId ID: ", nodeId);
+    }
+
     const originalText = renderFullTextFromPatches(nodeId);
+    console.log("Original Text: ", originalText);
+    console.log("New Text: ", newText);
 
     // Create a new node if the text has changed with type as 'human'
     createNodeIfTextChanged(originalText, newText, nodeId, "human");
