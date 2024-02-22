@@ -87,6 +87,36 @@
     font-size: 12px;
     max-width: 300px;
 }
+
+#infoModal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 10%;
+    top: 10%;
+    width: 80%;
+    height: 80%;
+    background-color: rgba(255, 255, 255, 0.9); /* white with 90% opacity */
+    border: 1px solid #ccc;
+    overflow: auto;
+}
+
+#infoModal h3 {
+    margin-top: 0;
+}
+
+#key-shortcuts-list {
+    list-style: none;
+    padding: 20;
+}
+
+#key-shortcuts-list li {
+    margin-bottom: 5px;
+}
+
+#stats-container {
+    /* Placeholder for stats styles */
+}
 </style>
 </head>
 <body>
@@ -124,12 +154,15 @@
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
     <div id="background-text">
-      Hello and welcome to tinyloom! This is a little loom in one file.<br>
+      <div>Hello and welcome to tinyloom! This is a little loom in one file.<br>
+      <br>
+      <b>Press '?' at any time to open a help menu.</b><br>
+      <br>
       Click anywhere to create your first node. Right click to exit the editor.<br>
       Add your together.ai api key, and press 'r' to generate! Happy looming!<br>
       <br>
       Double click on nodes to see and edit the full text.<br>
-      Click on nodes to check them out for generation.<br>
+      Click on nodes to check them out for generation.<br></div>
     </div>
     <!-- Settings modal for model configuration -->
     <div id="settingsModal">
@@ -166,6 +199,37 @@
         </div>
         <button id="save-settings-btn">Save Settings</button>
     </div>
+<div id="infoModal">
+    <div style="display: flex; justify-content: space-between; height: 50%;">
+        <div style="width: 50%; padding-right: 10px;">
+            <h3>Key Shortcuts</h3>
+            <ul id="key-shortcuts-list">
+              <li><kbd>e</kbd>: Open the editor</li>
+              <li><kbd>r</kbd>: Generate new output</li>
+              <li><kbd>p</kbd>: Open settings</li>
+              <li><kbd>Escape</kbd>: Close the editor</li>
+              <li><kbd>w</kbd>: Navigate to parent node</li>
+              <li><kbd>a</kbd>: Navigate to left sibling node</li>
+              <li><kbd>d</kbd>: Navigate to right sibling node</li>
+              <li><kbd>s</kbd>: Navigate to longest text child node</li>
+              <li><kbd>Space</kbd>: Toggle visibility of selected node</li>
+              <li><kbd>Enter</kbd>: Toggle bookmark of selected node</li>
+              <li><kbd>Delete</kbd>: Delete selected node</li>
+            </ul>
+            <h3>Mouse Options</h3>
+            Left click to select a node. This will update the editor if it is open.
+            Double click to open the editor on a node.
+            Right click on a node for hide, bookmark or delete. These can also be done with keyboard shortcuts.
+            Right click on the editor to close it.
+        </div>
+        <div style="width: 50%; padding-left: 10px;">
+            <h3>Stats</h3>
+            <div id="stats-container">
+                <!-- Stats will be added here -->
+            </div>
+        </div>
+    </div>
+</div>
 <script>
 // On page load, retrieve the API key from localStorage
 document.addEventListener("DOMContentLoaded", function () {
@@ -173,8 +237,16 @@ document.addEventListener("DOMContentLoaded", function () {
   var savedData = localStorage.getItem("data");
   if (savedData) {
     data = JSON.parse(savedData);
+    console.log(data);
     updateVisualization(Object.values(data.nodes));
   }
+
+  // Make sure all the node ids and parent ids are numbers
+  Object.values(data.nodes).forEach((node) => {
+    node.id = parseInt(node.id);
+    node.parent = parseInt(node.parent);
+  });
+
   // Hide the background text if there are nodes
   if (Object.keys(data.nodes).length > 0) {
     document.getElementById("background-text").style.display = "none";
@@ -460,7 +532,6 @@ function deleteNode(nodeId) {
 }
 
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
-  console.log(parentId, type)
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
     const newNodeId = !hasNonDataNodes()
@@ -471,7 +542,7 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
       id: newNodeId,
       text: dmp.patch_toText(patches),
       patches: patches,
-      parent: parentId,
+      parent: Number(parentId),
       type: type, // Store the type of the node
       bookmarked: false,
       hidden: false,
@@ -483,8 +554,8 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
     }
 
     updateVisualization([data.nodes[newNodeId]]);
-    useModelColors = event.target.checked;
-    updateNodeColors(); // Update only the node colors without re-rendering the entire tree
+    // Save data to local storage
+    localStorage.setItem("data", JSON.stringify(data));
     if (type === "human") {
       network.selectNodes([newNodeId]);
       localStorage.setItem("checkedOutNodeId", newNodeId);
@@ -596,6 +667,7 @@ function findLongestTextChildNode(parentNodeId) {
 
 // Function to find all the descendents of a node
 function findDescendentNodes(nodeId) {
+  nodeId = Number(nodeId);
   let descendents = [];
   const children = Object.values(data.nodes).filter(
     (n) => n.parent === nodeId,
@@ -607,6 +679,186 @@ function findDescendentNodes(nodeId) {
     });
   }
   return descendents;
+}
+
+// Function to find all the descendants of a node and their depth
+function findDescendentNodesWithDepth(nodeId, depth = 0) {
+  let descendantsWithDepth = [];
+  const children = Object.values(data.nodes).filter(
+    (n) => n.parent === nodeId,
+  );
+  if (children.length > 0) {
+    descendantsWithDepth = children.map((child) => ({ id: child.id, depth: depth + 1 }));
+    children.forEach((child) => {
+      descendantsWithDepth = descendantsWithDepth.concat(findDescendentNodesWithDepth(child.id, depth + 1));
+    });
+  }
+  return descendantsWithDepth;
+}
+
+// Function to calculate the path stats for the current path
+function getPathStats() {
+  const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
+  let currentNode = data.nodes[checkedOutNodeId];
+  let pathToRoot = [];
+
+  // Traverse up the tree to collect the path to the root
+  while (currentNode) {
+    pathToRoot.push(currentNode);
+    currentNode = data.nodes[currentNode.parent];
+  }
+
+  // Count the occurrences of each model in the path
+  const modelCounts = pathToRoot.reduce((counts, node) => {
+    counts[node.type] = (counts[node.type] || 0) + 1;
+    return counts;
+  }, {});
+
+  return modelCounts;
+}
+
+// Scoring system framework
+const scoringAlgorithms = {
+  averageDescendants: function (nodes) {
+    const typeCounts = {};
+    const typeTotals = {};
+
+    Object.values(nodes).forEach((node) => {
+      if (!node.hidden) {
+        const descendants = findDescendentNodes(node.id);
+        const type = node.type;
+        typeCounts[type] = (typeCounts[type] || 0) + descendants.length;
+        typeTotals[type] = (typeTotals[type] || 0) + 1;
+      }
+    });
+
+    // Average by type
+    const averages = {};
+    for (const type in typeCounts) {
+      averages[type] = typeTotals[type] > 0 ? (typeCounts[type] / typeTotals[type]).toFixed(2) : 0;
+    }
+
+    // Sort the averages by value
+    return Object.fromEntries(
+      Object.entries(averages).sort(([, a], [, b]) => b - a),
+    );
+    return averages;
+  },
+  // Scoring algorithm for Normalized Proportion of Peer Descendants (NPPD)
+  normalizedProportionOfPeerDescendants: function (nodes) {
+  const nppdScores = {};
+
+  Object.values(nodes).forEach((node) => {
+    // Find all children of the current node
+    const children = Object.values(nodes).filter((child) => child.parent === node.id);
+    if (children.length === 0) {
+      // If the node has no children, assign a default score of 1
+      nppdScores[node.id] = 1;
+    } else {
+      // Calculate the total number of descendants for each child
+      const totalDescendants = children.reduce((acc, child) => {
+        const descendantsCount = findDescendentNodes(child.id).length;
+        acc[child.id] = descendantsCount;
+        return acc;
+      }, {});
+      // Calculate the total number of descendants across all children
+      const sumOfDescendants = Object.values(totalDescendants).reduce((acc, count) => acc + count, 0);
+      // Calculate the NPPD score for each child
+      children.forEach((child) => {
+        const proportion = sumOfDescendants > 0 ? totalDescendants[child.id] / sumOfDescendants : 0;
+        const normalizedScore = proportion * children.length;
+        nppdScores[child.id] = normalizedScore.toFixed(2);
+      });
+    }
+    });
+
+    // Average by type
+    const typeCounts = {};
+    const typeTotals = {};
+    for (const [nodeId, nppd] of Object.entries(nppdScores)) {
+      const type = data.nodes[nodeId].type;
+      typeCounts[type] = (typeCounts[type] || 0) + parseFloat(nppd);
+      typeTotals[type] = (typeTotals[type] || 0) + 1;
+    }
+
+    const averages = {};
+    for (const type in typeCounts) {
+      averages[type] = typeTotals[type] > 0 ? (typeCounts[type] / typeTotals[type]).toFixed(2) : 0;
+    }
+
+    // Sort the averages by values
+    return Object.fromEntries(
+      Object.entries(averages).sort(([, a], [, b]) => b - a),
+    );
+
+    return averages;
+  },
+  discountedCumulativeGain: function (nodes) {
+  const dcgScores = {};
+
+  Object.values(nodes).forEach((node) => {
+    let dcg = 0;
+    const descendantsWithDepth = findDescendentNodesWithDepth(node.id);
+    descendantsWithDepth.forEach((descendant) => {
+      const relevance = data.nodes[descendant.id] && !data.nodes[descendant.id].hidden ? 1 : 0;
+      const position = descendant.depth;
+      if (position === 1) {
+        dcg += relevance; // rel_1
+      } else {
+        dcg += relevance / (Math.log2(position + 1)); // rel_i / log_2(i + 1)
+      }
+    });
+    dcgScores[node.id] = dcg.toFixed(2);
+  });
+
+  // Average by type
+  const typeCounts = {};
+  const typeTotals = {};
+  for (const [nodeId, dcg] of Object.entries(dcgScores)) {
+    const type = data.nodes[nodeId].type;
+    typeCounts[type] = (typeCounts[type] || 0) + parseFloat(dcg);
+    typeTotals[type] = (typeTotals[type] || 0) + 1;
+  }
+
+  const averages = {};
+  for (const type in typeCounts) {
+    averages[type] = typeTotals[type] > 0 ? (typeCounts[type] / typeTotals[type]).toFixed(2) : 0;
+  }
+
+  // Sort the averages by values
+  return Object.fromEntries(
+    Object.entries(averages).sort(([, a], [, b]) => b - a),
+  );
+
+  return dcgScores;
+  }
+};
+
+// Function to update the stats in the info modal
+function updatePathStats() {
+  const statsContainer = document.getElementById("stats-container");
+  const modelCounts = getPathStats();
+  let statsHtml = '<ul>';
+
+  // Title: Path Stats
+  statsHtml += '<strong>Path Stats</strong>';
+
+  for (const [model, count] of Object.entries(modelCounts)) {
+    statsHtml += `<li>${model}: ${count}</li>`;
+  }
+  statsHtml += '</ul>';
+
+  statsContainer.innerHTML += statsHtml;
+}
+
+// Function to calculate and return scores based on the selected algorithm
+function calculateScores(algorithmName) {
+  const algorithm = scoringAlgorithms[algorithmName];
+  if (algorithm) {
+    return algorithm(Object.values(data.nodes));
+  } else {
+    throw new Error(`Scoring algorithm "${algorithmName}" not found.`);
+  }
 }
 // Global variable to store the API key
 var apiKey = "";
@@ -844,6 +1096,7 @@ window.addEventListener("contextmenu", function (event) {
     requestAnimationFrame(() => {
       fullTextElement.scrollTop = fullTextElement.scrollHeight;
     });
+
     // Close the modal
     textEditor.style.display = "none";
     fullTextElement.scrollTop = fullTextElement.scrollHeight;
@@ -1098,6 +1351,60 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
+// Modify the event listener for the '?' key to update the path stats and average descendants stats
+window.addEventListener("keydown", function (event) {
+  if (event.key === '?' || event.keyCode === 191) {
+    const statsContainer = document.getElementById("stats-container");
+
+    // Tree stats: total number of nodes
+    const totalNodes = Object.keys(data.nodes).length;
+    let treeStatsHtml = `<strong>Total Nodes:</strong> ${totalNodes}<br>`;
+
+    statsContainer.innerHTML = treeStatsHtml;
+
+    // Update the path stats
+    updatePathStats();
+
+    // Calculate and update average descendants stats
+    const averageDescendantsStats = calculateScores('averageDescendants');
+    let statsHtml = '<ul><strong>Average Descendants by Node Type:</strong>';
+
+    for (const [type, average] of Object.entries(averageDescendantsStats)) {
+      statsHtml += `<li>${type}: ${average}</li>`;
+    }
+    statsHtml += '</ul>';
+
+    statsContainer.innerHTML += statsHtml;
+
+    // Calculate and update discounted cumulative gain stats
+    const dcgStats = calculateScores('discountedCumulativeGain');
+    let dcgHtml = '<ul><strong>Average Discounted Cumulative Gain by Model:</strong>';
+
+    for (const [nodeId, dcg] of Object.entries(dcgStats)) {
+      dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
+    }
+    dcgHtml += '</ul>';
+
+    statsContainer.innerHTML += dcgHtml;
+
+    // Calculate and update normalized proportion of peer descendants
+    const npdStats = calculateScores('normalizedProportionOfPeerDescendants');
+    let npdHtml = '<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>';
+
+    for (const [nodeId, npd] of Object.entries(npdStats)) {
+      npdHtml += `<li>${nodeId}: ${npd}</li>`;
+    }
+    npdHtml += '</ul>';
+
+    statsContainer.innerHTML += npdHtml;
+
+    // Toggle the info modal display
+    const infoModal = document.getElementById("infoModal");
+    const isModalOpen = infoModal.style.display === "block";
+    infoModal.style.display = isModalOpen ? "none" : "block";
+    event.preventDefault();
+  }
+});
 </script>
 </body>
 </html>

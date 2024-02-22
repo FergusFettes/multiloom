@@ -109,6 +109,7 @@ window.addEventListener("contextmenu", function (event) {
     requestAnimationFrame(() => {
       fullTextElement.scrollTop = fullTextElement.scrollHeight;
     });
+
     // Close the modal
     textEditor.style.display = "none";
     fullTextElement.scrollTop = fullTextElement.scrollHeight;
@@ -363,3 +364,57 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
+// Modify the event listener for the '?' key to update the path stats and average descendants stats
+window.addEventListener("keydown", function (event) {
+  if (event.key === '?' || event.keyCode === 191) {
+    const statsContainer = document.getElementById("stats-container");
+
+    // Tree stats: total number of nodes
+    const totalNodes = Object.keys(data.nodes).length;
+    let treeStatsHtml = `<strong>Total Nodes:</strong> ${totalNodes}<br>`;
+
+    statsContainer.innerHTML = treeStatsHtml;
+
+    // Update the path stats
+    updatePathStats();
+
+    // Calculate and update average descendants stats
+    const averageDescendantsStats = calculateScores('averageDescendants');
+    let statsHtml = '<ul><strong>Average Descendants by Node Type:</strong>';
+
+    for (const [type, average] of Object.entries(averageDescendantsStats)) {
+      statsHtml += `<li>${type}: ${average}</li>`;
+    }
+    statsHtml += '</ul>';
+
+    statsContainer.innerHTML += statsHtml;
+
+    // Calculate and update discounted cumulative gain stats
+    const dcgStats = calculateScores('discountedCumulativeGain');
+    let dcgHtml = '<ul><strong>Average Discounted Cumulative Gain by Model:</strong>';
+
+    for (const [nodeId, dcg] of Object.entries(dcgStats)) {
+      dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
+    }
+    dcgHtml += '</ul>';
+
+    statsContainer.innerHTML += dcgHtml;
+
+    // Calculate and update normalized proportion of peer descendants
+    const npdStats = calculateScores('normalizedProportionOfPeerDescendants');
+    let npdHtml = '<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>';
+
+    for (const [nodeId, npd] of Object.entries(npdStats)) {
+      npdHtml += `<li>${nodeId}: ${npd}</li>`;
+    }
+    npdHtml += '</ul>';
+
+    statsContainer.innerHTML += npdHtml;
+
+    // Toggle the info modal display
+    const infoModal = document.getElementById("infoModal");
+    const isModalOpen = infoModal.style.display === "block";
+    infoModal.style.display = isModalOpen ? "none" : "block";
+    event.preventDefault();
+  }
+});

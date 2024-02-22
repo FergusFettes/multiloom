@@ -32,12 +32,15 @@
         <textarea id="fullText" style="width:100%; height:100%;"></textarea>
     </div>
     <div id="background-text">
-      Hello and welcome to tinyloom! This is a little loom in one file.<br>
+      <div>Hello and welcome to tinyloom! This is a little loom in one file.<br>
+      <br>
+      <b>Press '?' at any time to open a help menu.</b><br>
+      <br>
       Click anywhere to create your first node. Right click to exit the editor.<br>
       Add your together.ai api key, and press 'r' to generate! Happy looming!<br>
       <br>
       Double click on nodes to see and edit the full text.<br>
-      Click on nodes to check them out for generation.<br>
+      Click on nodes to check them out for generation.<br></div>
     </div>
     <!-- Settings modal for model configuration -->
     <div id="settingsModal">
@@ -74,3 +77,34 @@
         </div>
         <button id="save-settings-btn">Save Settings</button>
     </div>
+<div id="infoModal">
+    <div style="display: flex; justify-content: space-between; height: 50%;">
+        <div style="width: 50%; padding-right: 10px;">
+            <h3>Key Shortcuts</h3>
+            <ul id="key-shortcuts-list">
+              <li><kbd>e</kbd>: Open the editor</li>
+              <li><kbd>r</kbd>: Generate new output</li>
+              <li><kbd>p</kbd>: Open settings</li>
+              <li><kbd>Escape</kbd>: Close the editor</li>
+              <li><kbd>w</kbd>: Navigate to parent node</li>
+              <li><kbd>a</kbd>: Navigate to left sibling node</li>
+              <li><kbd>d</kbd>: Navigate to right sibling node</li>
+              <li><kbd>s</kbd>: Navigate to longest text child node</li>
+              <li><kbd>Space</kbd>: Toggle visibility of selected node</li>
+              <li><kbd>Enter</kbd>: Toggle bookmark of selected node</li>
+              <li><kbd>Delete</kbd>: Delete selected node</li>
+            </ul>
+            <h3>Mouse Options</h3>
+            Left click to select a node. This will update the editor if it is open.
+            Double click to open the editor on a node.
+            Right click on a node for hide, bookmark or delete. These can also be done with keyboard shortcuts.
+            Right click on the editor to close it.
+        </div>
+        <div style="width: 50%; padding-left: 10px;">
+            <h3>Stats</h3>
+            <div id="stats-container">
+                <!-- Stats will be added here -->
+            </div>
+        </div>
+    </div>
+</div>

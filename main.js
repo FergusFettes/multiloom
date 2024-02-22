@@ -213,7 +213,6 @@ function deleteNode(nodeId) {
 }
 
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
-  console.log(parentId, type)
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
     const newNodeId = !hasNonDataNodes()
@@ -224,7 +223,7 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
       id: newNodeId,
       text: dmp.patch_toText(patches),
       patches: patches,
-      parent: parentId,
+      parent: Number(parentId),
       type: type, // Store the type of the node
       bookmarked: false,
       hidden: false,
@@ -236,8 +235,8 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
     }
 
     updateVisualization([data.nodes[newNodeId]]);
-    useModelColors = event.target.checked;
-    updateNodeColors(); // Update only the node colors without re-rendering the entire tree
+    // Save data to local storage
+    localStorage.setItem("data", JSON.stringify(data));
     if (type === "human") {
       network.selectNodes([newNodeId]);
       localStorage.setItem("checkedOutNodeId", newNodeId);

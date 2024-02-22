@@ -73,3 +73,33 @@
     font-size: 12px;
     max-width: 300px;
 }
+
+#infoModal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 10%;
+    top: 10%;
+    width: 80%;
+    height: 80%;
+    background-color: rgba(255, 255, 255, 0.9); /* white with 90% opacity */
+    border: 1px solid #ccc;
+    overflow: auto;
+}
+
+#infoModal h3 {
+    margin-top: 0;
+}
+
+#key-shortcuts-list {
+    list-style: none;
+    padding: 20;
+}
+
+#key-shortcuts-list li {
+    margin-bottom: 5px;
+}
+
+#stats-container {
+    /* Placeholder for stats styles */
+}

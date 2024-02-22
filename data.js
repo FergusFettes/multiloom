@@ -4,8 +4,16 @@ document.addEventListener("DOMContentLoaded", function () {
   var savedData = localStorage.getItem("data");
   if (savedData) {
     data = JSON.parse(savedData);
+    console.log(data);
     updateVisualization(Object.values(data.nodes));
   }
+
+  // Make sure all the node ids and parent ids are numbers
+  Object.values(data.nodes).forEach((node) => {
+    node.id = parseInt(node.id);
+    node.parent = parseInt(node.parent);
+  });
+
   // Hide the background text if there are nodes
   if (Object.keys(data.nodes).length > 0) {
     document.getElementById("background-text").style.display = "none";
