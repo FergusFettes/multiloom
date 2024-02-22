@@ -62,12 +62,11 @@
     background-color: #f0f0f0; /* Add a hover effect for list items */
 }
 
-/* Tooltop container. Should be sleek and minimal */
 #info-box {
     display: none;
     position: absolute;
     z-index: 1000;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.8);
     color: black;
     border: 1px solid #ccc;
     padding: 10px;
