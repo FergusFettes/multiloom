@@ -27,9 +27,7 @@ function updateVisualization(newNodes) {
       node.patches && node.patches.length > 0
         ? node.patches[node.patches.length - 1]
         : null;
-    var label = lastPatch
-      ? formatDiffsForDisplay(lastPatch.diffs)
-      : node.text;
+    var label = lastPatch ? formatDiffsForDisplay(lastPatch.diffs) : node.text;
     if (node.hidden) {
       label = "...";
     }
@@ -44,7 +42,12 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box">' + (node.bookmarked ? '🌟' : '') + '<strong>Model:</strong> ' + node.type + '</div>',
+      title:
+        '<div class="info-box">' +
+        (node.bookmarked ? "🌟" : "") +
+        "<strong>Model:</strong> " +
+        node.type +
+        "</div>",
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -58,7 +61,6 @@ function updateVisualization(newNodes) {
       nodes.remove(node.id);
     }
   });
-
 }
 
 updateVisualization(Object.values(data.nodes));
@@ -98,7 +100,7 @@ function updateNodeColors() {
 }
 
 // Get the context menu element
-var contextMenu = document.getElementById('nodeContextMenu');
+var contextMenu = document.getElementById("nodeContextMenu");
 // Create a network
 const container = document.getElementById("mynetwork");
 
@@ -192,7 +194,9 @@ function deleteNode(nodeId) {
   edges.remove(
     edges.get({
       filter: function (edge) {
-        return nodesToDelete.includes(edge.from) || nodesToDelete.includes(edge.to);
+        return (
+          nodesToDelete.includes(edge.from) || nodesToDelete.includes(edge.to)
+        );
       },
     }),
   );

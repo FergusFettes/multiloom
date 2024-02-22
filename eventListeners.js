@@ -45,7 +45,6 @@ network.on("doubleClick", function (params) {
   }
 });
 
-
 // Helper function to render and open fulltext
 function renderAndOpenFullText(nodeId) {
   const fullText = renderFullTextFromPatches(nodeId);
@@ -69,7 +68,7 @@ window.addEventListener("keydown", function (event) {
     }
 
     document.getElementById("background-text").style.display = "none";
-    console.log(document.getElementById("background-text").style.display)
+    console.log(document.getElementById("background-text").style.display);
 
     // Get the selected node
     const selectedNodeId = network.getSelectedNodes()[0];
@@ -81,11 +80,11 @@ window.addEventListener("keydown", function (event) {
       document.getElementById("textEditor").style.display = "block";
     }
 
-    console.log(selectedNodeId)
+    console.log(selectedNodeId);
 
     // Focus on the full text element
     document.getElementById("fullText").focus();
-    console.log(document.getElementById("background-text").style.display)
+    console.log(document.getElementById("background-text").style.display);
 
     // Prevent the default action of the 'e' key
     event.preventDefault();
@@ -127,7 +126,10 @@ window.addEventListener("keydown", function (event) {
   }
 
   // If there are no nodes and the text editor is not open, show the background text
-  if (Object.keys(data.nodes).length === 0 && document.getElementById("textEditor").style.display === "none") {
+  if (
+    Object.keys(data.nodes).length === 0 &&
+    document.getElementById("textEditor").style.display === "none"
+  ) {
     document.getElementById("background-text").style.display = "flex";
   }
 });
@@ -146,7 +148,6 @@ window.addEventListener("keydown", function (event) {
         : "block";
   }
 });
-
 
 // Event listener for the r key to generate new output
 window.addEventListener("keydown", function (event) {
@@ -270,52 +271,52 @@ document
   });
 
 // Attach context menu to the network
-network.on('oncontext', function (params) {
+network.on("oncontext", function (params) {
   // Prevent default context menu from appearing
   params.event.preventDefault();
   // Check if the right-clicked element is a node
   const nodeId = this.getNodeAt(params.pointer.DOM);
   if (nodeId) {
     // Store the node ID in the context menu's data attribute
-    contextMenu.setAttribute('data-node-id', nodeId);
+    contextMenu.setAttribute("data-node-id", nodeId);
     // Position the custom context menu at the pointer location
-    contextMenu.style.top = params.pointer.DOM.y + 'px';
-    contextMenu.style.left = params.pointer.DOM.x + 'px';
+    contextMenu.style.top = params.pointer.DOM.y + "px";
+    contextMenu.style.left = params.pointer.DOM.x + "px";
     // Display the custom context menu
-    contextMenu.style.display = 'block';
+    contextMenu.style.display = "block";
   }
 });
 
 // Hide the context menu when clicking elsewhere
-network.on('click', function () {
-    if (contextMenu.style.display === 'block') {
-        contextMenu.style.display = 'none';
-    }
+network.on("click", function () {
+  if (contextMenu.style.display === "block") {
+    contextMenu.style.display = "none";
+  }
 });
 
 // Event listeners for context menu actions
-document.getElementById('hideNode').addEventListener('click', function () {
-  const nodeId = contextMenu.getAttribute('data-node-id');
+document.getElementById("hideNode").addEventListener("click", function () {
+  const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
     toggleVisibility(Number(nodeId));
   }
-  contextMenu.style.display = 'none';
+  contextMenu.style.display = "none";
 });
 
-document.getElementById('bookmarkNode').addEventListener('click', function () {
-  const nodeId = contextMenu.getAttribute('data-node-id');
+document.getElementById("bookmarkNode").addEventListener("click", function () {
+  const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
     toggleBookmark(Number(nodeId));
   }
-  contextMenu.style.display = 'none';
+  contextMenu.style.display = "none";
 });
 
-document.getElementById('deleteNode').addEventListener('click', function () {
-  const nodeId = contextMenu.getAttribute('data-node-id');
+document.getElementById("deleteNode").addEventListener("click", function () {
+  const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
     deleteNode(Number(nodeId));
   }
-  contextMenu.style.display = 'none';
+  contextMenu.style.display = "none";
 });
 
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
@@ -366,7 +367,7 @@ window.addEventListener("keydown", function (event) {
 
 // Modify the event listener for the '?' key to update the path stats and average descendants stats
 window.addEventListener("keydown", function (event) {
-  if (event.key === '?' || event.keyCode === 191) {
+  if (event.key === "?" || event.keyCode === 191) {
     const statsContainer = document.getElementById("stats-container");
 
     // Tree stats: total number of nodes
@@ -379,35 +380,37 @@ window.addEventListener("keydown", function (event) {
     updatePathStats();
 
     // Calculate and update average descendants stats
-    const averageDescendantsStats = calculateScores('averageDescendants');
-    let statsHtml = '<ul><strong>Average Descendants by Node Type:</strong>';
+    const averageDescendantsStats = calculateScores("averageDescendants");
+    let statsHtml = "<ul><strong>Average Descendants by Node Type:</strong>";
 
     for (const [type, average] of Object.entries(averageDescendantsStats)) {
       statsHtml += `<li>${type}: ${average}</li>`;
     }
-    statsHtml += '</ul>';
+    statsHtml += "</ul>";
 
     statsContainer.innerHTML += statsHtml;
 
     // Calculate and update discounted cumulative gain stats
-    const dcgStats = calculateScores('discountedCumulativeGain');
-    let dcgHtml = '<ul><strong>Average Discounted Cumulative Gain by Model:</strong>';
+    const dcgStats = calculateScores("discountedCumulativeGain");
+    let dcgHtml =
+      "<ul><strong>Average Discounted Cumulative Gain by Model:</strong>";
 
     for (const [nodeId, dcg] of Object.entries(dcgStats)) {
       dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
     }
-    dcgHtml += '</ul>';
+    dcgHtml += "</ul>";
 
     statsContainer.innerHTML += dcgHtml;
 
     // Calculate and update normalized proportion of peer descendants
-    const npdStats = calculateScores('normalizedProportionOfPeerDescendants');
-    let npdHtml = '<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>';
+    const npdStats = calculateScores("normalizedProportionOfPeerDescendants");
+    let npdHtml =
+      "<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>";
 
     for (const [nodeId, npd] of Object.entries(npdStats)) {
       npdHtml += `<li>${nodeId}: ${npd}</li>`;
     }
-    npdHtml += '</ul>';
+    npdHtml += "</ul>";
 
     statsContainer.innerHTML += npdHtml;
 

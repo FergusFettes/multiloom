@@ -195,6 +195,7 @@
                 <textarea id="json-data-textarea" style="width:100%; height:90%;"></textarea>
                 <button id="export-json-btn">Export JSON</button>
                 <button id="import-json-btn">Import JSON</button>
+                <div id="json-load-status"></div>
             </div>
         </div>
         <button id="save-settings-btn">Save Settings</button>
@@ -273,9 +274,9 @@ var data = { nodes: {} };
 // Function to clear data from localStorage and reset visualization
 function clearData() {
   localStorage.removeItem("data");
-data = { nodes: {} }; // Reset data object
-edges.clear(); // Clear edges from DataSet
-nodes.clear(); // Clear nodes from DataSet
+  data = { nodes: {} }; // Reset data object
+  edges.clear(); // Clear edges from DataSet
+  nodes.clear(); // Clear nodes from DataSet
   document.getElementById("background-text").style.display = "flex"; // Show background text
 }
 
@@ -288,11 +289,20 @@ function exportJSON() {
 // Function to import JSON data from the textarea
 function importJSON() {
   const jsonData = document.getElementById("json-data-textarea").value;
+  document.getElementById("json-load-status").innerText =
+    "Loading. For larger trees, this might take a minute.";
   try {
     const parsedData = JSON.parse(jsonData);
     document.getElementById("background-text").style.display = "none";
     // Update the data object and visualization with the new data
+    clearData();
     data = parsedData;
+
+    // If textarea or settings are open, close them
+    document.getElementById("json-data-textarea").value = "";
+    document.getElementById("textEditor").style.display = "none";
+    document.getElementById("settingsModal").style.display = "none";
+    document.getElementById("background-text").style.display = "none";
     updateVisualization(Object.values(data.nodes));
   } catch (error) {
     console.error("Error parsing JSON:", error);
@@ -304,7 +314,7 @@ function importJSON() {
 function downloadHTML() {
   var htmlContent = document.documentElement.outerHTML;
   htmlContent = htmlContent.replace(
-"var data = " + JSON.stringify(data.nodes) + ";",
+    "var data = " + JSON.stringify(data.nodes) + ";",
   );
 
   var blob = new Blob([htmlContent], { type: "text/html" });
@@ -346,9 +356,7 @@ function updateVisualization(newNodes) {
       node.patches && node.patches.length > 0
         ? node.patches[node.patches.length - 1]
         : null;
-    var label = lastPatch
-      ? formatDiffsForDisplay(lastPatch.diffs)
-      : node.text;
+    var label = lastPatch ? formatDiffsForDisplay(lastPatch.diffs) : node.text;
     if (node.hidden) {
       label = "...";
     }
@@ -363,7 +371,12 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box">' + (node.bookmarked ? '🌟' : '') + '<strong>Model:</strong> ' + node.type + '</div>',
+      title:
+        '<div class="info-box">' +
+        (node.bookmarked ? "🌟" : "") +
+        "<strong>Model:</strong> " +
+        node.type +
+        "</div>",
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -377,7 +390,6 @@ function updateVisualization(newNodes) {
       nodes.remove(node.id);
     }
   });
-
 }
 
 updateVisualization(Object.values(data.nodes));
@@ -417,7 +429,7 @@ function updateNodeColors() {
 }
 
 // Get the context menu element
-var contextMenu = document.getElementById('nodeContextMenu');
+var contextMenu = document.getElementById("nodeContextMenu");
 // Create a network
 const container = document.getElementById("mynetwork");
 
@@ -511,7 +523,9 @@ function deleteNode(nodeId) {
   edges.remove(
     edges.get({
       filter: function (edge) {
-        return nodesToDelete.includes(edge.from) || nodesToDelete.includes(edge.to);
+        return (
+          nodesToDelete.includes(edge.from) || nodesToDelete.includes(edge.to)
+        );
       },
     }),
   );
@@ -669,9 +683,7 @@ function findLongestTextChildNode(parentNodeId) {
 function findDescendentNodes(nodeId) {
   nodeId = Number(nodeId);
   let descendents = [];
-  const children = Object.values(data.nodes).filter(
-    (n) => n.parent === nodeId,
-  );
+  const children = Object.values(data.nodes).filter((n) => n.parent === nodeId);
   if (children.length > 0) {
     descendents = children.map((child) => child.id);
     children.forEach((child) => {
@@ -684,13 +696,16 @@ function findDescendentNodes(nodeId) {
 // Function to find all the descendants of a node and their depth
 function findDescendentNodesWithDepth(nodeId, depth = 0) {
   let descendantsWithDepth = [];
-  const children = Object.values(data.nodes).filter(
-    (n) => n.parent === nodeId,
-  );
+  const children = Object.values(data.nodes).filter((n) => n.parent === nodeId);
   if (children.length > 0) {
-    descendantsWithDepth = children.map((child) => ({ id: child.id, depth: depth + 1 }));
+    descendantsWithDepth = children.map((child) => ({
+      id: child.id,
+      depth: depth + 1,
+    }));
     children.forEach((child) => {
-      descendantsWithDepth = descendantsWithDepth.concat(findDescendentNodesWithDepth(child.id, depth + 1));
+      descendantsWithDepth = descendantsWithDepth.concat(
+        findDescendentNodesWithDepth(child.id, depth + 1),
+      );
     });
   }
   return descendantsWithDepth;
@@ -735,7 +750,10 @@ const scoringAlgorithms = {
     // Average by type
     const averages = {};
     for (const type in typeCounts) {
-      averages[type] = typeTotals[type] > 0 ? (typeCounts[type] / typeTotals[type]).toFixed(2) : 0;
+      averages[type] =
+        typeTotals[type] > 0
+          ? (typeCounts[type] / typeTotals[type]).toFixed(2)
+          : 0;
     }
 
     // Sort the averages by value
@@ -746,30 +764,38 @@ const scoringAlgorithms = {
   },
   // Scoring algorithm for Normalized Proportion of Peer Descendants (NPPD)
   normalizedProportionOfPeerDescendants: function (nodes) {
-  const nppdScores = {};
+    const nppdScores = {};
 
-  Object.values(nodes).forEach((node) => {
-    // Find all children of the current node
-    const children = Object.values(nodes).filter((child) => child.parent === node.id);
-    if (children.length === 0) {
-      // If the node has no children, assign a default score of 1
-      nppdScores[node.id] = 1;
-    } else {
-      // Calculate the total number of descendants for each child
-      const totalDescendants = children.reduce((acc, child) => {
-        const descendantsCount = findDescendentNodes(child.id).length;
-        acc[child.id] = descendantsCount;
-        return acc;
-      }, {});
-      // Calculate the total number of descendants across all children
-      const sumOfDescendants = Object.values(totalDescendants).reduce((acc, count) => acc + count, 0);
-      // Calculate the NPPD score for each child
-      children.forEach((child) => {
-        const proportion = sumOfDescendants > 0 ? totalDescendants[child.id] / sumOfDescendants : 0;
-        const normalizedScore = proportion * children.length;
-        nppdScores[child.id] = normalizedScore.toFixed(2);
-      });
-    }
+    Object.values(nodes).forEach((node) => {
+      // Find all children of the current node
+      const children = Object.values(nodes).filter(
+        (child) => child.parent === node.id,
+      );
+      if (children.length === 0) {
+        // If the node has no children, assign a default score of 1
+        nppdScores[node.id] = 1;
+      } else {
+        // Calculate the total number of descendants for each child
+        const totalDescendants = children.reduce((acc, child) => {
+          const descendantsCount = findDescendentNodes(child.id).length;
+          acc[child.id] = descendantsCount;
+          return acc;
+        }, {});
+        // Calculate the total number of descendants across all children
+        const sumOfDescendants = Object.values(totalDescendants).reduce(
+          (acc, count) => acc + count,
+          0,
+        );
+        // Calculate the NPPD score for each child
+        children.forEach((child) => {
+          const proportion =
+            sumOfDescendants > 0
+              ? totalDescendants[child.id] / sumOfDescendants
+              : 0;
+          const normalizedScore = proportion * children.length;
+          nppdScores[child.id] = normalizedScore.toFixed(2);
+        });
+      }
     });
 
     // Average by type
@@ -783,7 +809,10 @@ const scoringAlgorithms = {
 
     const averages = {};
     for (const type in typeCounts) {
-      averages[type] = typeTotals[type] > 0 ? (typeCounts[type] / typeTotals[type]).toFixed(2) : 0;
+      averages[type] =
+        typeTotals[type] > 0
+          ? (typeCounts[type] / typeTotals[type]).toFixed(2)
+          : 0;
     }
 
     // Sort the averages by values
@@ -794,59 +823,65 @@ const scoringAlgorithms = {
     return averages;
   },
   discountedCumulativeGain: function (nodes) {
-  const dcgScores = {};
+    const dcgScores = {};
 
-  Object.values(nodes).forEach((node) => {
-    let dcg = 0;
-    const descendantsWithDepth = findDescendentNodesWithDepth(node.id);
-    descendantsWithDepth.forEach((descendant) => {
-      const relevance = data.nodes[descendant.id] && !data.nodes[descendant.id].hidden ? 1 : 0;
-      const position = descendant.depth;
-      if (position === 1) {
-        dcg += relevance; // rel_1
-      } else {
-        dcg += relevance / (Math.log2(position + 1)); // rel_i / log_2(i + 1)
-      }
+    Object.values(nodes).forEach((node) => {
+      let dcg = 0;
+      const descendantsWithDepth = findDescendentNodesWithDepth(node.id);
+      descendantsWithDepth.forEach((descendant) => {
+        const relevance =
+          data.nodes[descendant.id] && !data.nodes[descendant.id].hidden
+            ? 1
+            : 0;
+        const position = descendant.depth;
+        if (position === 1) {
+          dcg += relevance; // rel_1
+        } else {
+          dcg += relevance / Math.log2(position + 1); // rel_i / log_2(i + 1)
+        }
+      });
+      dcgScores[node.id] = dcg.toFixed(2);
     });
-    dcgScores[node.id] = dcg.toFixed(2);
-  });
 
-  // Average by type
-  const typeCounts = {};
-  const typeTotals = {};
-  for (const [nodeId, dcg] of Object.entries(dcgScores)) {
-    const type = data.nodes[nodeId].type;
-    typeCounts[type] = (typeCounts[type] || 0) + parseFloat(dcg);
-    typeTotals[type] = (typeTotals[type] || 0) + 1;
-  }
+    // Average by type
+    const typeCounts = {};
+    const typeTotals = {};
+    for (const [nodeId, dcg] of Object.entries(dcgScores)) {
+      const type = data.nodes[nodeId].type;
+      typeCounts[type] = (typeCounts[type] || 0) + parseFloat(dcg);
+      typeTotals[type] = (typeTotals[type] || 0) + 1;
+    }
 
-  const averages = {};
-  for (const type in typeCounts) {
-    averages[type] = typeTotals[type] > 0 ? (typeCounts[type] / typeTotals[type]).toFixed(2) : 0;
-  }
+    const averages = {};
+    for (const type in typeCounts) {
+      averages[type] =
+        typeTotals[type] > 0
+          ? (typeCounts[type] / typeTotals[type]).toFixed(2)
+          : 0;
+    }
 
-  // Sort the averages by values
-  return Object.fromEntries(
-    Object.entries(averages).sort(([, a], [, b]) => b - a),
-  );
+    // Sort the averages by values
+    return Object.fromEntries(
+      Object.entries(averages).sort(([, a], [, b]) => b - a),
+    );
 
-  return dcgScores;
-  }
+    return dcgScores;
+  },
 };
 
 // Function to update the stats in the info modal
 function updatePathStats() {
   const statsContainer = document.getElementById("stats-container");
   const modelCounts = getPathStats();
-  let statsHtml = '<ul>';
+  let statsHtml = "<ul>";
 
   // Title: Path Stats
-  statsHtml += '<strong>Path Stats</strong>';
+  statsHtml += "<strong>Path Stats</strong>";
 
   for (const [model, count] of Object.entries(modelCounts)) {
     statsHtml += `<li>${model}: ${count}</li>`;
   }
-  statsHtml += '</ul>';
+  statsHtml += "</ul>";
 
   statsContainer.innerHTML += statsHtml;
 }
@@ -920,7 +955,6 @@ Completion: Paris.
 Prompt:
 `;
 
-
 // Function to make an API call for text generation
 function generateText(fullText, parentId, type) {
   var config = Object.assign({}, modelConfig); // Clone the modelConfig object
@@ -934,10 +968,10 @@ function generateText(fullText, parentId, type) {
   };
 
   // Check if the model alias is for OpenAI and set the appropriate API URL and headers
-  if (type.startsWith('gpt')) {
+  if (type.startsWith("gpt")) {
     apiUrl = "https://api.openai.com/v1/chat/completions";
     headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: "Bearer " + openaiApiKey,
     };
     // OpenAI expects the prompt in a different format
@@ -971,7 +1005,7 @@ function generateText(fullText, parentId, type) {
       const responseData = response.data.replace(/^data: /, "");
       const jsonResponse = JSON.parse(responseData);
       var newText = "";
-      if (type.startsWith('gpt')) {
+      if (type.startsWith("gpt")) {
         // OpenAI returns the response in a different format
         newText = " " + jsonResponse.choices[0].message.content;
       } else {
@@ -1032,7 +1066,6 @@ network.on("doubleClick", function (params) {
   }
 });
 
-
 // Helper function to render and open fulltext
 function renderAndOpenFullText(nodeId) {
   const fullText = renderFullTextFromPatches(nodeId);
@@ -1056,7 +1089,7 @@ window.addEventListener("keydown", function (event) {
     }
 
     document.getElementById("background-text").style.display = "none";
-    console.log(document.getElementById("background-text").style.display)
+    console.log(document.getElementById("background-text").style.display);
 
     // Get the selected node
     const selectedNodeId = network.getSelectedNodes()[0];
@@ -1068,11 +1101,11 @@ window.addEventListener("keydown", function (event) {
       document.getElementById("textEditor").style.display = "block";
     }
 
-    console.log(selectedNodeId)
+    console.log(selectedNodeId);
 
     // Focus on the full text element
     document.getElementById("fullText").focus();
-    console.log(document.getElementById("background-text").style.display)
+    console.log(document.getElementById("background-text").style.display);
 
     // Prevent the default action of the 'e' key
     event.preventDefault();
@@ -1114,7 +1147,10 @@ window.addEventListener("keydown", function (event) {
   }
 
   // If there are no nodes and the text editor is not open, show the background text
-  if (Object.keys(data.nodes).length === 0 && document.getElementById("textEditor").style.display === "none") {
+  if (
+    Object.keys(data.nodes).length === 0 &&
+    document.getElementById("textEditor").style.display === "none"
+  ) {
     document.getElementById("background-text").style.display = "flex";
   }
 });
@@ -1133,7 +1169,6 @@ window.addEventListener("keydown", function (event) {
         : "block";
   }
 });
-
 
 // Event listener for the r key to generate new output
 window.addEventListener("keydown", function (event) {
@@ -1257,52 +1292,52 @@ document
   });
 
 // Attach context menu to the network
-network.on('oncontext', function (params) {
+network.on("oncontext", function (params) {
   // Prevent default context menu from appearing
   params.event.preventDefault();
   // Check if the right-clicked element is a node
   const nodeId = this.getNodeAt(params.pointer.DOM);
   if (nodeId) {
     // Store the node ID in the context menu's data attribute
-    contextMenu.setAttribute('data-node-id', nodeId);
+    contextMenu.setAttribute("data-node-id", nodeId);
     // Position the custom context menu at the pointer location
-    contextMenu.style.top = params.pointer.DOM.y + 'px';
-    contextMenu.style.left = params.pointer.DOM.x + 'px';
+    contextMenu.style.top = params.pointer.DOM.y + "px";
+    contextMenu.style.left = params.pointer.DOM.x + "px";
     // Display the custom context menu
-    contextMenu.style.display = 'block';
+    contextMenu.style.display = "block";
   }
 });
 
 // Hide the context menu when clicking elsewhere
-network.on('click', function () {
-    if (contextMenu.style.display === 'block') {
-        contextMenu.style.display = 'none';
-    }
+network.on("click", function () {
+  if (contextMenu.style.display === "block") {
+    contextMenu.style.display = "none";
+  }
 });
 
 // Event listeners for context menu actions
-document.getElementById('hideNode').addEventListener('click', function () {
-  const nodeId = contextMenu.getAttribute('data-node-id');
+document.getElementById("hideNode").addEventListener("click", function () {
+  const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
     toggleVisibility(Number(nodeId));
   }
-  contextMenu.style.display = 'none';
+  contextMenu.style.display = "none";
 });
 
-document.getElementById('bookmarkNode').addEventListener('click', function () {
-  const nodeId = contextMenu.getAttribute('data-node-id');
+document.getElementById("bookmarkNode").addEventListener("click", function () {
+  const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
     toggleBookmark(Number(nodeId));
   }
-  contextMenu.style.display = 'none';
+  contextMenu.style.display = "none";
 });
 
-document.getElementById('deleteNode').addEventListener('click', function () {
-  const nodeId = contextMenu.getAttribute('data-node-id');
+document.getElementById("deleteNode").addEventListener("click", function () {
+  const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
     deleteNode(Number(nodeId));
   }
-  contextMenu.style.display = 'none';
+  contextMenu.style.display = "none";
 });
 
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
@@ -1353,7 +1388,7 @@ window.addEventListener("keydown", function (event) {
 
 // Modify the event listener for the '?' key to update the path stats and average descendants stats
 window.addEventListener("keydown", function (event) {
-  if (event.key === '?' || event.keyCode === 191) {
+  if (event.key === "?" || event.keyCode === 191) {
     const statsContainer = document.getElementById("stats-container");
 
     // Tree stats: total number of nodes
@@ -1366,35 +1401,37 @@ window.addEventListener("keydown", function (event) {
     updatePathStats();
 
     // Calculate and update average descendants stats
-    const averageDescendantsStats = calculateScores('averageDescendants');
-    let statsHtml = '<ul><strong>Average Descendants by Node Type:</strong>';
+    const averageDescendantsStats = calculateScores("averageDescendants");
+    let statsHtml = "<ul><strong>Average Descendants by Node Type:</strong>";
 
     for (const [type, average] of Object.entries(averageDescendantsStats)) {
       statsHtml += `<li>${type}: ${average}</li>`;
     }
-    statsHtml += '</ul>';
+    statsHtml += "</ul>";
 
     statsContainer.innerHTML += statsHtml;
 
     // Calculate and update discounted cumulative gain stats
-    const dcgStats = calculateScores('discountedCumulativeGain');
-    let dcgHtml = '<ul><strong>Average Discounted Cumulative Gain by Model:</strong>';
+    const dcgStats = calculateScores("discountedCumulativeGain");
+    let dcgHtml =
+      "<ul><strong>Average Discounted Cumulative Gain by Model:</strong>";
 
     for (const [nodeId, dcg] of Object.entries(dcgStats)) {
       dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
     }
-    dcgHtml += '</ul>';
+    dcgHtml += "</ul>";
 
     statsContainer.innerHTML += dcgHtml;
 
     // Calculate and update normalized proportion of peer descendants
-    const npdStats = calculateScores('normalizedProportionOfPeerDescendants');
-    let npdHtml = '<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>';
+    const npdStats = calculateScores("normalizedProportionOfPeerDescendants");
+    let npdHtml =
+      "<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>";
 
     for (const [nodeId, npd] of Object.entries(npdStats)) {
       npdHtml += `<li>${nodeId}: ${npd}</li>`;
     }
-    npdHtml += '</ul>';
+    npdHtml += "</ul>";
 
     statsContainer.innerHTML += npdHtml;
 

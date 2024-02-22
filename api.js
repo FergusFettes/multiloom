@@ -58,7 +58,6 @@ Completion: Paris.
 Prompt:
 `;
 
-
 // Function to make an API call for text generation
 function generateText(fullText, parentId, type) {
   var config = Object.assign({}, modelConfig); // Clone the modelConfig object
@@ -72,10 +71,10 @@ function generateText(fullText, parentId, type) {
   };
 
   // Check if the model alias is for OpenAI and set the appropriate API URL and headers
-  if (type.startsWith('gpt')) {
+  if (type.startsWith("gpt")) {
     apiUrl = "https://api.openai.com/v1/chat/completions";
     headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: "Bearer " + openaiApiKey,
     };
     // OpenAI expects the prompt in a different format
@@ -109,7 +108,7 @@ function generateText(fullText, parentId, type) {
       const responseData = response.data.replace(/^data: /, "");
       const jsonResponse = JSON.parse(responseData);
       var newText = "";
-      if (type.startsWith('gpt')) {
+      if (type.startsWith("gpt")) {
         // OpenAI returns the response in a different format
         newText = " " + jsonResponse.choices[0].message.content;
       } else {

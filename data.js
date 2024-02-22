@@ -40,9 +40,9 @@ var data = { nodes: {} };
 // Function to clear data from localStorage and reset visualization
 function clearData() {
   localStorage.removeItem("data");
-data = { nodes: {} }; // Reset data object
-edges.clear(); // Clear edges from DataSet
-nodes.clear(); // Clear nodes from DataSet
+  data = { nodes: {} }; // Reset data object
+  edges.clear(); // Clear edges from DataSet
+  nodes.clear(); // Clear nodes from DataSet
   document.getElementById("background-text").style.display = "flex"; // Show background text
 }
 
@@ -55,11 +55,20 @@ function exportJSON() {
 // Function to import JSON data from the textarea
 function importJSON() {
   const jsonData = document.getElementById("json-data-textarea").value;
+  document.getElementById("json-load-status").innerText =
+    "Loading. For larger trees, this might take a minute.";
   try {
     const parsedData = JSON.parse(jsonData);
     document.getElementById("background-text").style.display = "none";
     // Update the data object and visualization with the new data
+    clearData();
     data = parsedData;
+
+    // If textarea or settings are open, close them
+    document.getElementById("json-data-textarea").value = "";
+    document.getElementById("textEditor").style.display = "none";
+    document.getElementById("settingsModal").style.display = "none";
+    document.getElementById("background-text").style.display = "none";
     updateVisualization(Object.values(data.nodes));
   } catch (error) {
     console.error("Error parsing JSON:", error);
@@ -71,7 +80,7 @@ function importJSON() {
 function downloadHTML() {
   var htmlContent = document.documentElement.outerHTML;
   htmlContent = htmlContent.replace(
-"var data = " + JSON.stringify(data.nodes) + ";",
+    "var data = " + JSON.stringify(data.nodes) + ";",
   );
 
   var blob = new Blob([htmlContent], { type: "text/html" });
