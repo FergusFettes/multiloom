@@ -46,7 +46,7 @@
     top: 10%;
     width: 80%;
     height: 80%;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.9); /* white with 90% opacity */
     border: 1px solid #ccc;
     overflow: auto;
 }
@@ -142,7 +142,7 @@
         <label>(per model!)</label><br>
         <div style="margin-top: 20px;">
             <h3>Display Settings</h3>
-            <label><input type="checkbox" id="toggle-model-colors" checked> Use Model Colors</label><br>
+            <label><input type="checkbox" id="toggle-model-colors"> Use Model Colors</label><br>
         </div>
             </div>
             <div style="width: 50%; padding-left: 10px;">
@@ -239,7 +239,8 @@ var nodes = new vis.DataSet([]);
 var edges = new vis.DataSet([]);
 
 // Global variable to track if model colors are enabled
-var useModelColors = true;
+// Get the value from the toffle-model-colors checkbox
+var useModelColors = document.getElementById("toggle-model-colors").checked;
 
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
@@ -259,7 +260,7 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box">Node Info</div>',
+      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -272,6 +273,7 @@ updateVisualization(Object.values(data.nodes));
 
 function getNodeBorderColor(nodeType) {
   if (!useModelColors) {
+    console.log("Model colors are disabled")
     return "black"; // Return black when model colors are disabled
   }
   switch (nodeType) {
@@ -285,9 +287,24 @@ function getNodeBorderColor(nodeType) {
       return "purple";
     case "mistral":
       return "red";
+    case "gpt3t":
+      return "#afd7af";
+    case "gpt4t":
+      return "#d7afff";
     default:
       return "black"; // Default border color for unknown types
   }
+}
+
+// Function to update node colors based on the model type
+function updateNodeColors() {
+  nodes.forEach((node) => {
+    const nodeColor = {
+      border: getNodeBorderColor(data.nodes[node.id].type),
+    };
+    console.log("Node color:", nodeColor);
+    nodes.update([{ id: node.id, color: nodeColor }]);
+  });
 }
 
 // Helper function to check if there are any non-data nodes in the network
@@ -409,9 +426,8 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
     }
 
     updateVisualization([data.nodes[newNodeId]]);
-    // Save data to localStorage
-    localStorage.setItem("data", JSON.stringify(data));
-    // if type is human, select the new node
+    useModelColors = event.target.checked;
+    updateNodeColors(); // Update only the node colors without re-rendering the entire tree
     if (type === "human") {
       network.selectNodes([newNodeId]);
       localStorage.setItem("checkedOutNodeId", newNodeId);
@@ -820,7 +836,7 @@ document
   .getElementById("toggle-model-colors")
   .addEventListener("change", function (event) {
     useModelColors = event.target.checked;
-    updateVisualization(Object.values(data.nodes)); // Update the visualization with the new color setting
+    updateNodeColors();
   });
 
 // Event listener for the save settings button to update the model configuration

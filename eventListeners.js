@@ -182,7 +182,7 @@ document
   .getElementById("toggle-model-colors")
   .addEventListener("change", function (event) {
     useModelColors = event.target.checked;
-    updateVisualization(Object.values(data.nodes)); // Update the visualization with the new color setting
+    updateNodeColors();
   });
 
 // Event listener for the save settings button to update the model configuration

@@ -4,7 +4,8 @@ var nodes = new vis.DataSet([]);
 var edges = new vis.DataSet([]);
 
 // Global variable to track if model colors are enabled
-var useModelColors = true;
+// Get the value from the toffle-model-colors checkbox
+var useModelColors = document.getElementById("toggle-model-colors").checked;
 
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
@@ -24,7 +25,7 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box">Node Info</div>',
+      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -37,6 +38,7 @@ updateVisualization(Object.values(data.nodes));
 
 function getNodeBorderColor(nodeType) {
   if (!useModelColors) {
+    console.log("Model colors are disabled")
     return "black"; // Return black when model colors are disabled
   }
   switch (nodeType) {
@@ -50,9 +52,23 @@ function getNodeBorderColor(nodeType) {
       return "purple";
     case "mistral":
       return "red";
+    case "gpt3t":
+      return "#afd7af";
+    case "gpt4t":
+      return "#d7afff";
     default:
       return "black"; // Default border color for unknown types
   }
+}
+
+// Function to update node colors based on the model type
+function updateNodeColors() {
+  nodes.forEach((node) => {
+    const nodeColor = {
+      border: getNodeBorderColor(data.nodes[node.id].type),
+    };
+    nodes.update([{ id: node.id, color: nodeColor }]);
+  });
 }
 
 // Helper function to check if there are any non-data nodes in the network
@@ -174,9 +190,8 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
     }
 
     updateVisualization([data.nodes[newNodeId]]);
-    // Save data to localStorage
-    localStorage.setItem("data", JSON.stringify(data));
-    // if type is human, select the new node
+    useModelColors = event.target.checked;
+    updateNodeColors(); // Update only the node colors without re-rendering the entire tree
     if (type === "human") {
       network.selectNodes([newNodeId]);
       localStorage.setItem("checkedOutNodeId", newNodeId);
