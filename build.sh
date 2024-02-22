@@ -29,6 +29,7 @@ cat main.js >> index.html
 cat utils.js >> index.html
 cat api.js >> index.html
 cat eventListeners.js >> index.html
+cat draggable.js >> index.html
 
 echo "</script>" >> index.html
 echo "</body>" >> index.html
