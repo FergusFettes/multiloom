@@ -254,3 +254,44 @@ window.addEventListener("keydown", function (event) {
     localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
   }
 });
+
+// Attach context menu to the network
+network.on('oncontext', function (params) {
+  // Prevent default context menu from appearing
+  params.event.preventDefault();
+  // Position the custom context menu at the pointer location
+  contextMenu.style.top = params.pointer.DOM.y + 'px';
+  contextMenu.style.left = params.pointer.DOM.x + 'px';
+  // Display the custom context menu
+  contextMenu.style.display = 'block';
+});
+
+// Hide the context menu when clicking elsewhere
+network.on('click', function () {
+    if (contextMenu.style.display === 'block') {
+        contextMenu.style.display = 'none';
+    }
+});
+
+// Event listeners for context menu actions
+document.getElementById('hideNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  if (selectedNodes.length > 0) {
+    toggleVisibility(selectedNodes[0]);
+  }
+  contextMenu.style.display = 'none';
+});
+
+document.getElementById('unhideNode').addEventListener('click', function () {
+  // Implement unhide node logic here
+  contextMenu.style.display = 'none';
+});
+
+document.getElementById('bookmarkNode').addEventListener('click', function () {
+  const selectedNodes = network.getSelectedNodes();
+  if (selectedNodes.length > 0) {
+    toggleBookmark(selectedNodes[0]);
+  }
+  contextMenu.style.display = 'none';
+});
+
