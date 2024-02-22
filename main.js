@@ -10,7 +10,6 @@ var useModelColors = document.getElementById("toggle-model-colors").checked;
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
   // First, find all the hidden children of the new nodes
-  console.log(newNodes);
   var hiddenChildren = [];
   newNodes.forEach((node) => {
     if (node.hidden) {
@@ -19,7 +18,6 @@ function updateVisualization(newNodes) {
       });
     }
   });
-  console.log(hiddenChildren);
   newNodes.forEach((node) => {
     if (hiddenChildren.includes(node.id)) {
       return;
@@ -197,8 +195,6 @@ function deleteNode(nodeId) {
   const node = data.nodes[nodeId];
   var descendents = findDescendentNodes(nodeId);
   const nodesToDelete = [nodeId].concat(descendents);
-  console.log(nodeId);
-  console.log(descendents);
   nodesToDelete.forEach((id) => {
     nodes.remove(id);
     delete data.nodes[id];

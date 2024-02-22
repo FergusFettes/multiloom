@@ -12,9 +12,9 @@ document
 
 network.on("click", function (params) {
   if (params.nodes.length > 0) {
-    // Check if the text editor is open
     nodeId = params.nodes[0];
     const textEditor = document.getElementById("textEditor");
+    // Check if the text editor is open
     if (textEditor.style.display === "block") {
       const fullText = renderFullTextFromPatches(nodeId);
 
@@ -57,6 +57,17 @@ network.on("doubleClick", function (params) {
   }
 });
 
+// Event listener for the 'e' key to open the editor
+window.addEventListener("keydown", function (event) {
+  if (event.key === "e" || event.keyCode === 69) {
+    const textEditor = document.getElementById("textEditor");
+    if (textEditor.style.display === "block") {
+      return; // Do nothing if the editor is already open
+    }
+    document.getElementById("textEditor").style.display = "block";
+  }
+});
+
 // Modify the event listener for the modal to call createNodeIfTextChanged with human type
 window.addEventListener("contextmenu", function (event) {
   const textEditor = document.getElementById("textEditor");
@@ -89,6 +100,11 @@ window.addEventListener("keydown", function (event) {
   ) {
     document.getElementById("textEditor").style.display = "none";
   }
+
+  // If there are no nodes, show the background text
+  if (Object.keys(data.nodes).length === 0) {
+    document.getElementById("background-text").style.display = "flex";
+  }
 });
 
 // Event listener for the 'p' key to open settings
@@ -105,6 +121,7 @@ window.addEventListener("keydown", function (event) {
         : "block";
   }
 });
+
 
 // Event listener for the r key to generate new output
 window.addEventListener("keydown", function (event) {
