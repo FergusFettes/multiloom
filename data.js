@@ -89,7 +89,8 @@ function importJSON() {
 function downloadHTML() {
   var htmlContent = document.documentElement.outerHTML;
   htmlContent = htmlContent.replace(
-    "var data = " + JSON.stringify(data.nodes) + ";",
+    "var data = { nodes: {} };",
+    "var data = { nodes: " + JSON.stringify(data.nodes) + " };",
   );
 
   var blob = new Blob([htmlContent], { type: "text/html" });
