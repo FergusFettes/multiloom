@@ -9,7 +9,15 @@ var useModelColors = document.getElementById("toggle-model-colors").checked;
 
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
+  // First, find all the hidden children of the new nodes
   var hiddenChildren = [];
+  newNodes.forEach((node) => {
+    if (node.hidden) {
+      findDescendentNodes(String(node.id)).forEach((descendant) => {
+        hiddenChildren.push(descendant);
+      });
+    }
+  });
   newNodes.forEach((node) => {
     if (hiddenChildren.includes(node.id)) {
       return;
@@ -22,14 +30,14 @@ function updateVisualization(newNodes) {
     var label = lastPatch
       ? formatDiffsForDisplay(lastPatch.diffs)
       : node.text;
-    const nodeColor = {
+    if (node.hidden) {
+      label = "...";
+    }
+    var nodeColor = {
       border: getNodeBorderColor(node.type),
     };
     if (node.hidden) {
-      label = "";
-      findDescendentNodes(node.id).forEach((descendant) => {
-        hiddenChildren.push(descendant);
-      });
+      nodeColor.border = "rgba(0, 0, 0, 0.2)";
     }
 
     nodes.update({
@@ -43,13 +51,20 @@ function updateVisualization(newNodes) {
       edges.update({ from: node.parent, to: node.id });
     }
   });
+
+  // Remove the hidden children from the visualization
+  nodes.forEach((node) => {
+    if (hiddenChildren.includes(node.id)) {
+      nodes.remove(node.id);
+    }
+  });
+
 }
 
 updateVisualization(Object.values(data.nodes));
 
 function getNodeBorderColor(nodeType) {
   if (!useModelColors) {
-    console.log("Model colors are disabled")
     return "black"; // Return black when model colors are disabled
   }
   switch (nodeType) {
@@ -166,21 +181,24 @@ function toggleBookmark(nodeId) {
   localStorage.setItem("data", JSON.stringify(data));
 }
 
-// Function to toggle the visibility of a node
+// Function to toggle the visibility of a node and descendants
 function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
-  updateVisualization([node]);
+  var descendents = findDescendentNodes(nodeId);
+  updateVisualization([node].concat(descendents.map((id) => data.nodes[id])));
   localStorage.setItem("data", JSON.stringify(data));
 }
 
 // Function to delete a node and all its descendants
 function deleteNode(nodeId) {
   const node = data.nodes[nodeId];
-  const descendents = findDescendentNodes(nodeId);
+  var descendents = findDescendentNodes(nodeId);
+  // convert descendents to strings
+  descendents = descendents.map(String);
   const nodesToDelete = [nodeId].concat(descendents);
   nodesToDelete.forEach((id) => {
-    nodes.remove
+    nodes.remove(id);
     delete data.nodes[id];
   });
   edges.remove(
@@ -190,7 +208,7 @@ function deleteNode(nodeId) {
       },
     }),
   );
-  ocalStorage.setItem("data", JSON.stringify(data));
+  localStorage.setItem("data", JSON.stringify(data));
 }
 
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
@@ -213,7 +231,6 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
     // if the parentId was nan, then the new node is the root and we must set the checked out node
     if (isNaN(parentId)) {
       localStorage.setItem("checkedOutNodeId", newNodeId);
-      console.log("Checked out node ID:", newNodeId);
     }
 
     updateVisualization([data.nodes[newNodeId]]);
@@ -230,4 +247,3 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
 
 // Close the settings modal
 document.getElementById("settingsModal").style.display = "none";
-console.log("Model configuration updated:", modelConfig);

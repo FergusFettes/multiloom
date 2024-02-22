@@ -257,7 +257,15 @@ var useModelColors = document.getElementById("toggle-model-colors").checked;
 
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
+  // First, find all the hidden children of the new nodes
   var hiddenChildren = [];
+  newNodes.forEach((node) => {
+    if (node.hidden) {
+      findDescendentNodes(String(node.id)).forEach((descendant) => {
+        hiddenChildren.push(descendant);
+      });
+    }
+  });
   newNodes.forEach((node) => {
     if (hiddenChildren.includes(node.id)) {
       return;
@@ -270,14 +278,14 @@ function updateVisualization(newNodes) {
     var label = lastPatch
       ? formatDiffsForDisplay(lastPatch.diffs)
       : node.text;
-    const nodeColor = {
+    if (node.hidden) {
+      label = "...";
+    }
+    var nodeColor = {
       border: getNodeBorderColor(node.type),
     };
     if (node.hidden) {
-      label = "";
-      findDescendentNodes(node.id).forEach((descendant) => {
-        hiddenChildren.push(descendant);
-      });
+      nodeColor.border = "rgba(0, 0, 0, 0.2)";
     }
 
     nodes.update({
@@ -291,13 +299,20 @@ function updateVisualization(newNodes) {
       edges.update({ from: node.parent, to: node.id });
     }
   });
+
+  // Remove the hidden children from the visualization
+  nodes.forEach((node) => {
+    if (hiddenChildren.includes(node.id)) {
+      nodes.remove(node.id);
+    }
+  });
+
 }
 
 updateVisualization(Object.values(data.nodes));
 
 function getNodeBorderColor(nodeType) {
   if (!useModelColors) {
-    console.log("Model colors are disabled")
     return "black"; // Return black when model colors are disabled
   }
   switch (nodeType) {
@@ -414,21 +429,24 @@ function toggleBookmark(nodeId) {
   localStorage.setItem("data", JSON.stringify(data));
 }
 
-// Function to toggle the visibility of a node
+// Function to toggle the visibility of a node and descendants
 function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
-  updateVisualization([node]);
+  var descendents = findDescendentNodes(nodeId);
+  updateVisualization([node].concat(descendents.map((id) => data.nodes[id])));
   localStorage.setItem("data", JSON.stringify(data));
 }
 
 // Function to delete a node and all its descendants
 function deleteNode(nodeId) {
   const node = data.nodes[nodeId];
-  const descendents = findDescendentNodes(nodeId);
+  var descendents = findDescendentNodes(nodeId);
+  // convert descendents to strings
+  descendents = descendents.map(String);
   const nodesToDelete = [nodeId].concat(descendents);
   nodesToDelete.forEach((id) => {
-    nodes.remove
+    nodes.remove(id);
     delete data.nodes[id];
   });
   edges.remove(
@@ -438,7 +456,7 @@ function deleteNode(nodeId) {
       },
     }),
   );
-  ocalStorage.setItem("data", JSON.stringify(data));
+  localStorage.setItem("data", JSON.stringify(data));
 }
 
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
@@ -461,7 +479,6 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
     // if the parentId was nan, then the new node is the root and we must set the checked out node
     if (isNaN(parentId)) {
       localStorage.setItem("checkedOutNodeId", newNodeId);
-      console.log("Checked out node ID:", newNodeId);
     }
 
     updateVisualization([data.nodes[newNodeId]]);
@@ -478,7 +495,6 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
 
 // Close the settings modal
 document.getElementById("settingsModal").style.display = "none";
-console.log("Model configuration updated:", modelConfig);
 // Function to format diffs for display
 function formatDiffsForDisplay(diffs) {
   const deletions = diffs
@@ -527,7 +543,6 @@ function renderFullTextFromPatches(nodeId) {
 // Function to find the parent node of the current node
 function findParentNode(nodeId) {
   const node = nodes.get(nodeId);
-  console.log("With parent:", node.parent);
   return node && node.parent ? node.parent : null;
 }
 
@@ -573,6 +588,8 @@ function findDescendentNodes(nodeId) {
   const children = Object.values(data.nodes).filter(
     (n) => n.parent === nodeId,
   );
+  console.log(nodeId)
+  console.log(children)
   if (children.length > 0) {
     descendents = children.map((child) => child.id);
     children.forEach((child) => {
@@ -967,11 +984,17 @@ window.addEventListener("keydown", function (event) {
 network.on('oncontext', function (params) {
   // Prevent default context menu from appearing
   params.event.preventDefault();
-  // Position the custom context menu at the pointer location
-  contextMenu.style.top = params.pointer.DOM.y + 'px';
-  contextMenu.style.left = params.pointer.DOM.x + 'px';
-  // Display the custom context menu
-  contextMenu.style.display = 'block';
+  // Check if the right-clicked element is a node
+  const nodeId = this.getNodeAt(params.pointer.DOM);
+  if (nodeId) {
+    // Store the node ID in the context menu's data attribute
+    contextMenu.setAttribute('data-node-id', nodeId);
+    // Position the custom context menu at the pointer location
+    contextMenu.style.top = params.pointer.DOM.y + 'px';
+    contextMenu.style.left = params.pointer.DOM.x + 'px';
+    // Display the custom context menu
+    contextMenu.style.display = 'block';
+  }
 });
 
 // Hide the context menu when clicking elsewhere
@@ -983,32 +1006,58 @@ network.on('click', function () {
 
 // Event listeners for context menu actions
 document.getElementById('hideNode').addEventListener('click', function () {
-  const selectedNodes = network.getSelectedNodes();
-  console.log('Hide node:', selectedNodes);
-  if (selectedNodes.length > 0) {
-    toggleVisibility(selectedNodes[0]);
+  const nodeId = contextMenu.getAttribute('data-node-id');
+  if (nodeId) {
+    toggleVisibility(nodeId);
   }
   contextMenu.style.display = 'none';
 });
 
 document.getElementById('bookmarkNode').addEventListener('click', function () {
-  const selectedNodes = network.getSelectedNodes();
-  console.log('Bookmark node:', selectedNodes);
-  if (selectedNodes.length > 0) {
-    toggleBookmark(selectedNodes[0]);
+  const nodeId = contextMenu.getAttribute('data-node-id');
+  if (nodeId) {
+    toggleBookmark(nodeId);
   }
   contextMenu.style.display = 'none';
 });
 
 document.getElementById('deleteNode').addEventListener('click', function () {
-  const selectedNodes = network.getSelectedNodes();
-  console.log('Delete node:', selectedNodes);
-  if (selectedNodes.length > 0) {
-    deleteNode(selectedNodes[0]);
+  const nodeId = contextMenu.getAttribute('data-node-id');
+  if (nodeId) {
+    deleteNode(nodeId);
   }
   contextMenu.style.display = 'none';
 });
 
+// Event listener to toggle hide on selected node on space bar
+window.addEventListener('keydown', function (event) {
+  if (event.key === ' ' || event.keyCode === 32) {
+    const selectedNodeId = network.getSelectedNodes()[0];
+    if (selectedNodeId) {
+      toggleVisibility(String(selectedNodeId));
+    }
+  }
+});
+
+// Event listener to delete node on delete key
+window.addEventListener('keydown', function (event) {
+  if (event.key === 'Delete' || event.keyCode === 46) {
+    const selectedNodeId = network.getSelectedNodes()[0];
+    if (selectedNodeId) {
+      deleteNode(String(selectedNodeId));
+    }
+  }
+});
+
+// Event listener to bookmark node on enter
+window.addEventListener('keydown', function (event) {
+  if (event.key === 'Enter' || event.keyCode === 13) {
+    const selectedNodeId = network.getSelectedNodes()[0];
+    if (selectedNodeId) {
+      toggleBookmark(String(selectedNodeId));
+    }
+  }
+});
 </script>
 </body>
 </html>

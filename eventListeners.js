@@ -259,11 +259,17 @@ window.addEventListener("keydown", function (event) {
 network.on('oncontext', function (params) {
   // Prevent default context menu from appearing
   params.event.preventDefault();
-  // Position the custom context menu at the pointer location
-  contextMenu.style.top = params.pointer.DOM.y + 'px';
-  contextMenu.style.left = params.pointer.DOM.x + 'px';
-  // Display the custom context menu
-  contextMenu.style.display = 'block';
+  // Check if the right-clicked element is a node
+  const nodeId = this.getNodeAt(params.pointer.DOM);
+  if (nodeId) {
+    // Store the node ID in the context menu's data attribute
+    contextMenu.setAttribute('data-node-id', nodeId);
+    // Position the custom context menu at the pointer location
+    contextMenu.style.top = params.pointer.DOM.y + 'px';
+    contextMenu.style.left = params.pointer.DOM.x + 'px';
+    // Display the custom context menu
+    contextMenu.style.display = 'block';
+  }
 });
 
 // Hide the context menu when clicking elsewhere
@@ -275,29 +281,55 @@ network.on('click', function () {
 
 // Event listeners for context menu actions
 document.getElementById('hideNode').addEventListener('click', function () {
-  const selectedNodes = network.getSelectedNodes();
-  console.log('Hide node:', selectedNodes);
-  if (selectedNodes.length > 0) {
-    toggleVisibility(selectedNodes[0]);
+  const nodeId = contextMenu.getAttribute('data-node-id');
+  if (nodeId) {
+    toggleVisibility(nodeId);
   }
   contextMenu.style.display = 'none';
 });
 
 document.getElementById('bookmarkNode').addEventListener('click', function () {
-  const selectedNodes = network.getSelectedNodes();
-  console.log('Bookmark node:', selectedNodes);
-  if (selectedNodes.length > 0) {
-    toggleBookmark(selectedNodes[0]);
+  const nodeId = contextMenu.getAttribute('data-node-id');
+  if (nodeId) {
+    toggleBookmark(nodeId);
   }
   contextMenu.style.display = 'none';
 });
 
 document.getElementById('deleteNode').addEventListener('click', function () {
-  const selectedNodes = network.getSelectedNodes();
-  console.log('Delete node:', selectedNodes);
-  if (selectedNodes.length > 0) {
-    deleteNode(selectedNodes[0]);
+  const nodeId = contextMenu.getAttribute('data-node-id');
+  if (nodeId) {
+    deleteNode(nodeId);
   }
   contextMenu.style.display = 'none';
 });
 
+// Event listener to toggle hide on selected node on space bar
+window.addEventListener('keydown', function (event) {
+  if (event.key === ' ' || event.keyCode === 32) {
+    const selectedNodeId = network.getSelectedNodes()[0];
+    if (selectedNodeId) {
+      toggleVisibility(String(selectedNodeId));
+    }
+  }
+});
+
+// Event listener to delete node on delete key
+window.addEventListener('keydown', function (event) {
+  if (event.key === 'Delete' || event.keyCode === 46) {
+    const selectedNodeId = network.getSelectedNodes()[0];
+    if (selectedNodeId) {
+      deleteNode(String(selectedNodeId));
+    }
+  }
+});
+
+// Event listener to bookmark node on enter
+window.addEventListener('keydown', function (event) {
+  if (event.key === 'Enter' || event.keyCode === 13) {
+    const selectedNodeId = network.getSelectedNodes()[0];
+    if (selectedNodeId) {
+      toggleBookmark(String(selectedNodeId));
+    }
+  }
+});

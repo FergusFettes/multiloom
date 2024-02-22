@@ -46,7 +46,6 @@ function renderFullTextFromPatches(nodeId) {
 // Function to find the parent node of the current node
 function findParentNode(nodeId) {
   const node = nodes.get(nodeId);
-  console.log("With parent:", node.parent);
   return node && node.parent ? node.parent : null;
 }
 
