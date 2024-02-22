@@ -10,14 +10,16 @@ var useModelColors = document.getElementById("toggle-model-colors").checked;
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
   // First, find all the hidden children of the new nodes
+  console.log(newNodes);
   var hiddenChildren = [];
   newNodes.forEach((node) => {
     if (node.hidden) {
-      findDescendentNodes(String(node.id)).forEach((descendant) => {
+      findDescendentNodes(node.id).forEach((descendant) => {
         hiddenChildren.push(descendant);
       });
     }
   });
+  console.log(hiddenChildren);
   newNodes.forEach((node) => {
     if (hiddenChildren.includes(node.id)) {
       return;
@@ -44,7 +46,7 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '<br><strong>Hidden:</strong> ' + (node.hidden ? 'Yes': 'No') + '</div>',
+      title: '<div class="info-box">' + (node.bookmarked ? '🌟' : '') + '<strong>Model:</strong> ' + node.type + '</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -186,6 +188,8 @@ function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
   var descendents = findDescendentNodes(nodeId);
+  console.log(nodeId);
+  console.log(descendents);
   updateVisualization([node].concat(descendents.map((id) => data.nodes[id])));
   localStorage.setItem("data", JSON.stringify(data));
 }
@@ -194,8 +198,6 @@ function toggleVisibility(nodeId) {
 function deleteNode(nodeId) {
   const node = data.nodes[nodeId];
   var descendents = findDescendentNodes(nodeId);
-  // convert descendents to strings
-  descendents = descendents.map(String);
   const nodesToDelete = [nodeId].concat(descendents);
   nodesToDelete.forEach((id) => {
     nodes.remove(id);

@@ -227,34 +227,6 @@ document
     event.preventDefault(); // Prevent the default context menu
   });
 
-// Event listener for the 'w', 'a', 'd', and 's' keys for navigation
-window.addEventListener("keydown", function (event) {
-  if (document.getElementById("textEditor").style.display === "block") {
-    return; // Do not navigate if the text editor is open
-  }
-  const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
-  let targetNodeId = null;
-  switch (event.key) {
-    case "w":
-      targetNodeId = findParentNode(checkedOutNodeId);
-      break;
-    case "a":
-      targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
-      break;
-    case "d":
-      targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
-      break;
-    case "s":
-      targetNodeId = findLongestTextChildNode(checkedOutNodeId);
-      break;
-  }
-  if (targetNodeId !== null) {
-    // instead of focusing on it, just make sure it is highlighted
-    network.selectNodes([targetNodeId]);
-    localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
-  }
-});
-
 // Attach context menu to the network
 network.on('oncontext', function (params) {
   // Prevent default context menu from appearing
@@ -283,7 +255,7 @@ network.on('click', function () {
 document.getElementById('hideNode').addEventListener('click', function () {
   const nodeId = contextMenu.getAttribute('data-node-id');
   if (nodeId) {
-    toggleVisibility(nodeId);
+    toggleVisibility(Number(nodeId));
   }
   contextMenu.style.display = 'none';
 });
@@ -291,7 +263,7 @@ document.getElementById('hideNode').addEventListener('click', function () {
 document.getElementById('bookmarkNode').addEventListener('click', function () {
   const nodeId = contextMenu.getAttribute('data-node-id');
   if (nodeId) {
-    toggleBookmark(nodeId);
+    toggleBookmark(Number(nodeId));
   }
   contextMenu.style.display = 'none';
 });
@@ -299,37 +271,54 @@ document.getElementById('bookmarkNode').addEventListener('click', function () {
 document.getElementById('deleteNode').addEventListener('click', function () {
   const nodeId = contextMenu.getAttribute('data-node-id');
   if (nodeId) {
-    deleteNode(nodeId);
+    deleteNode(Number(nodeId));
   }
   contextMenu.style.display = 'none';
 });
 
-// Event listener to toggle hide on selected node on space bar
-window.addEventListener('keydown', function (event) {
-  if (event.key === ' ' || event.keyCode === 32) {
-    const selectedNodeId = network.getSelectedNodes()[0];
-    if (selectedNodeId) {
-      toggleVisibility(String(selectedNodeId));
-    }
+// Event listener for the 'w', 'a', 'd', and 's' keys for navigation
+window.addEventListener("keydown", function (event) {
+  if (document.getElementById("textEditor").style.display === "block") {
+    return; // Do not navigate if the text editor is open
+  }
+  const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
+  const selectedNodeId = network.getSelectedNodes()[0];
+  let targetNodeId = null;
+  switch (event.key) {
+    case "w":
+      targetNodeId = findParentNode(checkedOutNodeId);
+      break;
+    case "a":
+      targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
+      break;
+    case "d":
+      targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
+      break;
+    case "s":
+      targetNodeId = findLongestTextChildNode(checkedOutNodeId);
+      break;
+    case " ":
+      if (selectedNodeId) {
+        toggleVisibility(selectedNodeId);
+      }
+      break;
+    case "Enter":
+      if (selectedNodeId) {
+        toggleBookmark(selectedNodeId);
+      }
+      break;
+    case "Delete":
+      if (selectedNodeId) {
+        deleteNode(selectedNodeId);
+      }
+      break;
+    default:
+      return;
+  }
+  if (targetNodeId !== null) {
+    // instead of focusing on it, just make sure it is highlighted
+    network.selectNodes([targetNodeId]);
+    localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
   }
 });
 
-// Event listener to delete node on delete key
-window.addEventListener('keydown', function (event) {
-  if (event.key === 'Delete' || event.keyCode === 46) {
-    const selectedNodeId = network.getSelectedNodes()[0];
-    if (selectedNodeId) {
-      deleteNode(String(selectedNodeId));
-    }
-  }
-});
-
-// Event listener to bookmark node on enter
-window.addEventListener('keydown', function (event) {
-  if (event.key === 'Enter' || event.keyCode === 13) {
-    const selectedNodeId = network.getSelectedNodes()[0];
-    if (selectedNodeId) {
-      toggleBookmark(String(selectedNodeId));
-    }
-  }
-});

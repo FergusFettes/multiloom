@@ -258,14 +258,16 @@ var useModelColors = document.getElementById("toggle-model-colors").checked;
 // Function to update the visualization with new nodes
 function updateVisualization(newNodes) {
   // First, find all the hidden children of the new nodes
+  console.log(newNodes);
   var hiddenChildren = [];
   newNodes.forEach((node) => {
     if (node.hidden) {
-      findDescendentNodes(String(node.id)).forEach((descendant) => {
+      findDescendentNodes(node.id).forEach((descendant) => {
         hiddenChildren.push(descendant);
       });
     }
   });
+  console.log(hiddenChildren);
   newNodes.forEach((node) => {
     if (hiddenChildren.includes(node.id)) {
       return;
@@ -292,7 +294,7 @@ function updateVisualization(newNodes) {
       id: node.id,
       label: label,
       color: nodeColor,
-      title: '<div class="info-box"><strong>Model:</strong> ' + node.type + '<br><strong>Bookmarked:</strong> ' + (node.bookmarked ? 'Yes' : 'No') + '<br><strong>Hidden:</strong> ' + (node.hidden ? 'Yes': 'No') + '</div>',
+      title: '<div class="info-box">' + (node.bookmarked ? '🌟' : '') + '<strong>Model:</strong> ' + node.type + '</div>',
       parent: node.parent,
     });
     if (node.parent !== null) {
@@ -434,6 +436,8 @@ function toggleVisibility(nodeId) {
   const node = data.nodes[nodeId];
   node.hidden = !node.hidden;
   var descendents = findDescendentNodes(nodeId);
+  console.log(nodeId);
+  console.log(descendents);
   updateVisualization([node].concat(descendents.map((id) => data.nodes[id])));
   localStorage.setItem("data", JSON.stringify(data));
 }
@@ -442,8 +446,6 @@ function toggleVisibility(nodeId) {
 function deleteNode(nodeId) {
   const node = data.nodes[nodeId];
   var descendents = findDescendentNodes(nodeId);
-  // convert descendents to strings
-  descendents = descendents.map(String);
   const nodesToDelete = [nodeId].concat(descendents);
   nodesToDelete.forEach((id) => {
     nodes.remove(id);
@@ -588,8 +590,6 @@ function findDescendentNodes(nodeId) {
   const children = Object.values(data.nodes).filter(
     (n) => n.parent === nodeId,
   );
-  console.log(nodeId)
-  console.log(children)
   if (children.length > 0) {
     descendents = children.map((child) => child.id);
     children.forEach((child) => {
@@ -952,34 +952,6 @@ document
     event.preventDefault(); // Prevent the default context menu
   });
 
-// Event listener for the 'w', 'a', 'd', and 's' keys for navigation
-window.addEventListener("keydown", function (event) {
-  if (document.getElementById("textEditor").style.display === "block") {
-    return; // Do not navigate if the text editor is open
-  }
-  const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
-  let targetNodeId = null;
-  switch (event.key) {
-    case "w":
-      targetNodeId = findParentNode(checkedOutNodeId);
-      break;
-    case "a":
-      targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
-      break;
-    case "d":
-      targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
-      break;
-    case "s":
-      targetNodeId = findLongestTextChildNode(checkedOutNodeId);
-      break;
-  }
-  if (targetNodeId !== null) {
-    // instead of focusing on it, just make sure it is highlighted
-    network.selectNodes([targetNodeId]);
-    localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
-  }
-});
-
 // Attach context menu to the network
 network.on('oncontext', function (params) {
   // Prevent default context menu from appearing
@@ -1008,7 +980,7 @@ network.on('click', function () {
 document.getElementById('hideNode').addEventListener('click', function () {
   const nodeId = contextMenu.getAttribute('data-node-id');
   if (nodeId) {
-    toggleVisibility(nodeId);
+    toggleVisibility(Number(nodeId));
   }
   contextMenu.style.display = 'none';
 });
@@ -1016,7 +988,7 @@ document.getElementById('hideNode').addEventListener('click', function () {
 document.getElementById('bookmarkNode').addEventListener('click', function () {
   const nodeId = contextMenu.getAttribute('data-node-id');
   if (nodeId) {
-    toggleBookmark(nodeId);
+    toggleBookmark(Number(nodeId));
   }
   contextMenu.style.display = 'none';
 });
@@ -1024,40 +996,57 @@ document.getElementById('bookmarkNode').addEventListener('click', function () {
 document.getElementById('deleteNode').addEventListener('click', function () {
   const nodeId = contextMenu.getAttribute('data-node-id');
   if (nodeId) {
-    deleteNode(nodeId);
+    deleteNode(Number(nodeId));
   }
   contextMenu.style.display = 'none';
 });
 
-// Event listener to toggle hide on selected node on space bar
-window.addEventListener('keydown', function (event) {
-  if (event.key === ' ' || event.keyCode === 32) {
-    const selectedNodeId = network.getSelectedNodes()[0];
-    if (selectedNodeId) {
-      toggleVisibility(String(selectedNodeId));
-    }
+// Event listener for the 'w', 'a', 'd', and 's' keys for navigation
+window.addEventListener("keydown", function (event) {
+  if (document.getElementById("textEditor").style.display === "block") {
+    return; // Do not navigate if the text editor is open
+  }
+  const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
+  const selectedNodeId = network.getSelectedNodes()[0];
+  let targetNodeId = null;
+  switch (event.key) {
+    case "w":
+      targetNodeId = findParentNode(checkedOutNodeId);
+      break;
+    case "a":
+      targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
+      break;
+    case "d":
+      targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
+      break;
+    case "s":
+      targetNodeId = findLongestTextChildNode(checkedOutNodeId);
+      break;
+    case " ":
+      if (selectedNodeId) {
+        toggleVisibility(selectedNodeId);
+      }
+      break;
+    case "Enter":
+      if (selectedNodeId) {
+        toggleBookmark(selectedNodeId);
+      }
+      break;
+    case "Delete":
+      if (selectedNodeId) {
+        deleteNode(selectedNodeId);
+      }
+      break;
+    default:
+      return;
+  }
+  if (targetNodeId !== null) {
+    // instead of focusing on it, just make sure it is highlighted
+    network.selectNodes([targetNodeId]);
+    localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
   }
 });
 
-// Event listener to delete node on delete key
-window.addEventListener('keydown', function (event) {
-  if (event.key === 'Delete' || event.keyCode === 46) {
-    const selectedNodeId = network.getSelectedNodes()[0];
-    if (selectedNodeId) {
-      deleteNode(String(selectedNodeId));
-    }
-  }
-});
-
-// Event listener to bookmark node on enter
-window.addEventListener('keydown', function (event) {
-  if (event.key === 'Enter' || event.keyCode === 13) {
-    const selectedNodeId = network.getSelectedNodes()[0];
-    if (selectedNodeId) {
-      toggleBookmark(String(selectedNodeId));
-    }
-  }
-});
 </script>
 </body>
 </html>
