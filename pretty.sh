@@ -7,6 +7,6 @@ if ! command -v prettier &> /dev/null; then
 fi
 
 # Find all .js files in the current directory and run prettier
-find . -type f -name "*.js" -exec prettier --write {} +
+find src -type f -name "*.js" -exec prettier --write {} +
 
 echo "All .js files have been prettified."
