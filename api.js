@@ -117,7 +117,11 @@ function generateText(fullText, parentId, type) {
       }
       // Add a space if the text has more than 2 characters and doesn't start with punctuation
       // And the fullText doesnt end in a newline
-      if (text.length > 2 && !".!?".includes(text[0]) && !fullText.endsWith("\n")) {
+      if (
+        text.length > 2 &&
+        !".!?".includes(text[0]) &&
+        !fullText.endsWith("\n")
+      ) {
         text = " " + text;
       }
       newText = text;
