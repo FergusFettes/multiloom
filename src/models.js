@@ -1,4 +1,5 @@
 const models = [
+  "google/gemma-7b@https://api.together.xyz/v1/completions",
   "mistralai/Mistral-7B-Instruct-v0.2@https://api.together.xyz/v1/completions",
   "mistralai/Mixtral-8x7B-Instruct-v0.1@https://api.together.xyz/v1/completions",
   "mistralai/Mixtral-8x7B-v0.1@https://api.together.xyz/v1/completions",
@@ -31,6 +32,7 @@ var modelAliases = {
   mistral: "mistralai/Mistral-7B-v0.1",
   gpt3t: "gpt-3.5-turbo",
   gpt4t: "gpt-4-turbo-preview",
+  gemma: "gpt-4-turbo-preview",
 };
 
 function createModelConfigElement(modelName) {
