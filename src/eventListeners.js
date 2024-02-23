@@ -64,7 +64,11 @@ function renderFullText(nodeId) {
 window.addEventListener("keydown", function (event) {
   if (event.key === "e" || event.keyCode === 69) {
     const textEditor = document.getElementById("textEditor");
-    if (textEditor.style.display === "block") {
+    if (
+      textEditor.style.display === "block" ||
+      document.getElementById("settingsModal").style.display === "block" ||
+      document.getElementById("model-config-modal").style.display === "block"
+    ) {
       return; // Do nothing if the editor is already open
     }
 
@@ -144,7 +148,10 @@ window.addEventListener("keydown", function (event) {
 window.addEventListener("keydown", function (event) {
   if (event.key === "p" || event.keyCode === 80) {
     // if the editor is open, do nothing
-    if (document.getElementById("textEditor").style.display === "block") {
+    if (
+      document.getElementById("textEditor").style.display === "block" ||
+      document.getElementById("model-config-modal").style.display === "block"
+    ) {
       return;
     }
     // Toggle the settings modal
@@ -157,9 +164,14 @@ window.addEventListener("keydown", function (event) {
 
 // Event listener for the 'm' key to open model configs
 window.addEventListener("keydown", function (event) {
-  if (event.key === "m" || event.keyCode === 80) {
+  console.log(event.key);
+  console.log(event.keyCode);
+  if (event.key === "m" || event.keyCode === 77) {
     // if the editor is open, do nothing
-    if (document.getElementById("textEditor").style.display === "block") {
+    if (
+      document.getElementById("textEditor").style.display === "block" ||
+      document.getElementById("settingsModal").style.display === "block"
+    ) {
       return;
     }
     // Toggle the model settings modal

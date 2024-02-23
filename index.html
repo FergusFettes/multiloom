@@ -248,7 +248,6 @@
         <li id="deleteNode">Delete</li>
     </ul>
 </div>
-<div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
 <div id="model-config-modal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
@@ -273,7 +272,6 @@
         </div>
         <button id="save-model-config-btn">Save Configuration</button>
     </div>
-</div>
 </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
         <button id="btn-settings">Settings</button>
@@ -300,6 +298,7 @@
         <div style="display: flex; justify-content: space-between; height: 50%;">
             <div style="width: 50%; padding-right: 10px;">
                 <h3>Settings</h3>
+        <div style="margin-top: 20px;">
             <h3>Display Settings</h3>
             <label><input type="checkbox" id="toggle-model-colors"> Use Model Colors</label><br>
         </div>
@@ -1292,7 +1291,11 @@ function renderFullText(nodeId) {
 window.addEventListener("keydown", function (event) {
   if (event.key === "e" || event.keyCode === 69) {
     const textEditor = document.getElementById("textEditor");
-    if (textEditor.style.display === "block") {
+    if (
+      textEditor.style.display === "block" ||
+      document.getElementById("settingsModal").style.display === "block" ||
+      document.getElementById("model-config-modal").style.display === "block"
+    ) {
       return; // Do nothing if the editor is already open
     }
 
@@ -1385,7 +1388,9 @@ window.addEventListener("keydown", function (event) {
 
 // Event listener for the 'm' key to open model configs
 window.addEventListener("keydown", function (event) {
-  if (event.key === "m" || event.keyCode === 80) {
+  console.log(event.key);
+  console.log(event.keyCode);
+  if (event.key === "m" || event.keyCode === 77) {
     // if the editor is open, do nothing
     if (document.getElementById("textEditor").style.display === "block") {
       return;
