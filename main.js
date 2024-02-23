@@ -56,6 +56,7 @@ const options = {
   layout: {
     hierarchical: {
       sortMethod: "directed",
+      direction: "LR",
       levelSeparation: 400,
       nodeSpacing: 250,
     },
@@ -171,15 +172,13 @@ function deleteNode(nodeId) {
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
-    const newNodeId = !hasNonDataNodes()
-      ? 1
-      : Object.keys(data.nodes).length + 1;
+    const newNodeId = uuid.v4();
     const patches = dmp.patch_make(originalText, newText);
     data.nodes[newNodeId] = {
       id: newNodeId,
       text: dmp.patch_toText(patches),
       patches: patches,
-      parent: Number(parentId),
+      parent: parentId,
       type: type, // Store the type of the node
       bookmarked: false,
       hidden: false,

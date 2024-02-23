@@ -304,7 +304,7 @@ network.on("click", function () {
 document.getElementById("hideNode").addEventListener("click", function () {
   const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
-    toggleVisibility(Number(nodeId));
+    toggleVisibility(nodeId);
   }
   contextMenu.style.display = "none";
 });
@@ -312,7 +312,7 @@ document.getElementById("hideNode").addEventListener("click", function () {
 document.getElementById("bookmarkNode").addEventListener("click", function () {
   const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
-    toggleBookmark(Number(nodeId));
+    toggleBookmark(nodeId);
   }
   contextMenu.style.display = "none";
 });
@@ -320,7 +320,7 @@ document.getElementById("bookmarkNode").addEventListener("click", function () {
 document.getElementById("deleteNode").addEventListener("click", function () {
   const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
-    deleteNode(Number(nodeId));
+    deleteNode(nodeId);
   }
   contextMenu.style.display = "none";
 });
@@ -384,6 +384,11 @@ window.addEventListener("keydown", function (event) {
       }
       break;
     case "Delete":
+      if (selectedNodeId) {
+        deleteNode(selectedNodeId);
+      }
+      break;
+    case "Backspace":
       if (selectedNodeId) {
         deleteNode(selectedNodeId);
       }

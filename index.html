@@ -11,10 +11,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch_uncompressed.js"></script>
 <!-- Load axios library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
+<!-- Load uuid library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
 <!-- <!-- Load llama tokenizer library --> -->
 <!-- <script type="module" src="https://belladoreai.github.io/llama-tokenizer-js/llama-tokenizer.js"></script> -->
 <style>
+
 #mynetwork {
+    display: block;
     width: 100%;
     height: 100vh;
     border: 1px solid lightgray;
@@ -119,7 +123,7 @@
 
 #key-shortcuts-list {
     list-style: none;
-    padding: 20;
+    padding: 20px;
 }
 
 #key-shortcuts-list li {
@@ -263,16 +267,11 @@ document.addEventListener("DOMContentLoaded", function () {
     updateVisualization(Object.values(data.nodes));
   }
 
-  // Make sure all the node ids and parent ids are numbers
-  Object.values(data.nodes).forEach((node) => {
-    node.id = parseInt(node.id);
-    node.parent = parseInt(node.parent);
-  });
-
   // Hide the background text if there are nodes
   if (Object.keys(data.nodes).length > 0) {
     document.getElementById("background-text").style.display = "none";
   }
+
   var savedApiKey = localStorage.getItem("togetherApiKey");
   if (savedApiKey) {
     const apiKeyInput = document.getElementById("together-api-key-input");
@@ -312,13 +311,30 @@ function importJSON() {
   const jsonData = document.getElementById("json-data-textarea").value;
   try {
     const parsedData = JSON.parse(jsonData);
+    const newNodes = {};
+    const idMapping = {};
+
+    // Generate UUIDs for nodes and create a mapping from old IDs to new UUIDs
+    Object.values(parsedData.nodes).forEach((node) => {
+      const oldId = node.id;
+      const newId = uuid.v4();
+      node.id = newId;
+      idMapping[oldId] = newId;
+      newNodes[newId] = node; // Use new UUID as key in the new nodes object
+    });
+
+    // Update parent references to use new UUIDs
+    Object.values(newNodes).forEach((node) => {
+      if (node.parent && idMapping[node.parent]) {
+        node.parent = idMapping[node.parent];
+      }
+    });
+
     document.getElementById("background-text").style.display = "none";
-    // Update the data object and visualization with the new data
     clearData();
-    data = parsedData;
+    data.nodes = newNodes; // Replace old nodes object with new one using UUIDs as keys
     localStorage.setItem("data", JSON.stringify(data));
 
-    // If textarea or settings are open, close them
     document.getElementById("json-data-textarea").value = "";
     document.getElementById("textEditor").style.display = "none";
     document.getElementById("settingsModal").style.display = "none";
@@ -503,6 +519,7 @@ const options = {
   layout: {
     hierarchical: {
       sortMethod: "directed",
+      direction: "LR",
       levelSeparation: 400,
       nodeSpacing: 250,
     },
@@ -618,15 +635,13 @@ function deleteNode(nodeId) {
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
-    const newNodeId = !hasNonDataNodes()
-      ? 1
-      : Object.keys(data.nodes).length + 1;
+    const newNodeId = uuid.v4();
     const patches = dmp.patch_make(originalText, newText);
     data.nodes[newNodeId] = {
       id: newNodeId,
       text: dmp.patch_toText(patches),
       patches: patches,
-      parent: Number(parentId),
+      parent: parentId,
       type: type, // Store the type of the node
       bookmarked: false,
       hidden: false,
@@ -770,7 +785,6 @@ function findLongestTextChildNode(parentNodeId) {
 
 // Function to find all the descendents of a node
 function findDescendentNodes(nodeId) {
-  nodeId = Number(nodeId);
   let descendents = [];
   const children = Object.values(data.nodes).filter((n) => n.parent === nodeId);
   if (children.length > 0) {
@@ -1107,7 +1121,11 @@ function generateText(fullText, parentId, type) {
       }
       // Add a space if the text has more than 2 characters and doesn't start with punctuation
       // And the fullText doesnt end in a newline
-      if (text.length > 2 && !".!?".includes(text[0]) && !fullText.endsWith("\n")) {
+      if (
+        text.length > 2 &&
+        !".!?".includes(text[0]) &&
+        !fullText.endsWith("\n")
+      ) {
         text = " " + text;
       }
       newText = text;
@@ -1441,7 +1459,7 @@ network.on("click", function () {
 document.getElementById("hideNode").addEventListener("click", function () {
   const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
-    toggleVisibility(Number(nodeId));
+    toggleVisibility(nodeId);
   }
   contextMenu.style.display = "none";
 });
@@ -1449,7 +1467,7 @@ document.getElementById("hideNode").addEventListener("click", function () {
 document.getElementById("bookmarkNode").addEventListener("click", function () {
   const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
-    toggleBookmark(Number(nodeId));
+    toggleBookmark(nodeId);
   }
   contextMenu.style.display = "none";
 });
@@ -1457,7 +1475,7 @@ document.getElementById("bookmarkNode").addEventListener("click", function () {
 document.getElementById("deleteNode").addEventListener("click", function () {
   const nodeId = contextMenu.getAttribute("data-node-id");
   if (nodeId) {
-    deleteNode(Number(nodeId));
+    deleteNode(nodeId);
   }
   contextMenu.style.display = "none";
 });
@@ -1496,6 +1514,7 @@ window.addEventListener("keydown", function (event) {
   }
   const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
   const selectedNodeId = network.getSelectedNodes()[0];
+  console.log(event)
   let targetNodeId = null;
   switch (event.key) {
     case "w":
@@ -1525,6 +1544,7 @@ window.addEventListener("keydown", function (event) {
         deleteNode(selectedNodeId);
       }
       break;
+      // Backsapce also deletes
     case "?":
       makeStats();
       break;

@@ -101,7 +101,6 @@ function findLongestTextChildNode(parentNodeId) {
 
 // Function to find all the descendents of a node
 function findDescendentNodes(nodeId) {
-  nodeId = Number(nodeId);
   let descendents = [];
   const children = Object.values(data.nodes).filter((n) => n.parent === nodeId);
   if (children.length > 0) {

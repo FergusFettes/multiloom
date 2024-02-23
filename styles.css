@@ -1,4 +1,6 @@
+
 #mynetwork {
+    display: block;
     width: 100%;
     height: 100vh;
     border: 1px solid lightgray;
@@ -103,7 +105,7 @@
 
 #key-shortcuts-list {
     list-style: none;
-    padding: 20;
+    padding: 20px;
 }
 
 #key-shortcuts-list li {

@@ -18,16 +18,11 @@ document.addEventListener("DOMContentLoaded", function () {
     updateVisualization(Object.values(data.nodes));
   }
 
-  // Make sure all the node ids and parent ids are numbers
-  Object.values(data.nodes).forEach((node) => {
-    node.id = parseInt(node.id);
-    node.parent = parseInt(node.parent);
-  });
-
   // Hide the background text if there are nodes
   if (Object.keys(data.nodes).length > 0) {
     document.getElementById("background-text").style.display = "none";
   }
+
   var savedApiKey = localStorage.getItem("togetherApiKey");
   if (savedApiKey) {
     const apiKeyInput = document.getElementById("together-api-key-input");
@@ -67,13 +62,30 @@ function importJSON() {
   const jsonData = document.getElementById("json-data-textarea").value;
   try {
     const parsedData = JSON.parse(jsonData);
+    const newNodes = {};
+    const idMapping = {};
+
+    // Generate UUIDs for nodes and create a mapping from old IDs to new UUIDs
+    Object.values(parsedData.nodes).forEach((node) => {
+      const oldId = node.id;
+      const newId = uuid.v4();
+      node.id = newId;
+      idMapping[oldId] = newId;
+      newNodes[newId] = node; // Use new UUID as key in the new nodes object
+    });
+
+    // Update parent references to use new UUIDs
+    Object.values(newNodes).forEach((node) => {
+      if (node.parent && idMapping[node.parent]) {
+        node.parent = idMapping[node.parent];
+      }
+    });
+
     document.getElementById("background-text").style.display = "none";
-    // Update the data object and visualization with the new data
     clearData();
-    data = parsedData;
+    data.nodes = newNodes; // Replace old nodes object with new one using UUIDs as keys
     localStorage.setItem("data", JSON.stringify(data));
 
-    // If textarea or settings are open, close them
     document.getElementById("json-data-textarea").value = "";
     document.getElementById("textEditor").style.display = "none";
     document.getElementById("settingsModal").style.display = "none";
