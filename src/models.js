@@ -22,6 +22,17 @@ var modelConfig = {
   n: 1,
 };
 
+// List of model aliases
+var modelAliases = {
+  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
+  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  mixtral: "mistralai/Mixtral-8x7B-v0.1",
+  llama2: "togethercomputer/llama-2-70b",
+  mistral: "mistralai/Mistral-7B-v0.1",
+  gpt3t: "gpt-3.5-turbo",
+  gpt4t: "gpt-4-turbo-preview",
+};
+
 function createModelConfigElement(modelName) {
   const configSection = document.createElement("div");
   configSection.className = "model-config-blob";
