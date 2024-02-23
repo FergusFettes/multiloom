@@ -1147,6 +1147,7 @@ network.on("click", function (params) {
     }
 
     // Save the last clicked node ID to localStorage
+    network.selectNodes([nodeId]);
     localStorage.setItem("checkedOutNodeId", nodeId);
   }
 });
@@ -1155,12 +1156,13 @@ network.on("click", function (params) {
 network.on("doubleClick", function (params) {
   if (params.nodes.length > 0) {
     const nodeId = params.nodes[0];
-    renderAndOpenFullText(nodeId);
+    renderFullText(nodeId);
+    document.getElementById("textEditor").style.display = "block";
   }
 });
 
 // Helper function to render and open fulltext
-function renderAndOpenFullText(nodeId) {
+function renderFullText(nodeId) {
   const fullText = renderFullTextFromPatches(nodeId);
   const fullTextElement = document.getElementById("fullText");
   fullTextElement.value = fullText;
@@ -1170,7 +1172,6 @@ function renderAndOpenFullText(nodeId) {
   });
   fullTextElement.scrollTop = fullTextElement.scrollHeight;
   fullTextElement.setAttribute("data-node-id", nodeId);
-  document.getElementById("textEditor").style.display = "block";
 }
 
 // Event listener for the 'e' key to open the editor
@@ -1186,7 +1187,8 @@ window.addEventListener("keydown", function (event) {
     // Get the selected node
     const selectedNodeId = network.getSelectedNodes()[0];
     if (selectedNodeId) {
-      renderAndOpenFullText(selectedNodeId);
+      renderFullText(selectedNodeId);
+      document.getElementById("textEditor").style.display = "block";
     } else {
       const fullTextElement = document.getElementById("fullText");
       fullTextElement.setAttribute("data-node-id", selectedNodeId);
@@ -1439,9 +1441,33 @@ document.getElementById("deleteNode").addEventListener("click", function () {
   contextMenu.style.display = "none";
 });
 
+// Event listener for tab to swtich focus between fullText and network
+window.addEventListener("keydown", function (event) {
+  // If the tab key is pressed, prevent the default action and focus on the network
+  if (event.key === "Tab" || event.keyCode === 9) {
+    // Check if textEdit is both open and focussed
+    fullTextElement = document.getElementById("fullText");
+    networkElement = document.getElementById("mynetwork");
+    if (
+      document.getElementById("textEditor").style.display === "block" &&
+      fullTextElement == document.activeElement
+    ) {
+      networkElement.focus();
+      event.preventDefault();
+    } else if (
+      document.getElementById("textEditor").style.display === "block" &&
+      networkElement == document.activeElement
+    ) {
+      fullTextElement.focus();
+      event.preventDefault();
+    }
+  }
+});
+
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
 window.addEventListener("keydown", function (event) {
-  if (document.getElementById("textEditor").style.display === "block") {
+  // Check if textEdit is both open and focussed
+  if (document.getElementById("textEditor").style.display === "block" && document.getElementById("fullText") == document.activeElement) {
     return; // Do not navigate if the text editor is open
   }
   const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
@@ -1475,8 +1501,14 @@ window.addEventListener("keydown", function (event) {
         deleteNode(selectedNodeId);
       }
       break;
+    case "?":
+      makeStats();
+      break;
     default:
       return;
+  }
+  if ( document.getElementById("textEditor").style.display = "block" && targetNodeId !== null) {
+    renderFullText(targetNodeId);
   }
   if (targetNodeId !== null) {
     // instead of focusing on it, just make sure it is highlighted
@@ -1485,9 +1517,8 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-// Modify the event listener for the '?' key to update the path stats and average descendants stats
-window.addEventListener("keydown", function (event) {
-  if (event.key === "?" || event.keyCode === 191) {
+
+function makeStats() {
     const statsContainer = document.getElementById("stats-container");
 
     // Tree stats: total number of nodes
@@ -1539,8 +1570,7 @@ window.addEventListener("keydown", function (event) {
     const isModalOpen = infoModal.style.display === "block";
     infoModal.style.display = isModalOpen ? "none" : "block";
     event.preventDefault();
-  }
-});
+};
 // Make the DIV element draggable:
 dragElement(document.getElementById("textEditor"));
 
