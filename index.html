@@ -13,8 +13,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
 <!-- Load uuid library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
-<!-- <!-- Load llama tokenizer library --> -->
-<!-- <script type="module" src="https://belladoreai.github.io/llama-tokenizer-js/llama-tokenizer.js"></script> -->
 <style>
 
 #mynetwork {
@@ -130,8 +128,120 @@
     margin-bottom: 5px;
 }
 
-#stats-container {
-    /* Placeholder for stats styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Show the API keys dropdown on hover over the dropdown container */
+#api-keys-dropdown:hover .dropdown-content,
+#api-keys-dropdown .dropdown-content:hover {
+    display: block;
+}
+
+/* Style the API key input fields */
+.api-key-input {
+    width: calc(100% - 24px); /* Full width minus padding */
+    padding: 6px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Style the dropdown button */
+.dropbtn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Style the checkboxes inside the dropdown */
+.dropdown-content input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+/* Style the labels for the checkboxes */
+.dropdown-content label {
+    margin-right: 10px;
+}
+.model-checkbox-container {
+    margin-bottom: 10px;
+}
+
+.model-checkbox {
+    margin-right: 5px;
+}
+
+#model-configs-container,
+#default-params-container {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#model-configs-container h3,
+#default-params-container h3 {
+    margin-top: 0;
+}
+
+.model-config-blob {
+  width: 300px;
+  height: auto;
 }
 </style>
 </head>
@@ -144,21 +254,37 @@
     </ul>
 </div>
 <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
-<input type="password" id="together-api-key-input" placeholder="Enter Together API Key" style="background-color: pink;"><br>
-<input type="password" id="openai-api-key-input" placeholder="Enter Openai API Key" style="background-color: pink;">
-<div id="model-checkboxes" style="margin-left: 10px;">
-    <label><input type="checkbox" class="model-checkbox" value="mistral" checked style="accent-color: red;"> Mistral</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="mistral-instruct" checked style="accent-color: blue;"> Mistral Instruct</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="mixtral" checked style="accent-color: orange;"> Mixtral</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="mixtral-instruct" checked style="accent-color: green;"> Mixtral Instruct</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="llama2" checked style="accent-color: purple;"> LLaMA2</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="minihf" style="accent-color: yellow;"> MiniHF</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="gpt3t" checked style="accent-color: #afd7af;"> Gpt4</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="gpt4t" checked style="accent-color: #d7afff;"> Gpt3</label><br>
-    <a href="https://docs.together.ai/docs/inference-models" target="_blank" title="Any of the models at the link available on request." style="font-size: smaller;">More?</a><br>
-    <!-- Additional models can be added here -->
+<div id="model-config-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Model Configuration</h2>
+        <div id="model-dropdown" class="dropdown">
+            <button id="model-dropdown-btn" class="dropbtn">Select Models</button>
+            <div id="model-checkboxes" class="dropdown-content">
+                <!-- Checkboxes for model selection will be populated here -->
+            </div>
+        </div>
+            <!-- Model options will be populated here -->
+        <div id="model-configs-container">
+            <h3>Model Configurations</h3>
+            <!-- Individual model configurations will be populated here -->
+        </div>
+        <div id="default-params-container">
+            <h3>Default Parameters</h3>
+            <!-- Default parameters will be displayed and editable here -->
+        </div>
+        <div id="api-keys-dropdown" class="dropdown">
+            <button id="api-keys-dropdown-btn" class="dropbtn">API Keys</button>
+            <div id="api-keys-container" class="dropdown-content">
+                <input type="password" id="together-api-key-input" placeholder="Together.AI API Key" class="api-key-input">
+                <input type="password" id="openai-api-key-input" placeholder="OpenAI API Key" class="api-key-input">
+                <input type="password" id="huggingface-token-input" placeholder="Huggingface Token" class="api-key-input">
+                <input type="password" id="another-api-key-input" placeholder="Another API Key" class="api-key-input">
+            </div>
+        </div>
+        <button id="save-model-config-btn">Save Configuration</button>
+    </div>
 </div>
-</select>
 </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
         <button id="btn-settings">Settings</button>
@@ -185,23 +311,6 @@
         <div style="display: flex; justify-content: space-between; height: 50%;">
             <div style="width: 50%; padding-right: 10px;">
                 <h3>Settings</h3>
-        <h2>Model Configuration</h2>
-        <label for="max-tokens-input">Max Tokens:</label>
-        <input type="number" id="max-tokens-input" value="50" step="10"><br>
-        <label for="temperature-input">Temperature:</label>
-        <input type="number" step="0.1" id="temperature-input" value="0.7"><br>
-        <label for="top-p-input">Top P:</label>
-        <input type="number" step="0.1" id="top-p-input" value="0.7"><br>
-        <label for="top-k-input">Top K:</label>
-        <input type="number" id="top-k-input" value="50"><br>
-        <label for="repetition-penalty-input">Repetition Penalty:</label>
-        <input type="number" step="0.1" id="repetition-penalty-input" value="1"><br>
-        <label for="stop-sequence-input">Stop Sequence:</label>
-        <input type="text" id="stop-sequence-input" value="</s>"><br>
-        <label for="completions-input">Completions:</label>
-        <input type="number" id="completions-input" value="1">
-        <label>(per model!)</label><br>
-        <div style="margin-top: 20px;">
             <h3>Display Settings</h3>
             <label><input type="checkbox" id="toggle-model-colors"> Use Model Colors</label><br>
         </div>
@@ -1005,31 +1114,6 @@ function calculateScores(algorithmName) {
 // Global variable to store the API key
 var apiKey = "";
 
-// Model configuration
-var modelConfig = {
-  model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  max_tokens: 50,
-  request_type: "language-model-inference",
-  temperature: 0.7,
-  top_p: 0.7,
-  top_k: 50,
-  repetition_penalty: 1,
-  stream_tokens: false,
-  stop: ["</s>"],
-  n: 1,
-};
-
-// List of model aliases
-var modelAliases = {
-  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  mixtral: "mistralai/Mixtral-8x7B-v0.1",
-  llama2: "togethercomputer/llama-2-70b",
-  mistral: "mistralai/Mistral-7B-v0.1",
-  gpt3t: "gpt-3.5-turbo",
-  gpt4t: "gpt-4-turbo-preview",
-};
-
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
@@ -1305,6 +1389,21 @@ window.addEventListener("keydown", function (event) {
     // Toggle the settings modal
     document.getElementById("settingsModal").style.display =
       document.getElementById("settingsModal").style.display === "block"
+        ? "none"
+        : "block";
+  }
+});
+
+// Event listener for the 'm' key to open model configs
+window.addEventListener("keydown", function (event) {
+  if (event.key === "m" || event.keyCode === 80) {
+    // if the editor is open, do nothing
+    if (document.getElementById("model-config-modal").style.display === "block") {
+      return;
+    }
+    // Toggle the settings modal
+    document.getElementById("model-config-modal").style.display =
+      document.getElementById("model-config-modal").style.display === "block"
         ? "none"
         : "block";
   }
@@ -1620,9 +1719,6 @@ function makeStats() {
   infoModal.style.display = isModalOpen ? "none" : "block";
   event.preventDefault();
 }
-// Make the DIV element draggable:
-dragElement(document.getElementById("textEditor"));
-
 function dragElement(elmnt) {
   var pos1 = 0,
     pos2 = 0,
@@ -1668,6 +1764,159 @@ function dragElement(elmnt) {
     document.onmousemove = null;
   }
 }
+
+// Make the DIV element draggable:
+dragElement(document.getElementById("textEditor"));
+const models = [
+  "mistralai/Mistral-7B-Instruct-v0.2@https://api.together.xyz/v1/completions",
+  "mistralai/Mixtral-8x7B-Instruct-v0.1@https://api.together.xyz/v1/completions",
+  "mistralai/Mixtral-8x7B-v0.1@https://api.together.xyz/v1/completions",
+  "togethercomputer/llama-2-70b@https://api.together.xyz/v1/completions",
+  "mistralai/Mistral-7B-v0.1@https://api.together.xyz/v1/completions",
+  "gpt-3.5-turbo@https://api.openai.com/v1/chat/completions",
+  "gpt-4-turbo-preview@https://api.openai.com/v1/chat/completions",
+];
+
+
+// Model configuration
+var modelConfig = {
+  model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  max_tokens: 50,
+  request_type: "language-model-inference",
+  temperature: 0.7,
+  top_p: 0.7,
+  top_k: 50,
+  repetition_penalty: 1,
+  stream_tokens: false,
+  stop: ["</s>"],
+  n: 1,
+};
+function createModelConfigElement(modelName) {
+    const configSection = document.createElement('div');
+    configSection.className = 'model-config-blob';
+    configSection.innerHTML = `
+        <h3>${modelName}</h3>
+        <div class="model-config-fields">
+            <label for="max-tokens-input-${modelName}">Max Tokens:</label>
+            <input type="number" id="max-tokens-input-${modelName}" value="${modelConfig.max_tokens}" step="10"><br>
+            <label for="temperature-input-${modelName}">Temperature:</label>
+            <input type="number" step="0.1" id="temperature-input-${modelName}" value="${modelConfig.temperature}"><br>
+            <label for="top-p-input-${modelName}">Top P:</label>
+            <input type="number" step="0.1" id="top-p-input-${modelName}" value="${modelConfig.top_p}"><br>
+            <label for="top-k-input-${modelName}">Top K:</label>
+            <input type="number" id="top-k-input-${modelName}" value="${modelConfig.top_k}"><br>
+            <label for="repetition-penalty-input-${modelName}">Repetition Penalty:</label>
+            <input type="number" step="0.1" id="repetition-penalty-input-${modelName}" value="${modelConfig.repetition_penalty}"><br>
+            <label for="stop-sequence-input-${modelName}">Stop Sequence:</label>
+            <input type="text" id="stop-sequence-input-${modelName}" value="${modelConfig.stop.join(', ')}"><br>
+            <label for="completions-input-${modelName}">Completions:</label>
+            <input type="number" id="completions-input-${modelName}" value="${modelConfig.n}">
+        </div>
+    `;
+    return configSection;
+}
+
+function makeConfigDraggable(configElement) {
+  dragElement(configElement);
+}
+
+function setupDraggableConfigs() {
+  const modelConfigContainer = document.getElementById('model-configs-container');
+  const modelConfigElements = modelConfigContainer.getElementsByClassName('model-config-blob');
+  Array.from(modelConfigElements).forEach(makeConfigDraggable);
+}
+
+function populateModelConfigs() {
+    const modelConfigsContainer = document.getElementById('model-configs-container');
+    models.forEach(model => {
+        const [modelName] = model.split('@');
+        const modelConfigElement = createModelConfigElement(modelName);
+        modelConfigsContainer.appendChild(modelConfigElement);
+    });
+}
+
+function populateModelCheckboxes() {
+    const modelCheckboxesContainer = document.getElementById('model-checkboxes');
+
+    models.forEach(model => {
+        // Split the model string into name and URL
+        const [modelName, modelUrl] = model.split('@');
+        
+        // Create checkbox element for each model
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'model-checkbox';
+        checkbox.id = `model-checkbox-${modelName}`;
+        checkbox.name = modelName;
+        checkbox.value = modelUrl;
+        checkbox.checked = true; // Default to checked
+
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = modelName;
+
+        const div = document.createElement('div');
+        div.className = 'model-checkbox-container';
+        div.appendChild(label);
+
+        modelCheckboxesContainer.appendChild(div);
+        // Add event listener to create model config on checkbox click
+        checkbox.addEventListener('click', function() {
+            const configElement = createModelConfigElement(modelName);
+            // Append or update the model config element in the DOM
+            const existingConfigElement = document.getElementById(`model-config-${modelName}`);
+            if (existingConfigElement) {
+                existingConfigElement.replaceWith(configElement);
+            } else {
+                document.body.appendChild(configElement); // Append to body or a specific container
+            }
+        });
+    });
+}
+
+// Call populateModelCheckboxes on window load or document ready
+window.addEventListener('DOMContentLoaded', populateModelCheckboxes);
+window.addEventListener('DOMContentLoaded', populateModelConfigs);
+window.addEventListener('DOMContentLoaded', setupDraggableConfigs);
+
+// Event listener for the model dropdown button
+document.getElementById('model-dropdown-btn').addEventListener('click', function(event) {
+    document.getElementById('model-checkboxes').classList.toggle('show');
+});
+
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function(event) {
+    if (!event.target.matches('.dropbtn')) {
+        var dropdowns = document.getElementsByClassName('dropdown-content');
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+};
+
+// Event listener for the API keys dropdown button
+document.getElementById('api-keys-dropdown-btn').addEventListener('click', function(event) {
+    document.getElementById('api-keys-container').classList.toggle('show');
+});
+
+// Close the API keys dropdown if the user clicks outside of it
+window.onclick = function(event) {
+    if (!event.target.matches('#api-keys-dropdown-btn')) {
+        var apiKeysContainer = document.getElementById('api-keys-container');
+        if (apiKeysContainer.classList.contains('show')) {
+            apiKeysContainer.classList.remove('show');
+        }
+    }
+};
+
+// Create a static default model config element using the default configuration
+const defaultModelConfigElement = createModelConfigElement(modelConfig.model);
+document.getElementById('default-params-container').appendChild(defaultModelConfigElement); // Append to the default params container
+
 </script>
 </body>
 </html>

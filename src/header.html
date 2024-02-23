@@ -6,21 +6,37 @@
     </ul>
 </div>
 <div style="position: absolute; top: 10px; right: 10px; z-index: 5;">
-<input type="password" id="together-api-key-input" placeholder="Enter Together API Key" style="background-color: pink;"><br>
-<input type="password" id="openai-api-key-input" placeholder="Enter Openai API Key" style="background-color: pink;">
-<div id="model-checkboxes" style="margin-left: 10px;">
-    <label><input type="checkbox" class="model-checkbox" value="mistral" checked style="accent-color: red;"> Mistral</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="mistral-instruct" checked style="accent-color: blue;"> Mistral Instruct</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="mixtral" checked style="accent-color: orange;"> Mixtral</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="mixtral-instruct" checked style="accent-color: green;"> Mixtral Instruct</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="llama2" checked style="accent-color: purple;"> LLaMA2</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="minihf" style="accent-color: yellow;"> MiniHF</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="gpt3t" checked style="accent-color: #afd7af;"> Gpt4</label><br>
-    <label><input type="checkbox" class="model-checkbox" value="gpt4t" checked style="accent-color: #d7afff;"> Gpt3</label><br>
-    <a href="https://docs.together.ai/docs/inference-models" target="_blank" title="Any of the models at the link available on request." style="font-size: smaller;">More?</a><br>
-    <!-- Additional models can be added here -->
+<div id="model-config-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Model Configuration</h2>
+        <div id="model-dropdown" class="dropdown">
+            <button id="model-dropdown-btn" class="dropbtn">Select Models</button>
+            <div id="model-checkboxes" class="dropdown-content">
+                <!-- Checkboxes for model selection will be populated here -->
+            </div>
+        </div>
+            <!-- Model options will be populated here -->
+        <div id="model-configs-container">
+            <h3>Model Configurations</h3>
+            <!-- Individual model configurations will be populated here -->
+        </div>
+        <div id="default-params-container">
+            <h3>Default Parameters</h3>
+            <!-- Default parameters will be displayed and editable here -->
+        </div>
+        <div id="api-keys-dropdown" class="dropdown">
+            <button id="api-keys-dropdown-btn" class="dropbtn">API Keys</button>
+            <div id="api-keys-container" class="dropdown-content">
+                <input type="password" id="together-api-key-input" placeholder="Together.AI API Key" class="api-key-input">
+                <input type="password" id="openai-api-key-input" placeholder="OpenAI API Key" class="api-key-input">
+                <input type="password" id="huggingface-token-input" placeholder="Huggingface Token" class="api-key-input">
+                <input type="password" id="another-api-key-input" placeholder="Another API Key" class="api-key-input">
+            </div>
+        </div>
+        <button id="save-model-config-btn">Save Configuration</button>
+    </div>
 </div>
-</select>
 </div>
     <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
         <button id="btn-settings">Settings</button>
@@ -47,23 +63,6 @@
         <div style="display: flex; justify-content: space-between; height: 50%;">
             <div style="width: 50%; padding-right: 10px;">
                 <h3>Settings</h3>
-        <h2>Model Configuration</h2>
-        <label for="max-tokens-input">Max Tokens:</label>
-        <input type="number" id="max-tokens-input" value="50" step="10"><br>
-        <label for="temperature-input">Temperature:</label>
-        <input type="number" step="0.1" id="temperature-input" value="0.7"><br>
-        <label for="top-p-input">Top P:</label>
-        <input type="number" step="0.1" id="top-p-input" value="0.7"><br>
-        <label for="top-k-input">Top K:</label>
-        <input type="number" id="top-k-input" value="50"><br>
-        <label for="repetition-penalty-input">Repetition Penalty:</label>
-        <input type="number" step="0.1" id="repetition-penalty-input" value="1"><br>
-        <label for="stop-sequence-input">Stop Sequence:</label>
-        <input type="text" id="stop-sequence-input" value="</s>"><br>
-        <label for="completions-input">Completions:</label>
-        <input type="number" id="completions-input" value="1">
-        <label>(per model!)</label><br>
-        <div style="margin-top: 20px;">
             <h3>Display Settings</h3>
             <label><input type="checkbox" id="toggle-model-colors"> Use Model Colors</label><br>
         </div>

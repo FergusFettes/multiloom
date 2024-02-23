@@ -1,6 +1,3 @@
-// Make the DIV element draggable:
-dragElement(document.getElementById("textEditor"));
-
 function dragElement(elmnt) {
   var pos1 = 0,
     pos2 = 0,
@@ -46,3 +43,6 @@ function dragElement(elmnt) {
     document.onmousemove = null;
   }
 }
+
+// Make the DIV element draggable:
+dragElement(document.getElementById("textEditor"));

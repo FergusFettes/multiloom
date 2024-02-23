@@ -155,6 +155,21 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
+// Event listener for the 'm' key to open model configs
+window.addEventListener("keydown", function (event) {
+  if (event.key === "m" || event.keyCode === 80) {
+    // if the editor is open, do nothing
+    if (document.getElementById("model-config-modal").style.display === "block") {
+      return;
+    }
+    // Toggle the settings modal
+    document.getElementById("model-config-modal").style.display =
+      document.getElementById("model-config-modal").style.display === "block"
+        ? "none"
+        : "block";
+  }
+});
+
 // Event listener for the r key to generate new output
 window.addEventListener("keydown", function (event) {
   if (event.key === "r" || event.keyCode === 82) {

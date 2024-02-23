@@ -1,0 +1,2 @@
+- tab for switching between text editor and graph editor
+- clean up the model configs

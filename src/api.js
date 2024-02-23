@@ -1,31 +1,6 @@
 // Global variable to store the API key
 var apiKey = "";
 
-// Model configuration
-var modelConfig = {
-  model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  max_tokens: 50,
-  request_type: "language-model-inference",
-  temperature: 0.7,
-  top_p: 0.7,
-  top_k: 50,
-  repetition_penalty: 1,
-  stream_tokens: false,
-  stop: ["</s>"],
-  n: 1,
-};
-
-// List of model aliases
-var modelAliases = {
-  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  mixtral: "mistralai/Mixtral-8x7B-v0.1",
-  llama2: "togethercomputer/llama-2-70b",
-  mistral: "mistralai/Mistral-7B-v0.1",
-  gpt3t: "gpt-3.5-turbo",
-  gpt4t: "gpt-4-turbo-preview",
-};
-
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);

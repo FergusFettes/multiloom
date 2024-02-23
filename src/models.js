@@ -1,0 +1,150 @@
+const models = [
+  "mistralai/Mistral-7B-Instruct-v0.2@https://api.together.xyz/v1/completions",
+  "mistralai/Mixtral-8x7B-Instruct-v0.1@https://api.together.xyz/v1/completions",
+  "mistralai/Mixtral-8x7B-v0.1@https://api.together.xyz/v1/completions",
+  "togethercomputer/llama-2-70b@https://api.together.xyz/v1/completions",
+  "mistralai/Mistral-7B-v0.1@https://api.together.xyz/v1/completions",
+  "gpt-3.5-turbo@https://api.openai.com/v1/chat/completions",
+  "gpt-4-turbo-preview@https://api.openai.com/v1/chat/completions",
+];
+
+
+// Model configuration
+var modelConfig = {
+  model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  max_tokens: 50,
+  request_type: "language-model-inference",
+  temperature: 0.7,
+  top_p: 0.7,
+  top_k: 50,
+  repetition_penalty: 1,
+  stream_tokens: false,
+  stop: ["</s>"],
+  n: 1,
+};
+function createModelConfigElement(modelName) {
+    const configSection = document.createElement('div');
+    configSection.className = 'model-config-blob';
+    configSection.innerHTML = `
+        <h3>${modelName}</h3>
+        <div class="model-config-fields">
+            <label for="max-tokens-input-${modelName}">Max Tokens:</label>
+            <input type="number" id="max-tokens-input-${modelName}" value="${modelConfig.max_tokens}" step="10"><br>
+            <label for="temperature-input-${modelName}">Temperature:</label>
+            <input type="number" step="0.1" id="temperature-input-${modelName}" value="${modelConfig.temperature}"><br>
+            <label for="top-p-input-${modelName}">Top P:</label>
+            <input type="number" step="0.1" id="top-p-input-${modelName}" value="${modelConfig.top_p}"><br>
+            <label for="top-k-input-${modelName}">Top K:</label>
+            <input type="number" id="top-k-input-${modelName}" value="${modelConfig.top_k}"><br>
+            <label for="repetition-penalty-input-${modelName}">Repetition Penalty:</label>
+            <input type="number" step="0.1" id="repetition-penalty-input-${modelName}" value="${modelConfig.repetition_penalty}"><br>
+            <label for="stop-sequence-input-${modelName}">Stop Sequence:</label>
+            <input type="text" id="stop-sequence-input-${modelName}" value="${modelConfig.stop.join(', ')}"><br>
+            <label for="completions-input-${modelName}">Completions:</label>
+            <input type="number" id="completions-input-${modelName}" value="${modelConfig.n}">
+        </div>
+    `;
+    return configSection;
+}
+
+function makeConfigDraggable(configElement) {
+  dragElement(configElement);
+}
+
+function setupDraggableConfigs() {
+  const modelConfigContainer = document.getElementById('model-configs-container');
+  const modelConfigElements = modelConfigContainer.getElementsByClassName('model-config-blob');
+  Array.from(modelConfigElements).forEach(makeConfigDraggable);
+}
+
+function populateModelConfigs() {
+    const modelConfigsContainer = document.getElementById('model-configs-container');
+    models.forEach(model => {
+        const [modelName] = model.split('@');
+        const modelConfigElement = createModelConfigElement(modelName);
+        modelConfigsContainer.appendChild(modelConfigElement);
+    });
+}
+
+function populateModelCheckboxes() {
+    const modelCheckboxesContainer = document.getElementById('model-checkboxes');
+
+    models.forEach(model => {
+        // Split the model string into name and URL
+        const [modelName, modelUrl] = model.split('@');
+        
+        // Create checkbox element for each model
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'model-checkbox';
+        checkbox.id = `model-checkbox-${modelName}`;
+        checkbox.name = modelName;
+        checkbox.value = modelUrl;
+        checkbox.checked = true; // Default to checked
+
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = modelName;
+
+        const div = document.createElement('div');
+        div.className = 'model-checkbox-container';
+        div.appendChild(label);
+
+        modelCheckboxesContainer.appendChild(div);
+        // Add event listener to create model config on checkbox click
+        checkbox.addEventListener('click', function() {
+            const configElement = createModelConfigElement(modelName);
+            // Append or update the model config element in the DOM
+            const existingConfigElement = document.getElementById(`model-config-${modelName}`);
+            if (existingConfigElement) {
+                existingConfigElement.replaceWith(configElement);
+            } else {
+                document.body.appendChild(configElement); // Append to body or a specific container
+            }
+        });
+    });
+}
+
+// Call populateModelCheckboxes on window load or document ready
+window.addEventListener('DOMContentLoaded', populateModelCheckboxes);
+window.addEventListener('DOMContentLoaded', populateModelConfigs);
+window.addEventListener('DOMContentLoaded', setupDraggableConfigs);
+
+// Event listener for the model dropdown button
+document.getElementById('model-dropdown-btn').addEventListener('click', function(event) {
+    document.getElementById('model-checkboxes').classList.toggle('show');
+});
+
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function(event) {
+    if (!event.target.matches('.dropbtn')) {
+        var dropdowns = document.getElementsByClassName('dropdown-content');
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+};
+
+// Event listener for the API keys dropdown button
+document.getElementById('api-keys-dropdown-btn').addEventListener('click', function(event) {
+    document.getElementById('api-keys-container').classList.toggle('show');
+});
+
+// Close the API keys dropdown if the user clicks outside of it
+window.onclick = function(event) {
+    if (!event.target.matches('#api-keys-dropdown-btn')) {
+        var apiKeysContainer = document.getElementById('api-keys-container');
+        if (apiKeysContainer.classList.contains('show')) {
+            apiKeysContainer.classList.remove('show');
+        }
+    }
+};
+
+// Create a static default model config element using the default configuration
+const defaultModelConfigElement = createModelConfigElement(modelConfig.model);
+document.getElementById('default-params-container').appendChild(defaultModelConfigElement); // Append to the default params container
+

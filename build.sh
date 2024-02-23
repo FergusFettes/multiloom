@@ -31,6 +31,7 @@ cat src/utils.js >> index.html
 cat src/api.js >> index.html
 cat src/eventListeners.js >> index.html
 cat src/draggable.js >> index.html
+cat src/models.js >> index.html
 
 echo "</script>" >> index.html
 echo "</body>" >> index.html
