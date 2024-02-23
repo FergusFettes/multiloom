@@ -164,8 +164,6 @@ window.addEventListener("keydown", function (event) {
 
 // Event listener for the 'm' key to open model configs
 window.addEventListener("keydown", function (event) {
-  console.log(event.key);
-  console.log(event.keyCode);
   if (event.key === "m" || event.keyCode === 77) {
     // if the editor is open, do nothing
     if (

@@ -1138,18 +1138,18 @@ Prompt:
 function generateText(fullText, parentId, type) {
   var config = Object.assign({}, modelConfig); // Clone the modelConfig object
   // Strip a space from the end of fullText if it exists
+  const [modelName, apiUrl] = type.split("@");
+
   config.prompt = fullText;
   // type is the model alias. set the name
-  config.model = modelAliases[type];
+  config.model = modelName;
 
-  let apiUrl = "https://api.together.xyz/v1/completions";
   let headers = {
     Authorization: "Bearer " + togetherApiKey,
   };
 
   // Check if the model alias is for OpenAI and set the appropriate API URL and headers
   if (type.startsWith("gpt")) {
-    apiUrl = "https://api.openai.com/v1/chat/completions";
     headers = {
       "Content-Type": "application/json",
       Authorization: "Bearer " + openaiApiKey,
@@ -1167,7 +1167,7 @@ function generateText(fullText, parentId, type) {
       top_p: modelConfig.top_p,
       n: modelConfig.n,
       stop: modelConfig.stop,
-      model: modelAliases[type],
+      model: modelName,
     };
   }
 
@@ -1391,8 +1391,6 @@ window.addEventListener("keydown", function (event) {
 
 // Event listener for the 'm' key to open model configs
 window.addEventListener("keydown", function (event) {
-  console.log(event.key);
-  console.log(event.keyCode);
   if (event.key === "m" || event.keyCode === 77) {
     // if the editor is open, do nothing
     if (
@@ -1791,6 +1789,17 @@ var modelConfig = {
   n: 1,
 };
 
+// List of model aliases
+var modelAliases = {
+  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
+  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  mixtral: "mistralai/Mixtral-8x7B-v0.1",
+  llama2: "togethercomputer/llama-2-70b",
+  mistral: "mistralai/Mistral-7B-v0.1",
+  gpt3t: "gpt-3.5-turbo",
+  gpt4t: "gpt-4-turbo-preview",
+};
+
 function createModelConfigElement(modelName) {
   const configSection = document.createElement("div");
   configSection.className = "model-config-blob";
@@ -1826,13 +1835,11 @@ function populateModelCheckboxes() {
 
   models.forEach((model) => {
     const [modelName, modelUrl] = model.split("@");
-    const cleanName = sanitizeModelName(modelName);
 
     // Create checkbox element for each model
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.className = "model-checkbox";
-    checkbox.id = `model-checkbox-${cleanName}`;
     checkbox.name = modelName;
     checkbox.value = model;
     checkbox.checked = true; // Default to checked

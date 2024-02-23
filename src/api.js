@@ -37,18 +37,18 @@ Prompt:
 function generateText(fullText, parentId, type) {
   var config = Object.assign({}, modelConfig); // Clone the modelConfig object
   // Strip a space from the end of fullText if it exists
+  const [modelName, apiUrl] = type.split("@");
+
   config.prompt = fullText;
   // type is the model alias. set the name
-  config.model = modelAliases[type];
+  config.model = modelName;
 
-  let apiUrl = "https://api.together.xyz/v1/completions";
   let headers = {
     Authorization: "Bearer " + togetherApiKey,
   };
 
   // Check if the model alias is for OpenAI and set the appropriate API URL and headers
   if (type.startsWith("gpt")) {
-    apiUrl = "https://api.openai.com/v1/chat/completions";
     headers = {
       "Content-Type": "application/json",
       Authorization: "Bearer " + openaiApiKey,
@@ -66,7 +66,7 @@ function generateText(fullText, parentId, type) {
       top_p: modelConfig.top_p,
       n: modelConfig.n,
       stop: modelConfig.stop,
-      model: modelAliases[type],
+      model: modelName,
     };
   }
 

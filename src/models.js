@@ -68,13 +68,11 @@ function populateModelCheckboxes() {
 
   models.forEach((model) => {
     const [modelName, modelUrl] = model.split("@");
-    const cleanName = sanitizeModelName(modelName);
 
     // Create checkbox element for each model
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.className = "model-checkbox";
-    checkbox.id = `model-checkbox-${cleanName}`;
     checkbox.name = modelName;
     checkbox.value = model;
     checkbox.checked = true; // Default to checked
