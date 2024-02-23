@@ -61,6 +61,7 @@ Prompt:
 // Function to make an API call for text generation
 function generateText(fullText, parentId, type) {
   var config = Object.assign({}, modelConfig); // Clone the modelConfig object
+  // Strip a space from the end of fullText if it exists
   config.prompt = fullText;
   // type is the model alias. set the name
   config.model = modelAliases[type];
@@ -110,10 +111,12 @@ function generateText(fullText, parentId, type) {
       var newText = "";
       if (type.startsWith("gpt")) {
         // OpenAI returns the response in a different format
-        newText = " " + jsonResponse.choices[0].message.content;
+        text = healTokens(jsonResponse.choices[0].message.content);
       } else {
-        newText = " " + jsonResponse.choices[0].text;
+        text = healTokens(jsonResponse.choices[0].text);
       }
+      // Add a space
+      newText = " " + text;
 
       // Create a new node with the generated text and the model type
       createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
@@ -121,4 +124,20 @@ function generateText(fullText, parentId, type) {
     .catch((error) => {
       console.error("Error during API call:", error);
     });
+}
+
+// Token Healing: Eventually I want to add good token healing support. For now, we will just check if the last character is punctuation. If not, we will back up to the last space.
+// We also strip any spaces at the start of the text.
+function healTokens(text) {
+  text = text.trim();
+
+  const lastChar = text[text.length - 1];
+  punctuation = ".!?}]);:,";
+  if (punctuation.includes(lastChar)) {
+    return text;
+  }
+  const lastSpace = text.lastIndexOf(" ");
+  // Strip spaces at the start and end of the text
+
+  return text.slice(0, lastSpace);
 }

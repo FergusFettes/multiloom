@@ -11,6 +11,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch_uncompressed.js"></script>
 <!-- Load axios library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
+<!-- <!-- Load llama tokenizer library --> -->
+<!-- <script type="module" src="https://belladoreai.github.io/llama-tokenizer-js/llama-tokenizer.js"></script> -->
 <style>
 #mynetwork {
     width: 100%;
@@ -427,9 +429,6 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
       setTimeout(processNextLevel, 0); // Schedule the next level
     }
 
-    console.log("Processed chunk of size", chunk.length);
-    console.log("Queue size", queue.length);
-
     // Reset the chunk for the next iteration
     chunk = [];
   }
@@ -439,8 +438,6 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
 
 // Modified updateVisualization function to use processNodesByLevel
 function updateVisualization(newNodes) {
-  console.log("Updating visualization with", newNodes.length, "new nodes");
-  console.log("New nodes", newNodes);
   if (newNodes.length === 0) {
     return;
   }
@@ -1051,6 +1048,7 @@ Prompt:
 // Function to make an API call for text generation
 function generateText(fullText, parentId, type) {
   var config = Object.assign({}, modelConfig); // Clone the modelConfig object
+  // Strip a space from the end of fullText if it exists
   config.prompt = fullText;
   // type is the model alias. set the name
   config.model = modelAliases[type];
@@ -1100,10 +1098,12 @@ function generateText(fullText, parentId, type) {
       var newText = "";
       if (type.startsWith("gpt")) {
         // OpenAI returns the response in a different format
-        newText = " " + jsonResponse.choices[0].message.content;
+        text = healTokens(jsonResponse.choices[0].message.content);
       } else {
-        newText = " " + jsonResponse.choices[0].text;
+        text = healTokens(jsonResponse.choices[0].text);
       }
+      // Add a space
+      newText = " " + text;
 
       // Create a new node with the generated text and the model type
       createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
@@ -1111,6 +1111,22 @@ function generateText(fullText, parentId, type) {
     .catch((error) => {
       console.error("Error during API call:", error);
     });
+}
+
+// Token Healing: Eventually I want to add good token healing support. For now, we will just check if the last character is punctuation. If not, we will back up to the last space.
+// We also strip any spaces at the start of the text.
+function healTokens(text) {
+  text = text.trim();
+
+  const lastChar = text[text.length - 1];
+  punctuation = ".!?}]);:,";
+  if (punctuation.includes(lastChar)) {
+    return text;
+  }
+  const lastSpace = text.lastIndexOf(" ");
+  // Strip spaces at the start and end of the text
+
+  return text.slice(0, lastSpace);
 }
 // Event listener for the background text to open the modal on the first click
 document
@@ -1209,19 +1225,17 @@ window.addEventListener("contextmenu", function (event) {
   const fullTextElement = document.getElementById("fullText");
   if (event.target === textEditor || event.target === fullTextElement) {
     // Get the current text from the modal
-    const newText = fullTextElement.value;
+    const newText = fullTextElement.value.trim();
+    // Set the trimmed text back to the modal
+    fullTextElement.value = newText;
     var nodeId = parseInt(fullTextElement.getAttribute("data-node-id"));
 
-    console.log("Node ID: ", nodeId);
     // If nodeId is null or NaN
     if (nodeId === null || isNaN(nodeId)) {
       nodeId = localStorage.getItem("checkedOutNodeId");
-      console.log("checkedOutNodeId ID: ", nodeId);
     }
 
     const originalText = renderFullTextFromPatches(nodeId);
-    console.log("Original Text: ", originalText);
-    console.log("New Text: ", newText);
 
     // Create a new node if the text has changed with type as 'human'
     createNodeIfTextChanged(originalText, newText, nodeId, "human");
@@ -1467,7 +1481,10 @@ window.addEventListener("keydown", function (event) {
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
 window.addEventListener("keydown", function (event) {
   // Check if textEdit is both open and focussed
-  if (document.getElementById("textEditor").style.display === "block" && document.getElementById("fullText") == document.activeElement) {
+  if (
+    document.getElementById("textEditor").style.display === "block" &&
+    document.getElementById("fullText") == document.activeElement
+  ) {
     return; // Do not navigate if the text editor is open
   }
   const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
@@ -1507,7 +1524,10 @@ window.addEventListener("keydown", function (event) {
     default:
       return;
   }
-  if ( document.getElementById("textEditor").style.display = "block" && targetNodeId !== null) {
+  if (
+    (document.getElementById("textEditor").style.display =
+      "block" && targetNodeId !== null)
+  ) {
     renderFullText(targetNodeId);
   }
   if (targetNodeId !== null) {
@@ -1517,60 +1537,59 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-
 function makeStats() {
-    const statsContainer = document.getElementById("stats-container");
+  const statsContainer = document.getElementById("stats-container");
 
-    // Tree stats: total number of nodes
-    const totalNodes = Object.keys(data.nodes).length;
-    let treeStatsHtml = `<strong>Total Nodes:</strong> ${totalNodes}<br>`;
+  // Tree stats: total number of nodes
+  const totalNodes = Object.keys(data.nodes).length;
+  let treeStatsHtml = `<strong>Total Nodes:</strong> ${totalNodes}<br>`;
 
-    statsContainer.innerHTML = treeStatsHtml;
+  statsContainer.innerHTML = treeStatsHtml;
 
-    // Update the path stats
-    updatePathStats();
+  // Update the path stats
+  updatePathStats();
 
-    // Calculate and update average descendants stats
-    const averageDescendantsStats = calculateScores("averageDescendants");
-    let statsHtml = "<ul><strong>Average Descendants by Node Type:</strong>";
+  // Calculate and update average descendants stats
+  const averageDescendantsStats = calculateScores("averageDescendants");
+  let statsHtml = "<ul><strong>Average Descendants by Node Type:</strong>";
 
-    for (const [type, average] of Object.entries(averageDescendantsStats)) {
-      statsHtml += `<li>${type}: ${average}</li>`;
-    }
-    statsHtml += "</ul>";
+  for (const [type, average] of Object.entries(averageDescendantsStats)) {
+    statsHtml += `<li>${type}: ${average}</li>`;
+  }
+  statsHtml += "</ul>";
 
-    statsContainer.innerHTML += statsHtml;
+  statsContainer.innerHTML += statsHtml;
 
-    // Calculate and update discounted cumulative gain stats
-    const dcgStats = calculateScores("discountedCumulativeGain");
-    let dcgHtml =
-      "<ul><strong>Average Discounted Cumulative Gain by Model:</strong>";
+  // Calculate and update discounted cumulative gain stats
+  const dcgStats = calculateScores("discountedCumulativeGain");
+  let dcgHtml =
+    "<ul><strong>Average Discounted Cumulative Gain by Model:</strong>";
 
-    for (const [nodeId, dcg] of Object.entries(dcgStats)) {
-      dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
-    }
-    dcgHtml += "</ul>";
+  for (const [nodeId, dcg] of Object.entries(dcgStats)) {
+    dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
+  }
+  dcgHtml += "</ul>";
 
-    statsContainer.innerHTML += dcgHtml;
+  statsContainer.innerHTML += dcgHtml;
 
-    // Calculate and update normalized proportion of peer descendants
-    const npdStats = calculateScores("normalizedProportionOfPeerDescendants");
-    let npdHtml =
-      "<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>";
+  // Calculate and update normalized proportion of peer descendants
+  const npdStats = calculateScores("normalizedProportionOfPeerDescendants");
+  let npdHtml =
+    "<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>";
 
-    for (const [nodeId, npd] of Object.entries(npdStats)) {
-      npdHtml += `<li>${nodeId}: ${npd}</li>`;
-    }
-    npdHtml += "</ul>";
+  for (const [nodeId, npd] of Object.entries(npdStats)) {
+    npdHtml += `<li>${nodeId}: ${npd}</li>`;
+  }
+  npdHtml += "</ul>";
 
-    statsContainer.innerHTML += npdHtml;
+  statsContainer.innerHTML += npdHtml;
 
-    // Toggle the info modal display
-    const infoModal = document.getElementById("infoModal");
-    const isModalOpen = infoModal.style.display === "block";
-    infoModal.style.display = isModalOpen ? "none" : "block";
-    event.preventDefault();
-};
+  // Toggle the info modal display
+  const infoModal = document.getElementById("infoModal");
+  const isModalOpen = infoModal.style.display === "block";
+  infoModal.style.display = isModalOpen ? "none" : "block";
+  event.preventDefault();
+}
 // Make the DIV element draggable:
 dragElement(document.getElementById("textEditor"));
 

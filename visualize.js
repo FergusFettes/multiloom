@@ -79,9 +79,6 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
       setTimeout(processNextLevel, 0); // Schedule the next level
     }
 
-    console.log("Processed chunk of size", chunk.length);
-    console.log("Queue size", queue.length);
-
     // Reset the chunk for the next iteration
     chunk = [];
   }
@@ -91,8 +88,6 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
 
 // Modified updateVisualization function to use processNodesByLevel
 function updateVisualization(newNodes) {
-  console.log("Updating visualization with", newNodes.length, "new nodes");
-  console.log("New nodes", newNodes);
   if (newNodes.length === 0) {
     return;
   }

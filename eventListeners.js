@@ -95,19 +95,17 @@ window.addEventListener("contextmenu", function (event) {
   const fullTextElement = document.getElementById("fullText");
   if (event.target === textEditor || event.target === fullTextElement) {
     // Get the current text from the modal
-    const newText = fullTextElement.value;
+    const newText = fullTextElement.value.trim();
+    // Set the trimmed text back to the modal
+    fullTextElement.value = newText;
     var nodeId = parseInt(fullTextElement.getAttribute("data-node-id"));
 
-    console.log("Node ID: ", nodeId);
     // If nodeId is null or NaN
     if (nodeId === null || isNaN(nodeId)) {
       nodeId = localStorage.getItem("checkedOutNodeId");
-      console.log("checkedOutNodeId ID: ", nodeId);
     }
 
     const originalText = renderFullTextFromPatches(nodeId);
-    console.log("Original Text: ", originalText);
-    console.log("New Text: ", newText);
 
     // Create a new node if the text has changed with type as 'human'
     createNodeIfTextChanged(originalText, newText, nodeId, "human");
