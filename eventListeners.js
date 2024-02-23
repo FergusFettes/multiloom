@@ -353,7 +353,10 @@ window.addEventListener("keydown", function (event) {
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
 window.addEventListener("keydown", function (event) {
   // Check if textEdit is both open and focussed
-  if (document.getElementById("textEditor").style.display === "block" && document.getElementById("fullText") == document.activeElement) {
+  if (
+    document.getElementById("textEditor").style.display === "block" &&
+    document.getElementById("fullText") == document.activeElement
+  ) {
     return; // Do not navigate if the text editor is open
   }
   const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
@@ -393,7 +396,10 @@ window.addEventListener("keydown", function (event) {
     default:
       return;
   }
-  if ( document.getElementById("textEditor").style.display = "block" && targetNodeId !== null) {
+  if (
+    (document.getElementById("textEditor").style.display =
+      "block" && targetNodeId !== null)
+  ) {
     renderFullText(targetNodeId);
   }
   if (targetNodeId !== null) {
@@ -403,57 +409,56 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-
 function makeStats() {
-    const statsContainer = document.getElementById("stats-container");
+  const statsContainer = document.getElementById("stats-container");
 
-    // Tree stats: total number of nodes
-    const totalNodes = Object.keys(data.nodes).length;
-    let treeStatsHtml = `<strong>Total Nodes:</strong> ${totalNodes}<br>`;
+  // Tree stats: total number of nodes
+  const totalNodes = Object.keys(data.nodes).length;
+  let treeStatsHtml = `<strong>Total Nodes:</strong> ${totalNodes}<br>`;
 
-    statsContainer.innerHTML = treeStatsHtml;
+  statsContainer.innerHTML = treeStatsHtml;
 
-    // Update the path stats
-    updatePathStats();
+  // Update the path stats
+  updatePathStats();
 
-    // Calculate and update average descendants stats
-    const averageDescendantsStats = calculateScores("averageDescendants");
-    let statsHtml = "<ul><strong>Average Descendants by Node Type:</strong>";
+  // Calculate and update average descendants stats
+  const averageDescendantsStats = calculateScores("averageDescendants");
+  let statsHtml = "<ul><strong>Average Descendants by Node Type:</strong>";
 
-    for (const [type, average] of Object.entries(averageDescendantsStats)) {
-      statsHtml += `<li>${type}: ${average}</li>`;
-    }
-    statsHtml += "</ul>";
+  for (const [type, average] of Object.entries(averageDescendantsStats)) {
+    statsHtml += `<li>${type}: ${average}</li>`;
+  }
+  statsHtml += "</ul>";
 
-    statsContainer.innerHTML += statsHtml;
+  statsContainer.innerHTML += statsHtml;
 
-    // Calculate and update discounted cumulative gain stats
-    const dcgStats = calculateScores("discountedCumulativeGain");
-    let dcgHtml =
-      "<ul><strong>Average Discounted Cumulative Gain by Model:</strong>";
+  // Calculate and update discounted cumulative gain stats
+  const dcgStats = calculateScores("discountedCumulativeGain");
+  let dcgHtml =
+    "<ul><strong>Average Discounted Cumulative Gain by Model:</strong>";
 
-    for (const [nodeId, dcg] of Object.entries(dcgStats)) {
-      dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
-    }
-    dcgHtml += "</ul>";
+  for (const [nodeId, dcg] of Object.entries(dcgStats)) {
+    dcgHtml += `<li>${nodeId}: ${dcg}</li>`;
+  }
+  dcgHtml += "</ul>";
 
-    statsContainer.innerHTML += dcgHtml;
+  statsContainer.innerHTML += dcgHtml;
 
-    // Calculate and update normalized proportion of peer descendants
-    const npdStats = calculateScores("normalizedProportionOfPeerDescendants");
-    let npdHtml =
-      "<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>";
+  // Calculate and update normalized proportion of peer descendants
+  const npdStats = calculateScores("normalizedProportionOfPeerDescendants");
+  let npdHtml =
+    "<ul><strong>Normalized Proportion of Peer Descendants by Model:</strong>";
 
-    for (const [nodeId, npd] of Object.entries(npdStats)) {
-      npdHtml += `<li>${nodeId}: ${npd}</li>`;
-    }
-    npdHtml += "</ul>";
+  for (const [nodeId, npd] of Object.entries(npdStats)) {
+    npdHtml += `<li>${nodeId}: ${npd}</li>`;
+  }
+  npdHtml += "</ul>";
 
-    statsContainer.innerHTML += npdHtml;
+  statsContainer.innerHTML += npdHtml;
 
-    // Toggle the info modal display
-    const infoModal = document.getElementById("infoModal");
-    const isModalOpen = infoModal.style.display === "block";
-    infoModal.style.display = isModalOpen ? "none" : "block";
-    event.preventDefault();
-};
+  // Toggle the info modal display
+  const infoModal = document.getElementById("infoModal");
+  const isModalOpen = infoModal.style.display === "block";
+  infoModal.style.display = isModalOpen ? "none" : "block";
+  event.preventDefault();
+}
