@@ -8,7 +8,6 @@ const models = [
   "gpt-4-turbo-preview@https://api.openai.com/v1/chat/completions",
 ];
 
-
 // Model configuration
 var modelConfig = {
   model: "",
@@ -24,10 +23,10 @@ var modelConfig = {
 };
 
 function createModelConfigElement(modelName) {
-    const configSection = document.createElement('div');
-    configSection.className = 'model-config-blob';
-    configSection.id = `model-config-${modelName}`;
-    configSection.innerHTML = `
+  const configSection = document.createElement("div");
+  configSection.className = "model-config-blob";
+  configSection.id = `model-config-${modelName}`;
+  configSection.innerHTML = `
         <h3>${modelName}</h3>
         <div class="model-config-fields">
             <label for="max-tokens-input">Max Tokens:</label>
@@ -41,86 +40,89 @@ function createModelConfigElement(modelName) {
             <label for="repetition-penalty-input">Repetition Penalty:</label>
             <input type="number" step="0.1" id="repetition-penalty-input" value="${modelConfig.repetition_penalty}"><br>
             <label for="stop-sequence-input">Stop Sequence:</label>
-            <input type="text" id="stop-sequence-input" value="${modelConfig.stop.join(', ')}"><br>
+            <input type="text" id="stop-sequence-input" value="${modelConfig.stop.join(", ")}"><br>
             <label for="completions-input">Completions:</label>
             <input type="number" id="completions-input" value="${modelConfig.n}">
         </div>
     `;
-    return configSection;
+  return configSection;
 }
 
 function sanitizeModelName(modelName) {
-    return modelName.replace(/[^a-zA-Z0-9]/g, '');
+  return modelName.replace(/[^a-zA-Z0-9]/g, "");
 }
 
 function populateModelCheckboxes() {
-    const modelCheckboxesContainer = document.getElementById('model-checkboxes');
+  const modelCheckboxesContainer = document.getElementById("model-checkboxes");
 
-    models.forEach(model => {
-        const [modelName, modelUrl] = model.split('@');
-        const cleanName = sanitizeModelName(modelName);
-        
-        // Create checkbox element for each model
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'model-checkbox';
-        checkbox.id = `model-checkbox-${cleanName}`;
-        checkbox.name = modelName;
-        checkbox.value = model;
-        checkbox.checked = true; // Default to checked
+  models.forEach((model) => {
+    const [modelName, modelUrl] = model.split("@");
+    const cleanName = sanitizeModelName(modelName);
 
-        const label = document.createElement('label');
-        label.htmlFor = checkbox.id;
-        label.textContent = modelName;
+    // Create checkbox element for each model
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "model-checkbox";
+    checkbox.id = `model-checkbox-${cleanName}`;
+    checkbox.name = modelName;
+    checkbox.value = model;
+    checkbox.checked = true; // Default to checked
 
-        const div = document.createElement('div');
-        div.className = 'model-checkbox-container';
-        div.appendChild(checkbox); // Append the checkbox to the container
-        div.appendChild(label); // Append the label to the container
+    const label = document.createElement("label");
+    label.htmlFor = checkbox.id;
+    label.textContent = modelName;
 
-        modelCheckboxesContainer.appendChild(div); // Append the container to the parent
-    });
+    const div = document.createElement("div");
+    div.className = "model-checkbox-container";
+    div.appendChild(checkbox); // Append the checkbox to the container
+    div.appendChild(label); // Append the label to the container
+
+    modelCheckboxesContainer.appendChild(div); // Append the container to the parent
+  });
 }
 
 // Call populateModelCheckboxes on window load or document ready
-window.addEventListener('DOMContentLoaded', populateModelCheckboxes);
-
+window.addEventListener("DOMContentLoaded", populateModelCheckboxes);
 
 // Event listener for the model dropdown button
-document.getElementById('model-dropdown-btn').addEventListener('click', function(event) {
-    document.getElementById('model-checkboxes').classList.toggle('show');
-});
-
+document
+  .getElementById("model-dropdown-btn")
+  .addEventListener("click", function (event) {
+    document.getElementById("model-checkboxes").classList.toggle("show");
+  });
 
 // Close the dropdown if the user clicks outside of it
-window.onclick = function(event) {
-    if (!event.target.matches('.dropbtn')) {
-        var dropdowns = document.getElementsByClassName('dropdown-content');
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
-            }
-        }
+window.onclick = function (event) {
+  if (!event.target.matches(".dropbtn")) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    for (var i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains("show")) {
+        openDropdown.classList.remove("show");
+      }
     }
+  }
 };
 
 // Event listener for the API keys dropdown button
-document.getElementById('api-keys-dropdown-btn').addEventListener('click', function(event) {
-    document.getElementById('api-keys-container').classList.toggle('show');
-});
+document
+  .getElementById("api-keys-dropdown-btn")
+  .addEventListener("click", function (event) {
+    document.getElementById("api-keys-container").classList.toggle("show");
+  });
 
 // Close the API keys dropdown if the user clicks outside of it
-window.onclick = function(event) {
-    if (!event.target.matches('#api-keys-dropdown-btn')) {
-        var apiKeysContainer = document.getElementById('api-keys-container');
-        if (apiKeysContainer.classList.contains('show')) {
-            apiKeysContainer.classList.remove('show');
-        }
+window.onclick = function (event) {
+  if (!event.target.matches("#api-keys-dropdown-btn")) {
+    var apiKeysContainer = document.getElementById("api-keys-container");
+    if (apiKeysContainer.classList.contains("show")) {
+      apiKeysContainer.classList.remove("show");
     }
+  }
 };
 
 // Create a static default model config element using the default configuration
 const defaultModelConfigElement = createModelConfigElement(modelConfig.model);
-document.getElementById('default-params-container').appendChild(defaultModelConfigElement); // Append to the default params container
-
+document
+  .getElementById("default-params-container")
+  .appendChild(defaultModelConfigElement); // Append to the default params container
