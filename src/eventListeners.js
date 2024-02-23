@@ -159,10 +159,10 @@ window.addEventListener("keydown", function (event) {
 window.addEventListener("keydown", function (event) {
   if (event.key === "m" || event.keyCode === 80) {
     // if the editor is open, do nothing
-    if (document.getElementById("model-config-modal").style.display === "block") {
+    if (document.getElementById("textEditor").style.display === "block") {
       return;
     }
-    // Toggle the settings modal
+    // Toggle the model settings modal
     document.getElementById("model-config-modal").style.display =
       document.getElementById("model-config-modal").style.display === "block"
         ? "none"
