@@ -1514,7 +1514,6 @@ window.addEventListener("keydown", function (event) {
   }
   const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
   const selectedNodeId = network.getSelectedNodes()[0];
-  console.log(event)
   let targetNodeId = null;
   switch (event.key) {
     case "w":
@@ -1544,7 +1543,11 @@ window.addEventListener("keydown", function (event) {
         deleteNode(selectedNodeId);
       }
       break;
-      // Backsapce also deletes
+    case "Backspace":
+      if (selectedNodeId) {
+        deleteNode(selectedNodeId);
+      }
+      break;
     case "?":
       makeStats();
       break;
