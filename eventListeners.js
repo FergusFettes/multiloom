@@ -95,7 +95,7 @@ window.addEventListener("contextmenu", function (event) {
   const fullTextElement = document.getElementById("fullText");
   if (event.target === textEditor || event.target === fullTextElement) {
     // Get the current text from the modal
-    const newText = fullTextElement.value.trim();
+    const newText = fullTextElement.value.replace(/ +$/, "");
     // Set the trimmed text back to the modal
     fullTextElement.value = newText;
     var nodeId = parseInt(fullTextElement.getAttribute("data-node-id"));

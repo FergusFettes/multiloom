@@ -115,8 +115,12 @@ function generateText(fullText, parentId, type) {
       } else {
         text = healTokens(jsonResponse.choices[0].text);
       }
-      // Add a space
-      newText = " " + text;
+      // Add a space if the text has more than 2 characters and doesn't start with punctuation
+      // And the fullText doesnt end in a newline
+      if (text.length > 2 && !".!?".includes(text[0]) && !fullText.endsWith("\n")) {
+        text = " " + text;
+      }
+      newText = text;
 
       // Create a new node with the generated text and the model type
       createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
@@ -129,7 +133,8 @@ function generateText(fullText, parentId, type) {
 // Token Healing: Eventually I want to add good token healing support. For now, we will just check if the last character is punctuation. If not, we will back up to the last space.
 // We also strip any spaces at the start of the text.
 function healTokens(text) {
-  text = text.trim();
+  // Trim literal spaces, not newlines
+  text = text.replace(/ +$/, "").replace(/^ +/, "");
 
   const lastChar = text[text.length - 1];
   punctuation = ".!?}]);:,";
@@ -137,7 +142,6 @@ function healTokens(text) {
     return text;
   }
   const lastSpace = text.lastIndexOf(" ");
-  // Strip spaces at the start and end of the text
 
   return text.slice(0, lastSpace);
 }

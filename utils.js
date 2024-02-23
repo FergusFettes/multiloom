@@ -66,7 +66,7 @@ function findSiblingNodes(nodeId) {
   if (parentNodeId) {
     const siblings = nodes.get({
       filter: function (n) {
-        return parseInt(n.parent) === parseInt(parentNodeId);
+        return parseInt(n.parent) === parseInt(parentNodeId) && !n.hidden;
       },
     });
     const index = siblings.findIndex(
@@ -85,6 +85,9 @@ function findLongestTextChildNode(parentNodeId) {
   let longestNode = null;
   let maxLength = 0;
   nodes.forEach(function (node) {
+    if (node.hidden) {
+      return;
+    }
     if (parseInt(node.parent) === parseInt(parentNodeId)) {
       const length = node.label.length;
       if (length > maxLength) {
