@@ -69,7 +69,7 @@ function findSiblingNodes(nodeId) {
 
   // Get the siblings and sort them. Use createdAt if available, otherwise fallback to UUID.
   const siblings = Object.values(data.nodes)
-    .filter(node => node.parent === parentNodeId && !node.hidden)
+    .filter((node) => node.parent === parentNodeId && !node.hidden)
     .sort((a, b) => {
       if (a.createdAt && b.createdAt) {
         // Compare by createdAt if both are available
@@ -81,26 +81,28 @@ function findSiblingNodes(nodeId) {
     });
 
   // Find the index of the current node
-  const currentIndex = siblings.findIndex(sibling => sibling.id === nodeId);
+  const currentIndex = siblings.findIndex((sibling) => sibling.id === nodeId);
 
   // Determine the left and right siblings, wrapping around at the ends
-  const leftSiblingIndex = currentIndex > 0 ? currentIndex - 1 : siblings.length - 1;
-  const rightSiblingIndex = currentIndex < siblings.length - 1 ? currentIndex + 1 : 0;
+  const leftSiblingIndex =
+    currentIndex > 0 ? currentIndex - 1 : siblings.length - 1;
+  const rightSiblingIndex =
+    currentIndex < siblings.length - 1 ? currentIndex + 1 : 0;
 
   return {
     leftSibling: siblings[leftSiblingIndex].id,
-    rightSibling: siblings[rightSiblingIndex].id
+    rightSibling: siblings[rightSiblingIndex].id,
   };
 }
 
 function findLastReadOrRandomChildNode(parentNodeId) {
   // Filter out visible child nodes of the provided parent node
-  const childNodes = Object.values(data.nodes).filter(node =>
-    !node.hidden && node.parent === parentNodeId
+  const childNodes = Object.values(data.nodes).filter(
+    (node) => !node.hidden && node.parent === parentNodeId,
   );
 
-  console.log("Children")
-  console.log(childNodes)
+  console.log("Children");
+  console.log(childNodes);
 
   if (childNodes.length === 0) {
     return null; // Return null if there are no child nodes
