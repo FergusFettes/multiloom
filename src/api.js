@@ -123,7 +123,7 @@ function generateText(fullText, parentId, modelName, customConfig) {
         messages: [
           {
             role: "user",
-            content: fullText,
+            content: prePrompt + fullText,
           },
         ],
         temperature: config.temperature,
