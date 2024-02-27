@@ -1,13 +1,35 @@
-const models = [
-  "google/gemma-7b@https://api.together.xyz/v1/completions",
-  "mistralai/Mistral-7B-Instruct-v0.2@https://api.together.xyz/v1/completions",
-  "mistralai/Mixtral-8x7B-Instruct-v0.1@https://api.together.xyz/v1/completions",
-  "mistralai/Mixtral-8x7B-v0.1@https://api.together.xyz/v1/completions",
-  "togethercomputer/llama-2-70b@https://api.together.xyz/v1/completions",
-  "mistralai/Mistral-7B-v0.1@https://api.together.xyz/v1/completions",
-  "gpt-3.5-turbo@https://api.openai.com/v1/chat/completions",
-  "gpt-4-turbo-preview@https://api.openai.com/v1/chat/completions",
-];
+const modelSanitized = [
+  "gemma-7b",
+  "mistral-7b-instruct-v0.2",
+  "mixtral-8x7b-instruct-v0.1",
+  "mixtral-8x7b-v0.1",
+  "llama-2-70b",
+  "mistral-7b-v0.1",
+  "gpt-3.5-turbo",
+  "gpt-4-turbo-preview",
+]
+
+const remoteName = {
+  "gemma-7b": "google/gemma-7b",
+  "mistral-7b-instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
+  "mixtral-8x7b-instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  "mixtral-8x7b-v0.1": "mistralai/Mixtral-8x7B-v0.1",
+  "llama-2-70b": "togethercomputer/llama-2-70b",
+  "mistral-7b-v0.1": "mistralai/Mistral-7B-v0.1",
+  "gpt-3.5-turbo": "gpt-3.5-turbo",
+  "gpt-4-turbo-preview": "gpt-4-turbo-preview",
+};
+
+const modelUrl = {
+  "gemma-7b": "https://api.together.xyz/v1/completions",
+  "mistral-7b-instruct-v0.2": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b-instruct-v0.1": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b-v0.1": "https://api.together.xyz/v1/completions",
+  "llama-2-70b": "https://api.together.xyz/v1/completions",
+  "mistral-7b-v0.1": "https://api.together.xyz/v1/completions",
+  "gpt-3.5-turbo": "https://api.openai.com/v1/chat/completions",
+  "gpt-4-turbo-preview": "https://api.openai.com/v1/chat/completions",
+}
 
 // Model configuration
 var modelConfig = {
@@ -23,58 +45,46 @@ var modelConfig = {
   n: 1,
 };
 
-// List of model aliases
-var modelAliases = {
-  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  mixtral: "mistralai/Mixtral-8x7B-v0.1",
-  llama2: "togethercomputer/llama-2-70b",
-  mistral: "mistralai/Mistral-7B-v0.1",
-  gpt3t: "gpt-3.5-turbo",
-  gpt4t: "gpt-4-turbo-preview",
-  gemma: "gpt-4-turbo-preview",
-};
-
 function createModelConfigElement(modelName, isDefault = false) {
   const configSection = document.createElement("div");
   configSection.className = "model-config-blob";
-  configSection.id = `model-config-${sanitizeModelName(modelName)}`;
+  configSection.id = `model-config-${modelName}`;
   configSection.innerHTML = `
             <h3>${modelName}
-            ${isDefault ? "" : `<input type="checkbox" class="model-enable-checkbox" id="enable-${sanitizeModelName(modelName)}" checked>`}
+            ${isDefault ? "" : `<input type="checkbox" class="model-enable-checkbox" id="enable-${modelName}">`}
             </h3>
             <div class="model-config-fields">
-            <label for="max-tokens-input-${sanitizeModelName(modelName)}">Max Tokens:</label>
-            <input type="number" id="max-tokens-input-${sanitizeModelName(modelName)}" value="${modelConfig.max_tokens}" step="10"><br>
-            <label for="temperature-input-${sanitizeModelName(modelName)}">Temperature:</label>
-            <input type="number" step="0.1" id="temperature-input-${sanitizeModelName(modelName)}" value="${modelConfig.temperature}"><br>
-            <label for="top-p-input-${sanitizeModelName(modelName)}">Top P:</label>
-            <input type="number" step="0.1" id="top-p-input-${sanitizeModelName(modelName)}" value="${modelConfig.top_p}"><br>
-            <label for="top-k-input-${sanitizeModelName(modelName)}">Top K:</label>
-            <input type="number" id="top-k-input-${sanitizeModelName(modelName)}" value="${modelConfig.top_k}"><br>
-            <label for="repetition-penalty-input-${sanitizeModelName(modelName)}">Repetition Penalty:</label>
-            <input type="number" step="0.1" id="repetition-penalty-input-${sanitizeModelName(modelName)}" value="${modelConfig.repetition_penalty}"><br>
-            <label for="stop-sequence-input-${sanitizeModelName(modelName)}">Stop Sequence:</label>
-            <input type="text" id="stop-sequence-input-${sanitizeModelName(modelName)}" value="${modelConfig.stop.join(", ")}"><br>
-            <label for="completions-input-${sanitizeModelName(modelName)}">Completions:</label>
-            <input type="number" id="completions-input-${sanitizeModelName(modelName)}" value="${modelConfig.n}"><br>
-            ${isDefault ? "" : `<label for="pin-default-${sanitizeModelName(modelName)}">Pin to Default:</label>
-            <input type="checkbox" id="pin-default-${sanitizeModelName(modelName)}" checked>`}
+            <label for="max-tokens-input-${modelName}">Max Tokens:</label>
+            <input type="number" id="max-tokens-input-${modelName}" value="${modelConfig.max_tokens}" step="10"><br>
+            <label for="temperature-input-${modelName}">Temperature:</label>
+            <input type="number" step="0.1" id="temperature-input-${modelName}" value="${modelConfig.temperature}"><br>
+            <label for="top-p-input-${modelName}">Top P:</label>
+            <input type="number" step="0.1" id="top-p-input-${modelName}" value="${modelConfig.top_p}"><br>
+            <label for="top-k-input-${modelName}">Top K:</label>
+            <input type="number" id="top-k-input-${modelName}" value="${modelConfig.top_k}"><br>
+            <label for="repetition-penalty-input-${modelName}">Repetition Penalty:</label>
+            <input type="number" step="0.1" id="repetition-penalty-input-${modelName}" value="${modelConfig.repetition_penalty}"><br>
+            <label for="stop-sequence-input-${modelName}">Stop Sequence:</label>
+            <input type="text" id="stop-sequence-input-${modelName}" value="${modelConfig.stop.join(", ")}"><br>
+            <label for="completions-input-${modelName}">Completions:</label>
+            <input type="number" id="completions-input-${modelName}" value="${modelConfig.n}"><br>
+            ${
+              isDefault
+                ? ""
+                : `<label for="pin-default-${modelName}">Pin to Default:</label>
+            <input type="checkbox" id="pin-default-${modelName}" checked>`
+            }
         </div>
     `;
   return configSection;
 }
 
-function sanitizeModelName(modelName) {
-  return modelName.replace(/[^a-zA-Z0-9]/g, "");
-}
-
-
-window.addEventListener("DOMContentLoaded", function() {
-  const modelConfigContainer = document.getElementById("model-params-container");
-  models.forEach((model) => {
-    const [modelName, modelUrl] = model.split("@");
-    const modelConfigElement = createModelConfigElement(modelName);
+window.addEventListener("DOMContentLoaded", function () {
+  const modelConfigContainer = document.getElementById(
+    "model-params-container",
+  );
+  modelSanitized.forEach((model) => {
+    const modelConfigElement = createModelConfigElement(model);
     modelConfigContainer.appendChild(modelConfigElement);
   });
 });
@@ -97,7 +107,7 @@ window.onclick = function (event) {
 };
 
 // Create a static default model config element using the default configuration
-const defaultModelConfigElement = createModelConfigElement('default', true);
+const defaultModelConfigElement = createModelConfigElement("default", true);
 document
   .getElementById("default-params-container")
   .appendChild(defaultModelConfigElement); // Append to the default params container

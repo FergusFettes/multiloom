@@ -4,16 +4,32 @@ var apiKey = "";
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
-  // Collect all selected models
-  const selectedModels = Array.from(
-    document.querySelectorAll(".model-checkbox:checked"),
-  ).map((checkbox) => checkbox.value);
+  // Collect all active models and their configurations
+  const activeModels = Array.from(document.querySelectorAll(".model-enable-checkbox:checked")).map((checkbox) => {
+    const modelName = checkbox.id.replace("enable-", "");
+    const isPinnedToDefault = document.getElementById(`pin-default-${modelName}`).checked;
+    const modelConfigElement = document.getElementById(`model-config-${modelName}`);
+    const customModelConfig = isPinnedToDefault ? modelConfig : {
+      max_tokens: parseInt(modelConfigElement.querySelector(`#max-tokens-input-${modelName}`).value),
+      temperature: parseFloat(modelConfigElement.querySelector(`#temperature-input-${modelName}`).value),
+      top_p: parseFloat(modelConfigElement.querySelector(`#top-p-input-${modelName}`).value),
+      top_k: parseInt(modelConfigElement.querySelector(`#top-k-input-${modelName}`).value),
+      repetition_penalty: parseFloat(modelConfigElement.querySelector(`#repetition-penalty-input-${modelName}`).value),
+      stop: modelConfigElement.querySelector(`#stop-sequence-input-${modelName}`).value.split(", "),
+      n: parseInt(modelConfigElement.querySelector(`#completions-input-${modelName}`).value),
+    };
+    return {
+      model: modelName,
+      config: customModelConfig,
+    };
+  });
+
   // Determine the number of generations to perform
   const generations = modelConfig.n || 1;
-  // Call the function to make an API call for text generation for each selected model
-  selectedModels.forEach((modelAlias) => {
+  // Call the function to make an API call for text generation for each active model
+  activeModels.forEach((model) => {
     for (let i = 0; i < generations; i++) {
-      generateText(fullText, parentId, modelAlias);
+      generateText(fullText, parentId, model.model, model.config);
     }
   });
 }
@@ -34,21 +50,20 @@ Prompt:
 `;
 
 // Function to make an API call for text generation
-function generateText(fullText, parentId, type) {
-  var config = Object.assign({}, modelConfig); // Clone the modelConfig object
-  // Strip a space from the end of fullText if it exists
-  const [modelName, apiUrl] = type.split("@");
+function generateText(fullText, parentId, modelName, customConfig) {
+  // Use custom config if provided, else clone the default modelConfig object
+  var config = customConfig || Object.assign({}, modelConfig);
+  const apiUrl = modelUrl[modelName];
 
   config.prompt = fullText;
-  // type is the model alias. set the name
-  config.model = modelName;
+  config.model = remoteName[modelName];
 
   let headers = {
     Authorization: "Bearer " + togetherApiKey,
   };
 
-  // Check if the model alias is for OpenAI and set the appropriate API URL and headers
-  if (type.startsWith("gpt")) {
+  // Check if the model is for OpenAI and set the appropriate API URL and headers
+  if (modelName.startsWith("gpt")) {
     headers = {
       "Content-Type": "application/json",
       Authorization: "Bearer " + openaiApiKey,
@@ -61,11 +76,10 @@ function generateText(fullText, parentId, type) {
           content: prePrompt + fullText,
         },
       ],
-      max_tokens: modelConfig.max_tokens,
-      temperature: modelConfig.temperature,
-      top_p: modelConfig.top_p,
-      n: modelConfig.n,
-      stop: modelConfig.stop,
+      max_tokens: config.max_tokens,
+      temperature: config.temperature,
+      top_p: config.top_p,
+      stop: config.stop,
       model: modelName,
     };
   }
@@ -80,33 +94,36 @@ function generateText(fullText, parentId, type) {
     responseType: "text",
   })
     .then((response) => {
-      // Remove the "data:" prefix if it exists and parse the JSON
-      const responseData = response.data.replace(/^data: /, "");
-      const jsonResponse = JSON.parse(responseData);
-      var newText = "";
-      if (type.startsWith("gpt")) {
-        // OpenAI returns the response in a different format
-        text = healTokens(jsonResponse.choices[0].message.content);
-      } else {
-        text = healTokens(jsonResponse.choices[0].text);
-      }
-      // Add a space if the text has more than 2 characters and doesn't start with punctuation
-      // And the fullText doesnt end in a newline
-      if (
-        text.length > 2 &&
-        !".!?".includes(text[0]) &&
-        !fullText.endsWith("\n")
-      ) {
-        text = " " + text;
-      }
-      newText = text;
-
-      // Create a new node with the generated text and the model type
-      createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
+      // Process the response and create a new node with the generated text
+      const newText = processApiResponse(fullText, response, modelName);
+      createNodeIfTextChanged(fullText, fullText + newText, parentId, modelName);
     })
     .catch((error) => {
       console.error("Error during API call:", error);
     });
+}
+
+function processApiResponse(fullText, response, modelName) {
+  // Remove the "data:" prefix if it exists and parse the JSON
+  const responseData = response.data.replace(/^data: /, "");
+  const jsonResponse = JSON.parse(responseData);
+  var newText = "";
+  if (modelName.startsWith("gpt")) {
+    // OpenAI returns the response in a different format
+    newText = healTokens(jsonResponse.choices[0].message.content);
+  } else {
+    newText = healTokens(jsonResponse.choices[0].text);
+  }
+  // Add a space if the text has more than 2 characters and doesn't start with punctuation
+  // And the fullText doesn't end in a newline
+  if (
+    newText.length > 2 &&
+    !".!?".includes(newText[0]) &&
+    !fullText.endsWith("\n")
+  ) {
+    newText = " " + newText;
+  }
+  return newText;
 }
 
 // Token Healing: Eventually I want to add good token healing support. For now, we will just check if the last character is punctuation. If not, we will back up to the last space.

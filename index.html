@@ -1103,16 +1103,32 @@ var apiKey = "";
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
-  // Collect all selected models
-  const selectedModels = Array.from(
-    document.querySelectorAll(".model-checkbox:checked"),
-  ).map((checkbox) => checkbox.value);
+  // Collect all active models and their configurations
+  const activeModels = Array.from(document.querySelectorAll(".model-enable-checkbox:checked")).map((checkbox) => {
+    const modelName = checkbox.id.replace("enable-", "");
+    const isPinnedToDefault = document.getElementById(`pin-default-${modelName}`).checked;
+    const modelConfigElement = document.getElementById(`model-config-${modelName}`);
+    const customModelConfig = isPinnedToDefault ? modelConfig : {
+      max_tokens: parseInt(modelConfigElement.querySelector(`#max-tokens-input-${modelName}`).value),
+      temperature: parseFloat(modelConfigElement.querySelector(`#temperature-input-${modelName}`).value),
+      top_p: parseFloat(modelConfigElement.querySelector(`#top-p-input-${modelName}`).value),
+      top_k: parseInt(modelConfigElement.querySelector(`#top-k-input-${modelName}`).value),
+      repetition_penalty: parseFloat(modelConfigElement.querySelector(`#repetition-penalty-input-${modelName}`).value),
+      stop: modelConfigElement.querySelector(`#stop-sequence-input-${modelName}`).value.split(", "),
+      n: parseInt(modelConfigElement.querySelector(`#completions-input-${modelName}`).value),
+    };
+    return {
+      model: modelName,
+      config: customModelConfig,
+    };
+  });
+
   // Determine the number of generations to perform
   const generations = modelConfig.n || 1;
-  // Call the function to make an API call for text generation for each selected model
-  selectedModels.forEach((modelAlias) => {
+  // Call the function to make an API call for text generation for each active model
+  activeModels.forEach((model) => {
     for (let i = 0; i < generations; i++) {
-      generateText(fullText, parentId, modelAlias);
+      generateText(fullText, parentId, model.model, model.config);
     }
   });
 }
@@ -1133,21 +1149,20 @@ Prompt:
 `;
 
 // Function to make an API call for text generation
-function generateText(fullText, parentId, type) {
-  var config = Object.assign({}, modelConfig); // Clone the modelConfig object
-  // Strip a space from the end of fullText if it exists
-  const [modelName, apiUrl] = type.split("@");
+function generateText(fullText, parentId, modelName, customConfig) {
+  // Use custom config if provided, else clone the default modelConfig object
+  var config = customConfig || Object.assign({}, modelConfig);
+  const apiUrl = modelUrl[modelName];
 
   config.prompt = fullText;
-  // type is the model alias. set the name
-  config.model = modelName;
+  config.model = remoteName[modelName];
 
   let headers = {
     Authorization: "Bearer " + togetherApiKey,
   };
 
-  // Check if the model alias is for OpenAI and set the appropriate API URL and headers
-  if (type.startsWith("gpt")) {
+  // Check if the model is for OpenAI and set the appropriate API URL and headers
+  if (modelName.startsWith("gpt")) {
     headers = {
       "Content-Type": "application/json",
       Authorization: "Bearer " + openaiApiKey,
@@ -1160,11 +1175,10 @@ function generateText(fullText, parentId, type) {
           content: prePrompt + fullText,
         },
       ],
-      max_tokens: modelConfig.max_tokens,
-      temperature: modelConfig.temperature,
-      top_p: modelConfig.top_p,
-      n: modelConfig.n,
-      stop: modelConfig.stop,
+      max_tokens: config.max_tokens,
+      temperature: config.temperature,
+      top_p: config.top_p,
+      stop: config.stop,
       model: modelName,
     };
   }
@@ -1179,33 +1193,36 @@ function generateText(fullText, parentId, type) {
     responseType: "text",
   })
     .then((response) => {
-      // Remove the "data:" prefix if it exists and parse the JSON
-      const responseData = response.data.replace(/^data: /, "");
-      const jsonResponse = JSON.parse(responseData);
-      var newText = "";
-      if (type.startsWith("gpt")) {
-        // OpenAI returns the response in a different format
-        text = healTokens(jsonResponse.choices[0].message.content);
-      } else {
-        text = healTokens(jsonResponse.choices[0].text);
-      }
-      // Add a space if the text has more than 2 characters and doesn't start with punctuation
-      // And the fullText doesnt end in a newline
-      if (
-        text.length > 2 &&
-        !".!?".includes(text[0]) &&
-        !fullText.endsWith("\n")
-      ) {
-        text = " " + text;
-      }
-      newText = text;
-
-      // Create a new node with the generated text and the model type
-      createNodeIfTextChanged(fullText, fullText + newText, parentId, type);
+      // Process the response and create a new node with the generated text
+      const newText = processApiResponse(fullText, response, modelName);
+      createNodeIfTextChanged(fullText, fullText + newText, parentId, modelName);
     })
     .catch((error) => {
       console.error("Error during API call:", error);
     });
+}
+
+function processApiResponse(fullText, response, modelName) {
+  // Remove the "data:" prefix if it exists and parse the JSON
+  const responseData = response.data.replace(/^data: /, "");
+  const jsonResponse = JSON.parse(responseData);
+  var newText = "";
+  if (modelName.startsWith("gpt")) {
+    // OpenAI returns the response in a different format
+    newText = healTokens(jsonResponse.choices[0].message.content);
+  } else {
+    newText = healTokens(jsonResponse.choices[0].text);
+  }
+  // Add a space if the text has more than 2 characters and doesn't start with punctuation
+  // And the fullText doesn't end in a newline
+  if (
+    newText.length > 2 &&
+    !".!?".includes(newText[0]) &&
+    !fullText.endsWith("\n")
+  ) {
+    newText = " " + newText;
+  }
+  return newText;
 }
 
 // Token Healing: Eventually I want to add good token healing support. For now, we will just check if the last character is punctuation. If not, we will back up to the last space.
@@ -1763,16 +1780,38 @@ function dragElement(elmnt) {
 
 // Make the DIV element draggable:
 dragElement(document.getElementById("textEditor"));
-const models = [
-  "google/gemma-7b@https://api.together.xyz/v1/completions",
-  "mistralai/Mistral-7B-Instruct-v0.2@https://api.together.xyz/v1/completions",
-  "mistralai/Mixtral-8x7B-Instruct-v0.1@https://api.together.xyz/v1/completions",
-  "mistralai/Mixtral-8x7B-v0.1@https://api.together.xyz/v1/completions",
-  "togethercomputer/llama-2-70b@https://api.together.xyz/v1/completions",
-  "mistralai/Mistral-7B-v0.1@https://api.together.xyz/v1/completions",
-  "gpt-3.5-turbo@https://api.openai.com/v1/chat/completions",
-  "gpt-4-turbo-preview@https://api.openai.com/v1/chat/completions",
-];
+const modelSanitized = [
+  "gemma-7b",
+  "mistral-7b-instruct-v0.2",
+  "mixtral-8x7b-instruct-v0.1",
+  "mixtral-8x7b-v0.1",
+  "llama-2-70b",
+  "mistral-7b-v0.1",
+  "gpt-3.5-turbo",
+  "gpt-4-turbo-preview",
+]
+
+const remoteName = {
+  "gemma-7b": "google/gemma-7b",
+  "mistral-7b-instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
+  "mixtral-8x7b-instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  "mixtral-8x7b-v0.1": "mistralai/Mixtral-8x7B-v0.1",
+  "llama-2-70b": "togethercomputer/llama-2-70b",
+  "mistral-7b-v0.1": "mistralai/Mistral-7B-v0.1",
+  "gpt-3.5-turbo": "gpt-3.5-turbo",
+  "gpt-4-turbo-preview": "gpt-4-turbo-preview",
+};
+
+const modelUrl = {
+  "gemma-7b": "https://api.together.xyz/v1/completions",
+  "mistral-7b-instruct-v0.2": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b-instruct-v0.1": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b-v0.1": "https://api.together.xyz/v1/completions",
+  "llama-2-70b": "https://api.together.xyz/v1/completions",
+  "mistral-7b-v0.1": "https://api.together.xyz/v1/completions",
+  "gpt-3.5-turbo": "https://api.openai.com/v1/chat/completions",
+  "gpt-4-turbo-preview": "https://api.openai.com/v1/chat/completions",
+}
 
 // Model configuration
 var modelConfig = {
@@ -1788,58 +1827,46 @@ var modelConfig = {
   n: 1,
 };
 
-// List of model aliases
-var modelAliases = {
-  "mistral-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  mixtral: "mistralai/Mixtral-8x7B-v0.1",
-  llama2: "togethercomputer/llama-2-70b",
-  mistral: "mistralai/Mistral-7B-v0.1",
-  gpt3t: "gpt-3.5-turbo",
-  gpt4t: "gpt-4-turbo-preview",
-  gemma: "gpt-4-turbo-preview",
-};
-
 function createModelConfigElement(modelName, isDefault = false) {
   const configSection = document.createElement("div");
   configSection.className = "model-config-blob";
-  configSection.id = `model-config-${sanitizeModelName(modelName)}`;
+  configSection.id = `model-config-${modelName}`;
   configSection.innerHTML = `
             <h3>${modelName}
-            ${isDefault ? "" : `<input type="checkbox" class="model-enable-checkbox" id="enable-${sanitizeModelName(modelName)}" checked>`}
+            ${isDefault ? "" : `<input type="checkbox" class="model-enable-checkbox" id="enable-${modelName}">`}
             </h3>
             <div class="model-config-fields">
-            <label for="max-tokens-input-${sanitizeModelName(modelName)}">Max Tokens:</label>
-            <input type="number" id="max-tokens-input-${sanitizeModelName(modelName)}" value="${modelConfig.max_tokens}" step="10"><br>
-            <label for="temperature-input-${sanitizeModelName(modelName)}">Temperature:</label>
-            <input type="number" step="0.1" id="temperature-input-${sanitizeModelName(modelName)}" value="${modelConfig.temperature}"><br>
-            <label for="top-p-input-${sanitizeModelName(modelName)}">Top P:</label>
-            <input type="number" step="0.1" id="top-p-input-${sanitizeModelName(modelName)}" value="${modelConfig.top_p}"><br>
-            <label for="top-k-input-${sanitizeModelName(modelName)}">Top K:</label>
-            <input type="number" id="top-k-input-${sanitizeModelName(modelName)}" value="${modelConfig.top_k}"><br>
-            <label for="repetition-penalty-input-${sanitizeModelName(modelName)}">Repetition Penalty:</label>
-            <input type="number" step="0.1" id="repetition-penalty-input-${sanitizeModelName(modelName)}" value="${modelConfig.repetition_penalty}"><br>
-            <label for="stop-sequence-input-${sanitizeModelName(modelName)}">Stop Sequence:</label>
-            <input type="text" id="stop-sequence-input-${sanitizeModelName(modelName)}" value="${modelConfig.stop.join(", ")}"><br>
-            <label for="completions-input-${sanitizeModelName(modelName)}">Completions:</label>
-            <input type="number" id="completions-input-${sanitizeModelName(modelName)}" value="${modelConfig.n}"><br>
-            ${isDefault ? "" : `<label for="pin-default-${sanitizeModelName(modelName)}">Pin to Default:</label>
-            <input type="checkbox" id="pin-default-${sanitizeModelName(modelName)}">`}
+            <label for="max-tokens-input-${modelName}">Max Tokens:</label>
+            <input type="number" id="max-tokens-input-${modelName}" value="${modelConfig.max_tokens}" step="10"><br>
+            <label for="temperature-input-${modelName}">Temperature:</label>
+            <input type="number" step="0.1" id="temperature-input-${modelName}" value="${modelConfig.temperature}"><br>
+            <label for="top-p-input-${modelName}">Top P:</label>
+            <input type="number" step="0.1" id="top-p-input-${modelName}" value="${modelConfig.top_p}"><br>
+            <label for="top-k-input-${modelName}">Top K:</label>
+            <input type="number" id="top-k-input-${modelName}" value="${modelConfig.top_k}"><br>
+            <label for="repetition-penalty-input-${modelName}">Repetition Penalty:</label>
+            <input type="number" step="0.1" id="repetition-penalty-input-${modelName}" value="${modelConfig.repetition_penalty}"><br>
+            <label for="stop-sequence-input-${modelName}">Stop Sequence:</label>
+            <input type="text" id="stop-sequence-input-${modelName}" value="${modelConfig.stop.join(", ")}"><br>
+            <label for="completions-input-${modelName}">Completions:</label>
+            <input type="number" id="completions-input-${modelName}" value="${modelConfig.n}"><br>
+            ${
+              isDefault
+                ? ""
+                : `<label for="pin-default-${modelName}">Pin to Default:</label>
+            <input type="checkbox" id="pin-default-${modelName}" checked>`
+            }
         </div>
     `;
   return configSection;
 }
 
-function sanitizeModelName(modelName) {
-  return modelName.replace(/[^a-zA-Z0-9]/g, "");
-}
-
-
-window.addEventListener("DOMContentLoaded", function() {
-  const modelConfigContainer = document.getElementById("model-params-container");
-  models.forEach((model) => {
-    const [modelName, modelUrl] = model.split("@");
-    const modelConfigElement = createModelConfigElement(modelName);
+window.addEventListener("DOMContentLoaded", function () {
+  const modelConfigContainer = document.getElementById(
+    "model-params-container",
+  );
+  modelSanitized.forEach((model) => {
+    const modelConfigElement = createModelConfigElement(model);
     modelConfigContainer.appendChild(modelConfigElement);
   });
 });
@@ -1862,7 +1889,7 @@ window.onclick = function (event) {
 };
 
 // Create a static default model config element using the default configuration
-const defaultModelConfigElement = createModelConfigElement('default', true);
+const defaultModelConfigElement = createModelConfigElement("default", true);
 document
   .getElementById("default-params-container")
   .appendChild(defaultModelConfigElement); // Append to the default params container
