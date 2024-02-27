@@ -173,8 +173,9 @@ window.addEventListener("keydown", function (event) {
       return;
     }
     // Toggle the model settings modal
-    document.getElementById("model-config-modal").style.display =
-      document.getElementById("model-config-modal").style.display === "block"
+    const modelConfig = document.getElementById("model-config-modal")
+    modelConfig.style.display =
+      modelConfig.style.display === "block"
         ? "none"
         : "block";
   }
@@ -454,6 +455,8 @@ window.addEventListener("keydown", function (event) {
   }
   const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
   const selectedNodeId = network.getSelectedNodes()[0];
+  const defaultTemperature = document.getElementById("temperature-input-default");
+  const defaultTokens = document.getElementById("max-tokens-input-default");
   let targetNodeId = null;
   switch (event.key) {
     case "w":
@@ -467,6 +470,26 @@ window.addEventListener("keydown", function (event) {
       break;
     case "s":
       targetNodeId = findLongestTextChildNode(checkedOutNodeId);
+      break;
+    case "W":
+      defaultTokens.value = parseInt(defaultTokens.value) + 20;
+      modelConfig.max_tokens = parseInt(defaultTokens.value);
+      updateDefaultConfigDisplay();
+      break;
+    case "A":
+      defaultTemperature.value = parseFloat(defaultTemperature.value) - 0.1;
+      modelConfig.temperature = parseFloat(defaultTemperature.value);
+      updateDefaultConfigDisplay();
+      break;
+    case "D":
+      defaultTemperature.value = parseFloat(defaultTemperature.value) + 0.1;
+      modelConfig.temperature = parseFloat(defaultTemperature.value);
+      updateDefaultConfigDisplay();
+      break;
+    case "S":
+      defaultTokens.value = parseInt(defaultTokens.value) - 20;
+      modelConfig.max_tokens = parseInt(defaultTokens.value);
+      updateDefaultConfigDisplay();
       break;
     case " ":
       if (selectedNodeId) {

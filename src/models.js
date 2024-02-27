@@ -72,6 +72,12 @@ function saveModelConfigToLocalStorage(modelName) {
       ? document.getElementById(`enable-${modelName}`).checked
       : true,
   };
+  // If model name contains 'defualt', dont save to local storage, update the default config
+  if (modelName.includes("default")) {
+    modelConfig = { ...modelConfig, ...config };
+    updateDefaultConfigDisplay();
+    return;
+  }
   localStorage.setItem(`modelConfig-${modelName}`, JSON.stringify(config));
 }
 
@@ -100,6 +106,7 @@ function loadModelConfigFromLocalStorage(modelName) {
       modelName,
       document.getElementById(`model-config-${modelName}`),
     );
+    updateDefaultConfigDisplay();
   }
 }
 
@@ -108,8 +115,9 @@ function createModelConfigElement(modelName, isDefault = false) {
   configSection.className = "model-config-blob";
   configSection.id = `model-config-${modelName}`;
   configSection.innerHTML = `
-            <h3>${modelName}
-            ${isDefault ? "" : `<input type="checkbox" class="model-enable-checkbox" id="enable-${modelName}">`}
+            <h3>${modelName}--on:
+            ${isDefault ? "" : `<input type="checkbox" class="model-enable-checkbox" id="enable-${modelName}"><label for="pin-default-${modelName}"> use defaults: </label><input type="checkbox" id="pin-default-${modelName}" checked>`
+            }
             </h3>
             <div class="model-config-fields">
             <label for="max-tokens-input-${modelName}">Max Tokens:</label>
@@ -126,13 +134,7 @@ function createModelConfigElement(modelName, isDefault = false) {
             <input type="text" id="stop-sequence-input-${modelName}" value="${modelConfig.stop.join(", ")}"><br>
             <label for="completions-input-${modelName}">Completions:</label>
             <input type="number" id="completions-input-${modelName}" value="${modelConfig.n}"><br>
-            ${
-              isDefault
-                ? ""
-                : `<label for="pin-default-${modelName}">Pin to Default:</label>
-            <input type="checkbox" id="pin-default-${modelName}" checked>`
-            }
-        </div>
+            </div>
     `;
   // Attach event listeners to save config on change
   configSection.querySelectorAll("input").forEach((input) => {
@@ -146,13 +148,23 @@ function createModelConfigElement(modelName, isDefault = false) {
 
 function toggleConfigVisibility(modelName, configSection) {
   const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
+  const pinnedCheckbox = configSection.querySelector(`#pin-default-${modelName}`);
+  const pinnedLabel = configSection.querySelector(`label[for=pin-default-${modelName}]`);
   const configFields = configSection.querySelector(".model-config-fields");
   if (enableCheckbox) {
+    console.log("Adding event listener")
     enableCheckbox.addEventListener("change", () => {
-      configFields.style.display = enableCheckbox.checked ? "block" : "none";
+      console.log("triggered event listener")
+      configFields.style.display = enableCheckbox.checked && !pinnedCheckbox.checked ? "block" : "none";
+      pinnedCheckbox.style.display = enableCheckbox.checked ? "inline" : "none";
+      pinnedLabel.style.display = enableCheckbox.checked ? "inline" : "none";
+    });
+    pinnedCheckbox.addEventListener("change", () => {
+      console.log("triggered event listener")
+      configFields.style.display = enableCheckbox.checked && !pinnedCheckbox.checked ? "block" : "none";
     });
     // Set initial visibility based on checkbox state
-    configFields.style.display = enableCheckbox.checked ? "block" : "none";
+    configFields.style.display = enableCheckbox.checked && !pinnedCheckbox.checked ? "block" : "none";
   }
 }
 
@@ -166,6 +178,7 @@ window.addEventListener("DOMContentLoaded", function () {
     // Load model configuration from localStorage
     loadModelConfigFromLocalStorage(model);
   });
+  updateDefaultConfigDisplay();
 });
 
 // Event listener for the API keys dropdown button
@@ -184,6 +197,26 @@ window.onclick = function (event) {
     }
   }
 };
+
+function updateDefaultConfigDisplay() {
+  const maxTokensDisplay = document.getElementById('default-max-tokens-display');
+  const temperatureDisplay = document.getElementById('default-temperature-display');
+  if (modelConfig) {
+    maxTokensDisplay.textContent = `Max Tokens: ${modelConfig.max_tokens}`;
+    const temperature = parseFloat(modelConfig.temperature);
+    temperatureDisplay.textContent = `Temperature: ${temperature.toFixed(2)}`;
+    const color = interpolateColor(temperature, 0.7, 0.99, { from: [76, 175, 80], to: [244, 67, 54] });
+    temperatureDisplay.style.color = `rgb(${color.join(", ")})`;
+  }
+}
+
+function interpolateColor(value, min, max, colors) {
+  const ratio = (value - min) / (max - min);
+  return colors.from.map((fromColor, index) => {
+    const toColor = colors.to[index];
+    return Math.round(fromColor + ratio * (toColor - fromColor));
+  });
+}
 
 // Create a static default model config element using the default configuration
 const defaultModelConfigElement = createModelConfigElement("default", true);

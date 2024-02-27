@@ -30,11 +30,10 @@
         <button id="save-model-config-btn">Save Configuration</button>
     </div>
 </div>
-    <div style="position: absolute; top: 10px; left: 10px; z-index: 5;">
-        <button id="btn-settings">Settings</button>
-        <button id="btn-download">Download</button>
-        <button id="clear-data-btn">Clear Data</button>
-    </div>
+<div id="default-config-display" style="position: absolute; top: 10px; left: 10px; z-index: 5;">
+    <span id="default-max-tokens-display">Max Tokens: --</span>
+    <span id="default-temperature-display" style="margin-left: 10px;">Temperature: --</span>
+</div>
     <div id="mynetwork"></div>
     <div id="textEditor">
         <textarea id="fullText"></textarea>
@@ -81,7 +80,9 @@
                 <button id="import-json-btn">Import JSON</button>
             </div>
         </div>
-        <button id="save-settings-btn">Save Settings</button>
+        <button id="btn-settings">Settings</button>
+        <button id="btn-download">Download</button>
+        <button id="clear-data-btn">Clear Data</button>
     </div>
 <div id="infoModal">
     <div style="display: flex; justify-content: space-between; height: 50%;">
