@@ -88,6 +88,13 @@ const options = {
   physics: { enabled: false },
 };
 const network = new vis.Network(container, visData, options);
+updateTreeLayout();
+// Set the background color from local storage if it exists
+const backgroundColor = localStorage.getItem("backgroundColor");
+if (backgroundColor) {
+    document.getElementById("mynetwork").style.backgroundColor = backgroundColor;
+    document.getElementById("background-color-input").value = backgroundColor;
+}
 
 // Check if nodes are empty and display background text
 if (!hasNonDataNodes()) {

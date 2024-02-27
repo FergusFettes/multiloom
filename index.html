@@ -312,6 +312,8 @@
             <h3>Display Settings</h3>
             <label><input type="checkbox" id="toggle-model-colors"> Use Model Colors</label><br>
         </div>
+            <h3>Background Color</h3>
+            <input type="color" id="background-color-input" title="Choose background color" style="width: 50px; height: 50px; border: none; cursor: pointer;"><br>
             <h3>Tree Layout Settings</h3>
             <label for="level-separation-input">Level Separation:</label>
             <input type="number" id="level-separation-input" value="400"><br>
@@ -691,6 +693,13 @@ const options = {
   physics: { enabled: false },
 };
 const network = new vis.Network(container, visData, options);
+updateTreeLayout();
+// Set the background color from local storage if it exists
+const backgroundColor = localStorage.getItem("backgroundColor");
+if (backgroundColor) {
+    document.getElementById("mynetwork").style.backgroundColor = backgroundColor;
+    document.getElementById("background-color-input").value = backgroundColor;
+}
 
 // Check if nodes are empty and display background text
 if (!hasNonDataNodes()) {
@@ -1685,6 +1694,12 @@ document.getElementById("btn-settings").addEventListener("click", function () {
   settingsModal.style.display =
     settingsModal.style.display === "block" ? "none" : "block";
 });
+// Event listener for the background color input
+document.getElementById("background-color-input").addEventListener("input", function (event) {
+    const color = event.target.value;
+    document.getElementById("mynetwork").style.backgroundColor = color;
+    localStorage.setItem("backgroundColor", color);
+});
 // Event listener for the tree layout settings inputs
 document
   .getElementById("level-separation-input")
@@ -1706,9 +1721,19 @@ document
   });
 
 function updateTreeLayout() {
-  const levelSeparation =
-    parseInt(localStorage.getItem("levelSeparation")) || 400;
-  const nodeSpacing = parseInt(localStorage.getItem("nodeSpacing")) || 250;
+  // if level separation or node spacing are less than 50, set them to 50
+  var levelSeparationNew = parseInt(localStorage.getItem("levelSeparation")) || 400;
+  var nodeSpacingNew = parseInt(localStorage.getItem("nodeSpacing")) || 250;
+
+  if (levelSeparationNew < 50) {
+    levelSeparationNew = 50;
+  }
+  if (nodeSpacingNew < 50) {
+    nodeSpacingNew = 50;
+  }
+
+  const levelSeparation = levelSeparationNew;
+  const nodeSpacing = nodeSpacingNew;
   const direction = localStorage.getItem("direction") || "LR";
   network.setOptions({
     layout: {
@@ -1717,6 +1742,10 @@ function updateTreeLayout() {
         nodeSpacing: nodeSpacing,
         direction: direction,
       },
+    },
+    edges: {
+      smooth: true,
+      arrows: { to: true },
     },
   });
 }

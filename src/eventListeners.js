@@ -278,6 +278,12 @@ document.getElementById("btn-settings").addEventListener("click", function () {
   settingsModal.style.display =
     settingsModal.style.display === "block" ? "none" : "block";
 });
+// Event listener for the background color input
+document.getElementById("background-color-input").addEventListener("input", function (event) {
+    const color = event.target.value;
+    document.getElementById("mynetwork").style.backgroundColor = color;
+    localStorage.setItem("backgroundColor", color);
+});
 // Event listener for the tree layout settings inputs
 document
   .getElementById("level-separation-input")
@@ -299,9 +305,19 @@ document
   });
 
 function updateTreeLayout() {
-  const levelSeparation =
-    parseInt(localStorage.getItem("levelSeparation")) || 400;
-  const nodeSpacing = parseInt(localStorage.getItem("nodeSpacing")) || 250;
+  // if level separation or node spacing are less than 50, set them to 50
+  var levelSeparationNew = parseInt(localStorage.getItem("levelSeparation")) || 400;
+  var nodeSpacingNew = parseInt(localStorage.getItem("nodeSpacing")) || 250;
+
+  if (levelSeparationNew < 20) {
+    levelSeparationNew = 20;
+  }
+  if (nodeSpacingNew < 20) {
+    nodeSpacingNew = 20;
+  }
+
+  const levelSeparation = levelSeparationNew;
+  const nodeSpacing = nodeSpacingNew;
   const direction = localStorage.getItem("direction") || "LR";
   network.setOptions({
     layout: {
@@ -310,6 +326,10 @@ function updateTreeLayout() {
         nodeSpacing: nodeSpacing,
         direction: direction,
       },
+    },
+    edges: {
+      smooth: true,
+      arrows: { to: true },
     },
   });
 }
