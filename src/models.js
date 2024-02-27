@@ -175,10 +175,19 @@ function toggleConfigVisibility(modelName, configSection) {
     // Set initial visibility based on checkbox state
     configFields.style.display =
       enableCheckbox.checked && !pinnedCheckbox.checked ? "block" : "none";
+    pinnedCheckbox.style.display = enableCheckbox.checked ? "inline" : "none";
+    pinnedLabel.style.display = enableCheckbox.checked ? "inline" : "none";
   }
+
 }
 
 window.addEventListener("DOMContentLoaded", function () {
+  // Event listener for the API keys dropdown button
+  document.getElementById("api-keys-dropdown-btn")
+    .addEventListener("click", function (event) {
+      document.getElementById("api-keys-container").classList.toggle("show");
+    });
+
   const modelConfigContainer = document.getElementById(
     "model-params-container",
   );
@@ -190,13 +199,6 @@ window.addEventListener("DOMContentLoaded", function () {
   });
   updateDefaultConfigDisplay();
 });
-
-// Event listener for the API keys dropdown button
-document
-  .getElementById("api-keys-dropdown-btn")
-  .addEventListener("click", function (event) {
-    document.getElementById("api-keys-container").classList.toggle("show");
-  });
 
 // Close the API keys dropdown if the user clicks outside of it
 window.onclick = function (event) {

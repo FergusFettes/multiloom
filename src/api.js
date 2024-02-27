@@ -49,11 +49,9 @@ function generateNewOutput(parentId) {
     };
   });
 
-  // Determine the number of generations to perform
-  const generations = modelConfig.n || 1;
   // Call the function to make an API call for text generation for each active model
   activeModels.forEach((model) => {
-    for (let i = 0; i < generations; i++) {
+    for (let i = 0; i < (model.config.n || 1); i++) {
       generateText(fullText, parentId, model.model, model.config);
     }
   });
