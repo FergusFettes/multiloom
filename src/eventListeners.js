@@ -102,7 +102,7 @@ window.addEventListener("contextmenu", function (event) {
     const newText = fullTextElement.value.replace(/ +$/, "");
     // Set the trimmed text back to the modal
     fullTextElement.value = newText;
-    var nodeId = parseInt(fullTextElement.getAttribute("data-node-id"));
+    var nodeId = fullTextElement.getAttribute("data-node-id");
 
     // If nodeId is null or NaN
     if (nodeId === null || isNaN(nodeId)) {
