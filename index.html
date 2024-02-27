@@ -1365,7 +1365,7 @@ function generateText(fullText, parentId, modelName, customConfig) {
       // Check if the result is a string (from Google API) or an object (from axios)
       if (typeof result === "string") {
         // If it's a string, it's the text returned directly from the Google API
-        newText = healTokens(result);
+        newText = addSpace(healTokens(result));
       } else {
         // If it's an object, process the axios response to extract the text
         newText = processApiResponse(fullText, result, modelName);
@@ -1439,16 +1439,7 @@ function processApiResponse(fullText, response, modelName) {
   } else {
     newText = healTokens(jsonResponse.choices[0].text);
   }
-  // Add a space if the text has more than 2 characters and doesn't start with punctuation
-  // And the fullText doesn't end in a newline
-  if (
-    newText.length > 2 &&
-    !".!?,".includes(newText[0]) &&
-    !fullText.endsWith("\n")
-  ) {
-    newText = " " + newText;
-  }
-  return newText;
+  return addSpace(newText, fullText);
 }
 
 // Token Healing: Eventually I want to add good token healing support. For now, we will just check if the last character is punctuation. If not, we will back up to the last space.
@@ -1465,6 +1456,19 @@ function healTokens(text) {
   const lastSpace = text.lastIndexOf(" ");
 
   return text.slice(0, lastSpace);
+}
+
+function addSpace(text, fullText) {
+  // Add a space if the text has more than 2 characters and doesn't start with punctuation
+  // And the fullText doesn't end in a newline
+  if (
+    newText.length > 2 &&
+    !".!?,".includes(newText[0]) &&
+    !fullText.endsWith("\n")
+  ) {
+    newText = " " + newText;
+  }
+  return newText;
 }
 // Event listener for the background text to open the modal on the first click
 document

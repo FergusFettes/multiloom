@@ -242,7 +242,7 @@ function healTokens(text) {
   return text.slice(0, lastSpace);
 }
 
-function addSpace(text, fullText) {
+function addSpace(newText, fullText) {
   // Add a space if the text has more than 2 characters and doesn't start with punctuation
   // And the fullText doesn't end in a newline
   if (
