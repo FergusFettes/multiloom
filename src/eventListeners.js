@@ -173,11 +173,9 @@ window.addEventListener("keydown", function (event) {
       return;
     }
     // Toggle the model settings modal
-    const modelConfig = document.getElementById("model-config-modal")
+    const modelConfig = document.getElementById("model-config-modal");
     modelConfig.style.display =
-      modelConfig.style.display === "block"
-        ? "none"
-        : "block";
+      modelConfig.style.display === "block" ? "none" : "block";
   }
 });
 
@@ -455,7 +453,9 @@ window.addEventListener("keydown", function (event) {
   }
   const checkedOutNodeId = localStorage.getItem("checkedOutNodeId");
   const selectedNodeId = network.getSelectedNodes()[0];
-  const defaultTemperature = document.getElementById("temperature-input-default");
+  const defaultTemperature = document.getElementById(
+    "temperature-input-default",
+  );
   const defaultTokens = document.getElementById("max-tokens-input-default");
   let targetNodeId = null;
   switch (event.key) {
