@@ -56,10 +56,10 @@ const options = {
   layout: {
     hierarchical: {
       sortMethod: "directed",
-      direction: "LR",
-      levelSeparation: 400,
-      nodeSpacing: 250,
-    },
+      direction: localStorage.getItem("direction") || "LR",
+      levelSeparation: parseInt(localStorage.getItem("levelSeparation")) || 400,
+      nodeSpacing: parseInt(localStorage.getItem("nodeSpacing")) || 250,
+    }
   },
   nodes: {
     shape: "box",

@@ -278,6 +278,34 @@ document.getElementById("btn-settings").addEventListener("click", function () {
   settingsModal.style.display =
     settingsModal.style.display === "block" ? "none" : "block";
 });
+// Event listener for the tree layout settings inputs
+document.getElementById("level-separation-input").addEventListener("input", function (event) {
+    localStorage.setItem("levelSeparation", event.target.value);
+    updateTreeLayout();
+});
+document.getElementById("node-spacing-input").addEventListener("input", function (event) {
+    localStorage.setItem("nodeSpacing", event.target.value);
+    updateTreeLayout();
+});
+document.getElementById("direction-select").addEventListener("change", function (event) {
+    localStorage.setItem("direction", event.target.value);
+    updateTreeLayout();
+});
+
+function updateTreeLayout() {
+    const levelSeparation = parseInt(localStorage.getItem("levelSeparation")) || 400;
+    const nodeSpacing = parseInt(localStorage.getItem("nodeSpacing")) || 250;
+    const direction = localStorage.getItem("direction") || "LR";
+    network.setOptions({
+        layout: {
+            hierarchical: {
+                levelSeparation: levelSeparation,
+                nodeSpacing: nodeSpacing,
+                direction: direction,
+            }
+        }
+    });
+}
 
 // Event listener for the toggle model colors checkbox
 document
@@ -285,30 +313,6 @@ document
   .addEventListener("change", function (event) {
     useModelColors = event.target.checked;
     updateNodeColors();
-  });
-
-// Event listener for the save settings button to update the model configuration
-document
-  .getElementById("save-settings-btn")
-  .addEventListener("click", function () {
-    modelConfig.max_tokens = parseInt(
-      document.getElementById("max-tokens-input").value,
-    );
-    modelConfig.temperature = parseFloat(
-      document.getElementById("temperature-input").value,
-    );
-    modelConfig.top_p = parseFloat(
-      document.getElementById("top-p-input").value,
-    );
-    modelConfig.top_k = parseInt(document.getElementById("top-k-input").value);
-    modelConfig.repetition_penalty = parseFloat(
-      document.getElementById("repetition-penalty-input").value,
-    );
-    modelConfig.stop = [document.getElementById("stop-sequence-input").value];
-    modelConfig.n = parseInt(
-      document.getElementById("completions-input").value,
-    );
-    // Function to export JSON data to the textarea
   });
 
 // Event listener for the export JSON button
