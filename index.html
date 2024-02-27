@@ -662,7 +662,7 @@ const options = {
       direction: localStorage.getItem("direction") || "LR",
       levelSeparation: parseInt(localStorage.getItem("levelSeparation")) || 400,
       nodeSpacing: parseInt(localStorage.getItem("nodeSpacing")) || 250,
-    }
+    },
   },
   nodes: {
     shape: "box",
@@ -1685,32 +1685,39 @@ document.getElementById("btn-settings").addEventListener("click", function () {
     settingsModal.style.display === "block" ? "none" : "block";
 });
 // Event listener for the tree layout settings inputs
-document.getElementById("level-separation-input").addEventListener("input", function (event) {
+document
+  .getElementById("level-separation-input")
+  .addEventListener("input", function (event) {
     localStorage.setItem("levelSeparation", event.target.value);
     updateTreeLayout();
-});
-document.getElementById("node-spacing-input").addEventListener("input", function (event) {
+  });
+document
+  .getElementById("node-spacing-input")
+  .addEventListener("input", function (event) {
     localStorage.setItem("nodeSpacing", event.target.value);
     updateTreeLayout();
-});
-document.getElementById("direction-select").addEventListener("change", function (event) {
+  });
+document
+  .getElementById("direction-select")
+  .addEventListener("change", function (event) {
     localStorage.setItem("direction", event.target.value);
     updateTreeLayout();
-});
+  });
 
 function updateTreeLayout() {
-    const levelSeparation = parseInt(localStorage.getItem("levelSeparation")) || 400;
-    const nodeSpacing = parseInt(localStorage.getItem("nodeSpacing")) || 250;
-    const direction = localStorage.getItem("direction") || "LR";
-    network.setOptions({
-        layout: {
-            hierarchical: {
-                levelSeparation: levelSeparation,
-                nodeSpacing: nodeSpacing,
-                direction: direction,
-            }
-        }
-    });
+  const levelSeparation =
+    parseInt(localStorage.getItem("levelSeparation")) || 400;
+  const nodeSpacing = parseInt(localStorage.getItem("nodeSpacing")) || 250;
+  const direction = localStorage.getItem("direction") || "LR";
+  network.setOptions({
+    layout: {
+      hierarchical: {
+        levelSeparation: levelSeparation,
+        nodeSpacing: nodeSpacing,
+        direction: direction,
+      },
+    },
+  });
 }
 
 // Event listener for the toggle model colors checkbox

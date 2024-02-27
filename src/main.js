@@ -59,7 +59,7 @@ const options = {
       direction: localStorage.getItem("direction") || "LR",
       levelSeparation: parseInt(localStorage.getItem("levelSeparation")) || 400,
       nodeSpacing: parseInt(localStorage.getItem("nodeSpacing")) || 250,
-    }
+    },
   },
   nodes: {
     shape: "box",
