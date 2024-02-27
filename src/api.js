@@ -1,4 +1,4 @@
-  // Add your additional code here to interact with the model
+// Add your additional code here to interact with the model
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
@@ -144,37 +144,37 @@ function generateText(fullText, parentId, modelName, customConfig) {
     });
   }
 
-// Process the API call
-apiCall
-  .then((result) => {
-    let newText;
-    // Check if the result is a string (from Google API) or an object (from axios)
-    if (typeof result === 'string') {
-      // If it's a string, it's the text returned directly from the Google API
-      newText = result;
-    } else {
-      // If it's an object, process the axios response to extract the text
-      newText = processApiResponse(fullText, result, modelName);
-    }
-    console.log(newText)
-    // Create a new node with the generated text
-    createNodeIfTextChanged(
-      fullText,
-      fullText + newText,
-      parentId,
-      modelName,
-    );
-  })
-  .catch((error) => {
-    console.error("Error during API call:", error);
-  });
+  // Process the API call
+  apiCall
+    .then((result) => {
+      let newText;
+      // Check if the result is a string (from Google API) or an object (from axios)
+      if (typeof result === "string") {
+        // If it's a string, it's the text returned directly from the Google API
+        newText = result;
+      } else {
+        // If it's an object, process the axios response to extract the text
+        newText = processApiResponse(fullText, result, modelName);
+      }
+      console.log(newText);
+      // Create a new node with the generated text
+      createNodeIfTextChanged(
+        fullText,
+        fullText + newText,
+        parentId,
+        modelName,
+      );
+    })
+    .catch((error) => {
+      console.error("Error during API call:", error);
+    });
 }
 
 // Function to call Google's Generative AI API
 function callGoogleAPI(fullText, modelName, config) {
   return new Promise(async (resolve, reject) => {
     if (!googleApiKey) {
-      return reject(new Error('API key for Google Generative AI not found.'));
+      return reject(new Error("API key for Google Generative AI not found."));
     }
 
     const generationConfig = {
@@ -185,17 +185,20 @@ function callGoogleAPI(fullText, modelName, config) {
       stopSequences: config.stop,
     };
 
-    console.log(generationConfig)
+    console.log(generationConfig);
     // Access your API key
     const genAI = new GoogleGenerativeAI(googleApiKey);
 
     // Define the model name
-    const model = genAI.getGenerativeModel({ model: remoteName[modelName], generationConfig });
+    const model = genAI.getGenerativeModel({
+      model: remoteName[modelName],
+      generationConfig,
+    });
 
     // Call the model's generate function with the provided config
     try {
       const result = await model.generateContentStream(fullText);
-      let text = '';
+      let text = "";
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
         console.log(chunkText);
@@ -203,7 +206,7 @@ function callGoogleAPI(fullText, modelName, config) {
       }
       resolve(text);
     } catch (error) {
-      console.error('Error calling Google Generative AI:', error);
+      console.error("Error calling Google Generative AI:", error);
       reject(error);
     }
   });
