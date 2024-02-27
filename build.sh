@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Create the dist directory if it doesn't exist
-mkdir -p dist
-
 # Start with a clean index.html
 echo "<!DOCTYPE html>" > index.html
 echo "<html>" >> index.html
