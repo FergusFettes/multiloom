@@ -151,12 +151,12 @@ function generateText(fullText, parentId, modelName, customConfig) {
       // Check if the result is a string (from Google API) or an object (from axios)
       if (typeof result === "string") {
         // If it's a string, it's the text returned directly from the Google API
-        newText = result;
+        newText = healTokens(result);
       } else {
         // If it's an object, process the axios response to extract the text
         newText = processApiResponse(fullText, result, modelName);
       }
-      console.log(newText);
+      console.log(modelName, newText);
       // Create a new node with the generated text
       createNodeIfTextChanged(
         fullText,
@@ -185,7 +185,6 @@ function callGoogleAPI(fullText, modelName, config) {
       stopSequences: config.stop,
     };
 
-    console.log(generationConfig);
     // Access your API key
     const genAI = new GoogleGenerativeAI(googleApiKey);
 
@@ -197,13 +196,13 @@ function callGoogleAPI(fullText, modelName, config) {
 
     // Call the model's generate function with the provided config
     try {
-      const result = await model.generateContentStream(fullText);
+      const result = await model.generateContentStream(prePrompt + fullText);
       let text = "";
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
-        console.log(chunkText);
         text += chunkText;
       }
+
       resolve(text);
     } catch (error) {
       console.error("Error calling Google Generative AI:", error);
@@ -217,16 +216,9 @@ function processApiResponse(fullText, response, modelName) {
   const responseData = response.data.replace(/^data: /, "");
   const jsonResponse = JSON.parse(responseData);
   var newText = "";
-  if (modelName.includes("gemini")) {
-    // Google's Gemini returns the response in a different format
-    newText = healTokens(
-      jsonResponse.candidates[0].content.parts
-        .map((part) => part.text)
-        .join(""),
-    );
-  } else if (modelName.includes("mistral-large")) {
+  if (modelName.includes("mistral-large")) {
     // Mistral returns the response in a different format
-    newText = healTokens(jsonResponse[0].content);
+    newText = healTokens(jsonResponse.choices[0].message.content);
   } else if (modelName.startsWith("gpt")) {
     // OpenAI returns the response in a different format
     newText = healTokens(jsonResponse.choices[0].message.content);

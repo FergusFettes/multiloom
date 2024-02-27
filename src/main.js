@@ -177,7 +177,6 @@ function deleteNode(nodeId) {
 }
 
 function createNodeIfTextChanged(originalText, newText, parentId, type) {
-  console.log(parentId);
   if (originalText !== newText || !hasNonDataNodes()) {
     // Text has changed, or it's the first node, create a new node
     const newNodeId = uuid.v4();

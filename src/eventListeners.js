@@ -483,11 +483,11 @@ window.addEventListener("keydown", function (event) {
         deleteNode(selectedNodeId);
       }
       break;
-    case "Backspace":
-      if (selectedNodeId) {
-        deleteNode(selectedNodeId);
-      }
-      break;
+    // case "Backspace":
+    //   if (selectedNodeId) {
+    //     deleteNode(selectedNodeId);
+    //   }
+    //   break;
     case "?":
       makeStats();
       break;
