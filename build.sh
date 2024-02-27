@@ -5,7 +5,7 @@ echo "<!DOCTYPE html>" > index.html
 echo "<html>" >> index.html
 echo "<head>" >> index.html
 echo "<meta charset='utf-8'>" >> index.html
-echo "<title>TinyLoom</title>" >> index.html
+echo "<title>MultiLoom</title>" >> index.html
 cat src/imports.html >> index.html
 
 echo "<style>" >> index.html
