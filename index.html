@@ -2286,12 +2286,12 @@ function toggleConfigVisibility(modelName, configSection) {
     pinnedCheckbox.style.display = enableCheckbox.checked ? "inline" : "none";
     pinnedLabel.style.display = enableCheckbox.checked ? "inline" : "none";
   }
-
 }
 
 window.addEventListener("DOMContentLoaded", function () {
   // Event listener for the API keys dropdown button
-  document.getElementById("api-keys-dropdown-btn")
+  document
+    .getElementById("api-keys-dropdown-btn")
     .addEventListener("click", function (event) {
       document.getElementById("api-keys-container").classList.toggle("show");
     });
