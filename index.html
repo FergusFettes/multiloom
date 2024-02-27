@@ -37,9 +37,12 @@ body {
     position: fixed;
     display: none;
     width: 60%;
-    height: 94%;
+    max-width: 60%;
+    height: 94vh;
     top: 2%;
-    right: 2%;
+    right: 20vw;
+    padding: 1vw;
+    box-sizing: border-box;
     resize: both; /* Ensure the element is resizable */
     overflow: auto; /* Add scrollbars if needed */
     z-index: 100;
@@ -49,6 +52,12 @@ body {
 #fullText {
     width: 100%;
     height: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    border: none;
+    padding: 15px;
+    box-sizing: border-box;
+    resize: none;
 }
 
 #background-text {
@@ -300,7 +309,6 @@ body {
             <h3>Model Parameters</h3>
             <!-- Default parameters will be displayed and editable here -->
         </div>
-        <button id="save-model-config-btn">Save Configuration</button>
     </div>
 </div>
 <div id="default-config-display" style="position: absolute; top: 10px; left: 10px; z-index: 5;">
@@ -309,7 +317,7 @@ body {
 </div>
     <div id="mynetwork"></div>
     <div id="textEditor">
-        <textarea id="fullText"></textarea>
+        <textarea id="fullText" wrap="soft"></textarea>
     </div>
     <div id="background-text">
       <div>Hello and welcome to MultiLoom! This is a little loom in one file.<br>
@@ -409,8 +417,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const fullText = document.getElementById("fullText");
   if (savedSize) {
     textEditor.style.display = "block";
-    fullText.style.width = `${savedSize.width}px`;
-    fullText.style.height = `${savedSize.height}px`;
+    // fullText.style.width = `${savedSize.width}px`;
+    // fullText.style.height = `${savedSize.height}px`;
     textEditor.style.display = "none";
   }
 
@@ -458,6 +466,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Initialize data object to store nodes and edges
 var data = { nodes: {} };
+window.data = data;
 
 // Function to clear data from localStorage and reset visualization
 function clearData() {
@@ -633,6 +642,8 @@ var dmp = new diff_match_patch();
 
 var nodes = new vis.DataSet([]);
 var edges = new vis.DataSet([]);
+window.nodes = nodes;
+window.edges = edges;
 
 // Global variable to track if model colors are enabled
 // Get the value from the toffle-model-colors checkbox
@@ -820,10 +831,11 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
       type: type, // Store the type of the node
       bookmarked: false,
       hidden: false,
+      createdAt: Date.now(),
     };
 
-    // if the parentId was nan, then the new node is the root and we must set the checked out node
-    if (isNaN(parentId)) {
+    // if the parentId was null, set the checkedOutNodeId to the new node
+    if (parentId === null) {
       localStorage.setItem("checkedOutNodeId", newNodeId);
     }
 
@@ -850,7 +862,6 @@ const resizeObserver = new ResizeObserver((entries) => {
     if (width !== 0 && height !== 0) {
       localStorage.setItem("textEditorSize", JSON.stringify(size));
     }
-
     // On page
   }
 });
@@ -922,40 +933,64 @@ function findParentNode(nodeId) {
 // Function to find the left and right sibling nodes of the current node
 function findSiblingNodes(nodeId) {
   const parentNodeId = findParentNode(nodeId);
-  if (parentNodeId) {
-    const siblings = nodes.get({
-      filter: function (n) {
-        return parseInt(n.parent) === parseInt(parentNodeId) && !n.hidden;
-      },
-    });
-    const index = siblings.findIndex(
-      (sibling) => parseInt(sibling.id) === parseInt(nodeId),
-    );
-    const leftSibling = index > 0 ? siblings[index - 1].id : null;
-    const rightSibling =
-      index < siblings.length - 1 ? siblings[index + 1].id : null;
-    return { leftSibling, rightSibling };
+  if (parentNodeId === null) {
+    return { leftSibling: null, rightSibling: null };
   }
-  return { leftSibling: null, rightSibling: null };
+
+  // Get the siblings and sort them. Use createdAt if available, otherwise fallback to UUID.
+  const siblings = Object.values(data.nodes)
+    .filter(node => node.parent === parentNodeId && !node.hidden)
+    .sort((a, b) => {
+      if (a.createdAt && b.createdAt) {
+        // Compare by createdAt if both are available
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      } else {
+        // Fallback to string comparison of UUIDs
+        return a.id.localeCompare(b.id);
+      }
+    });
+
+  // Find the index of the current node
+  const currentIndex = siblings.findIndex(sibling => sibling.id === nodeId);
+
+  // Determine the left and right siblings, wrapping around at the ends
+  const leftSiblingIndex = currentIndex > 0 ? currentIndex - 1 : siblings.length - 1;
+  const rightSiblingIndex = currentIndex < siblings.length - 1 ? currentIndex + 1 : 0;
+
+  return {
+    leftSibling: siblings[leftSiblingIndex].id,
+    rightSibling: siblings[rightSiblingIndex].id
+  };
 }
 
-// Function to find the child node with the longest text from the currently selected node's children
-function findLongestTextChildNode(parentNodeId) {
-  let longestNode = null;
-  let maxLength = 0;
-  nodes.forEach(function (node) {
-    if (node.hidden) {
-      return;
+function findLastReadOrRandomChildNode(parentNodeId) {
+  // Filter out visible child nodes of the provided parent node
+  const childNodes = Object.values(data.nodes).filter(node =>
+    !node.hidden && node.parent === parentNodeId
+  );
+
+  console.log("Children")
+  console.log(childNodes)
+
+  if (childNodes.length === 0) {
+    return null; // Return null if there are no child nodes
+  }
+
+  // Find the last read child node
+  const lastReadNode = childNodes.reduce((acc, node) => {
+    if (!acc || node.lastRead > acc.lastRead) {
+      return node;
     }
-    if (parseInt(node.parent) === parseInt(parentNodeId)) {
-      const length = node.label.length;
-      if (length > maxLength) {
-        longestNode = node.id;
-        maxLength = length;
-      }
-    }
-  });
-  return longestNode;
+    return acc;
+  }, null);
+
+  if (lastReadNode) {
+    return lastReadNode.id; // Return the id of the last read child node
+  }
+
+  // If there is no last read child node, pick a random child node
+  const randomIndex = Math.floor(Math.random() * childNodes.length);
+  return childNodes[randomIndex].id;
 }
 
 // Function to find all the descendents of a node
@@ -1408,7 +1443,7 @@ function processApiResponse(fullText, response, modelName) {
   // And the fullText doesn't end in a newline
   if (
     newText.length > 2 &&
-    !".!?".includes(newText[0]) &&
+    !".!?,".includes(newText[0]) &&
     !fullText.endsWith("\n")
   ) {
     newText = " " + newText;
@@ -1468,6 +1503,10 @@ network.on("click", function (params) {
     // Save the last clicked node ID to localStorage
     network.selectNodes([nodeId]);
     localStorage.setItem("checkedOutNodeId", nodeId);
+    
+    // Set the read time on the node
+    const currentNode = nodes.get(nodeId)
+    currentNode.lastRead = Date.now()
   }
 });
 
@@ -1902,7 +1941,7 @@ window.addEventListener("keydown", function (event) {
       targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
       break;
     case "s":
-      targetNodeId = findLongestTextChildNode(checkedOutNodeId);
+      targetNodeId = findLastReadOrRandomChildNode(checkedOutNodeId);
       break;
     case "W":
       defaultTokens.value = parseInt(defaultTokens.value) + 20;
@@ -1960,6 +1999,9 @@ window.addEventListener("keydown", function (event) {
     // instead of focusing on it, just make sure it is highlighted
     network.selectNodes([targetNodeId]);
     localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
+    const targetNode = data.nodes[targetNodeId]
+    targetNode.lastRead = Date.now()
+    console.log(targetNodeId);
   }
 });
 

@@ -13,8 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const fullText = document.getElementById("fullText");
   if (savedSize) {
     textEditor.style.display = "block";
-    fullText.style.width = `${savedSize.width}px`;
-    fullText.style.height = `${savedSize.height}px`;
+    // fullText.style.width = `${savedSize.width}px`;
+    // fullText.style.height = `${savedSize.height}px`;
     textEditor.style.display = "none";
   }
 
@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Initialize data object to store nodes and edges
 var data = { nodes: {} };
+window.data = data;
 
 // Function to clear data from localStorage and reset visualization
 function clearData() {

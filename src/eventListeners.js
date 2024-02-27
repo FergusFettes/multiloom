@@ -35,6 +35,10 @@ network.on("click", function (params) {
     // Save the last clicked node ID to localStorage
     network.selectNodes([nodeId]);
     localStorage.setItem("checkedOutNodeId", nodeId);
+    
+    // Set the read time on the node
+    const currentNode = nodes.get(nodeId)
+    currentNode.lastRead = Date.now()
   }
 });
 
@@ -469,7 +473,7 @@ window.addEventListener("keydown", function (event) {
       targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
       break;
     case "s":
-      targetNodeId = findLongestTextChildNode(checkedOutNodeId);
+      targetNodeId = findLastReadOrRandomChildNode(checkedOutNodeId);
       break;
     case "W":
       defaultTokens.value = parseInt(defaultTokens.value) + 20;
@@ -527,6 +531,9 @@ window.addEventListener("keydown", function (event) {
     // instead of focusing on it, just make sure it is highlighted
     network.selectNodes([targetNodeId]);
     localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
+    const targetNode = data.nodes[targetNodeId]
+    targetNode.lastRead = Date.now()
+    console.log(targetNodeId);
   }
 });
 

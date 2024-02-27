@@ -14,9 +14,12 @@ body {
     position: fixed;
     display: none;
     width: 60%;
-    height: 94%;
+    max-width: 60%;
+    height: 94vh;
     top: 2%;
-    right: 2%;
+    right: 20vw;
+    padding: 1vw;
+    box-sizing: border-box;
     resize: both; /* Ensure the element is resizable */
     overflow: auto; /* Add scrollbars if needed */
     z-index: 100;
@@ -26,6 +29,12 @@ body {
 #fullText {
     width: 100%;
     height: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    border: none;
+    padding: 15px;
+    box-sizing: border-box;
+    resize: none;
 }
 
 #background-text {

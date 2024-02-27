@@ -2,6 +2,8 @@ var dmp = new diff_match_patch();
 
 var nodes = new vis.DataSet([]);
 var edges = new vis.DataSet([]);
+window.nodes = nodes;
+window.edges = edges;
 
 // Global variable to track if model colors are enabled
 // Get the value from the toffle-model-colors checkbox
@@ -189,10 +191,11 @@ function createNodeIfTextChanged(originalText, newText, parentId, type) {
       type: type, // Store the type of the node
       bookmarked: false,
       hidden: false,
+      createdAt: Date.now(),
     };
 
-    // if the parentId was nan, then the new node is the root and we must set the checked out node
-    if (isNaN(parentId)) {
+    // if the parentId was null, set the checkedOutNodeId to the new node
+    if (parentId === null) {
       localStorage.setItem("checkedOutNodeId", newNodeId);
     }
 
@@ -219,7 +222,6 @@ const resizeObserver = new ResizeObserver((entries) => {
     if (width !== 0 && height !== 0) {
       localStorage.setItem("textEditorSize", JSON.stringify(size));
     }
-
     // On page
   }
 });

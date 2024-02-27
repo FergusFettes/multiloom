@@ -229,7 +229,7 @@ function processApiResponse(fullText, response, modelName) {
   // And the fullText doesn't end in a newline
   if (
     newText.length > 2 &&
-    !".!?".includes(newText[0]) &&
+    !".!?,".includes(newText[0]) &&
     !fullText.endsWith("\n")
   ) {
     newText = " " + newText;

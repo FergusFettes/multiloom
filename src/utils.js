@@ -63,40 +63,64 @@ function findParentNode(nodeId) {
 // Function to find the left and right sibling nodes of the current node
 function findSiblingNodes(nodeId) {
   const parentNodeId = findParentNode(nodeId);
-  if (parentNodeId) {
-    const siblings = nodes.get({
-      filter: function (n) {
-        return parseInt(n.parent) === parseInt(parentNodeId) && !n.hidden;
-      },
-    });
-    const index = siblings.findIndex(
-      (sibling) => parseInt(sibling.id) === parseInt(nodeId),
-    );
-    const leftSibling = index > 0 ? siblings[index - 1].id : null;
-    const rightSibling =
-      index < siblings.length - 1 ? siblings[index + 1].id : null;
-    return { leftSibling, rightSibling };
+  if (parentNodeId === null) {
+    return { leftSibling: null, rightSibling: null };
   }
-  return { leftSibling: null, rightSibling: null };
+
+  // Get the siblings and sort them. Use createdAt if available, otherwise fallback to UUID.
+  const siblings = Object.values(data.nodes)
+    .filter(node => node.parent === parentNodeId && !node.hidden)
+    .sort((a, b) => {
+      if (a.createdAt && b.createdAt) {
+        // Compare by createdAt if both are available
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      } else {
+        // Fallback to string comparison of UUIDs
+        return a.id.localeCompare(b.id);
+      }
+    });
+
+  // Find the index of the current node
+  const currentIndex = siblings.findIndex(sibling => sibling.id === nodeId);
+
+  // Determine the left and right siblings, wrapping around at the ends
+  const leftSiblingIndex = currentIndex > 0 ? currentIndex - 1 : siblings.length - 1;
+  const rightSiblingIndex = currentIndex < siblings.length - 1 ? currentIndex + 1 : 0;
+
+  return {
+    leftSibling: siblings[leftSiblingIndex].id,
+    rightSibling: siblings[rightSiblingIndex].id
+  };
 }
 
-// Function to find the child node with the longest text from the currently selected node's children
-function findLongestTextChildNode(parentNodeId) {
-  let longestNode = null;
-  let maxLength = 0;
-  nodes.forEach(function (node) {
-    if (node.hidden) {
-      return;
+function findLastReadOrRandomChildNode(parentNodeId) {
+  // Filter out visible child nodes of the provided parent node
+  const childNodes = Object.values(data.nodes).filter(node =>
+    !node.hidden && node.parent === parentNodeId
+  );
+
+  console.log("Children")
+  console.log(childNodes)
+
+  if (childNodes.length === 0) {
+    return null; // Return null if there are no child nodes
+  }
+
+  // Find the last read child node
+  const lastReadNode = childNodes.reduce((acc, node) => {
+    if (!acc || node.lastRead > acc.lastRead) {
+      return node;
     }
-    if (parseInt(node.parent) === parseInt(parentNodeId)) {
-      const length = node.label.length;
-      if (length > maxLength) {
-        longestNode = node.id;
-        maxLength = length;
-      }
-    }
-  });
-  return longestNode;
+    return acc;
+  }, null);
+
+  if (lastReadNode) {
+    return lastReadNode.id; // Return the id of the last read child node
+  }
+
+  // If there is no last read child node, pick a random child node
+  const randomIndex = Math.floor(Math.random() * childNodes.length);
+  return childNodes[randomIndex].id;
 }
 
 // Function to find all the descendents of a node
