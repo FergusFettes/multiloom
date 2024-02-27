@@ -279,11 +279,13 @@ document.getElementById("btn-settings").addEventListener("click", function () {
     settingsModal.style.display === "block" ? "none" : "block";
 });
 // Event listener for the background color input
-document.getElementById("background-color-input").addEventListener("input", function (event) {
+document
+  .getElementById("background-color-input")
+  .addEventListener("input", function (event) {
     const color = event.target.value;
     document.getElementById("mynetwork").style.backgroundColor = color;
     localStorage.setItem("backgroundColor", color);
-});
+  });
 // Event listener for the tree layout settings inputs
 document
   .getElementById("level-separation-input")
@@ -306,7 +308,8 @@ document
 
 function updateTreeLayout() {
   // if level separation or node spacing are less than 50, set them to 50
-  var levelSeparationNew = parseInt(localStorage.getItem("levelSeparation")) || 400;
+  var levelSeparationNew =
+    parseInt(localStorage.getItem("levelSeparation")) || 400;
   var nodeSpacingNew = parseInt(localStorage.getItem("nodeSpacing")) || 250;
 
   if (levelSeparationNew < 20) {
