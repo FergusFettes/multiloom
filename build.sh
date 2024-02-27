@@ -22,7 +22,7 @@ echo "<body>" >> index.html
 # Include the header and footer HTML
 cat src/header.html >> index.html
 
-echo "<script>" >> index.html
+echo "<script type='module'>" >> index.html
 
 cat src/data.js >> index.html
 cat src/visualize.js >> index.html

@@ -1,3 +1,10 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+var togetherApiKey = "";
+var openaiApiKey = "";
+var mistralApiKey = "";
+var googleApiKey = "";
+
 // On page load, retrieve the API key from localStorage
 document.addEventListener("DOMContentLoaded", function () {
   // Load the editor size

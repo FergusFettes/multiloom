@@ -96,7 +96,7 @@ function loadModelConfigFromLocalStorage(modelName) {
     if (document.getElementById(`enable-${modelName}`)) {
       document.getElementById(`enable-${modelName}`).checked = config.is_active;
     }
-    toggleVisibility(
+    toggleConfigVisibility(
       modelName,
       document.getElementById(`model-config-${modelName}`),
     );
@@ -140,11 +140,11 @@ function createModelConfigElement(modelName, isDefault = false) {
       saveModelConfigToLocalStorage(modelName),
     );
   });
-  toggleVisibility(modelName, configSection);
+  toggleConfigVisibility(modelName, configSection);
   return configSection;
 }
 
-function toggleVisibility(modelName, configSection) {
+function toggleConfigVisibility(modelName, configSection) {
   const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
   const configFields = configSection.querySelector(".model-config-fields");
   if (enableCheckbox) {

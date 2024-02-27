@@ -1,3 +1,4 @@
+  // Add your additional code here to interact with the model
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
@@ -86,93 +87,126 @@ function generateText(fullText, parentId, modelName, customConfig) {
     Authorization: "Bearer " + togetherApiKey,
   };
 
-  // Check if the model is for OpenAI and set the appropriate API URL and headers
-  if (modelName.startsWith("gpt")) {
-    headers = {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + openaiApiKey,
-    };
-    // OpenAI expects the prompt in a different format
-    config = {
-      messages: [
-        {
-          role: "user",
-          content: prePrompt + fullText,
-        },
-      ],
-      max_tokens: config.max_tokens,
-      temperature: config.temperature,
-      top_p: config.top_p,
-      stop: config.stop,
-      model: remoteName[modelName],
-    };
-  }
-
-  // Check if the model is for Mistral and set the appropriate API URL and headers
-  if (modelName.includes("mistral-large")) {
-    headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: "Bearer " + mistralApiKey,
-    };
-    config = {
-      messages: [
-        {
-          role: "user",
-          content: fullText,
-        },
-      ],
-      temperature: config.temperature,
-      top_p: config.top_p,
-      max_tokens: config.max_tokens,
-      model: remoteName[modelName],
-    };
-  }
-
-  // Check if the model is for Google's Gemini and set the appropriate API URL and headers
+  // Determine which API to call based on the model name
+  let apiCall;
   if (modelName.includes("gemini")) {
-    headers = {
-      "Content-Type": "application/json",
-    };
-    apiUrl = `${apiUrl}/${modelName}:generateContent?key=${googleApiKey}`;
-    config = {
-      contents: [
-        {
-          parts: [{ text: fullText }],
-        },
-      ],
-      generationConfig: {
-        stopSequences: config.stop,
+    // Call Google's API
+    apiCall = callGoogleAPI(fullText, modelName, config);
+  } else {
+    // Set headers for axios call
+    if (modelName.startsWith("gpt")) {
+      headers = {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + openaiApiKey,
+      };
+      // OpenAI expects the prompt in a different format
+      config = {
+        messages: [
+          {
+            role: "user",
+            content: prePrompt + fullText,
+          },
+        ],
+        max_tokens: config.max_tokens,
         temperature: config.temperature,
-        maxOutputTokens: config.max_tokens,
-        topP: config.top_p,
-        topK: config.top_k,
-      },
-    };
+        top_p: config.top_p,
+        stop: config.stop,
+        model: remoteName[modelName],
+      };
+    } else if (modelName.includes("mistral-large")) {
+      headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: "Bearer " + mistralApiKey,
+      };
+      config = {
+        messages: [
+          {
+            role: "user",
+            content: fullText,
+          },
+        ],
+        temperature: config.temperature,
+        top_p: config.top_p,
+        max_tokens: config.max_tokens,
+        model: remoteName[modelName],
+      };
+    }
+
+    // Remove the 'n' parameter as it's not supported by the axios call
+    delete config.n;
+    apiCall = axios({
+      method: "post",
+      url: apiUrl,
+      data: config,
+      headers: headers,
+      responseType: "text",
+    });
   }
 
-  // Remove the 'n' parameter as it's not supported by the axios call
-  delete config.n;
-  axios({
-    method: "post",
-    url: apiUrl,
-    data: config,
-    headers: headers,
-    responseType: "text",
+// Process the API call
+apiCall
+  .then((result) => {
+    let newText;
+    // Check if the result is a string (from Google API) or an object (from axios)
+    if (typeof result === 'string') {
+      // If it's a string, it's the text returned directly from the Google API
+      newText = result;
+    } else {
+      // If it's an object, process the axios response to extract the text
+      newText = processApiResponse(fullText, result, modelName);
+    }
+    console.log(newText)
+    // Create a new node with the generated text
+    createNodeIfTextChanged(
+      fullText,
+      fullText + newText,
+      parentId,
+      modelName,
+    );
   })
-    .then((response) => {
-      // Process the response and create a new node with the generated text
-      const newText = processApiResponse(fullText, response, modelName);
-      createNodeIfTextChanged(
-        fullText,
-        fullText + newText,
-        parentId,
-        modelName,
-      );
-    })
-    .catch((error) => {
-      console.error("Error during API call:", error);
-    });
+  .catch((error) => {
+    console.error("Error during API call:", error);
+  });
+}
+
+// Function to call Google's Generative AI API
+function callGoogleAPI(fullText, modelName, config) {
+  return new Promise(async (resolve, reject) => {
+    if (!googleApiKey) {
+      return reject(new Error('API key for Google Generative AI not found.'));
+    }
+
+    const generationConfig = {
+      maxOutputTokens: config.max_tokens,
+      temperature: config.temperature,
+      topP: config.top_p,
+      topK: config.top_k,
+      stopSequences: config.stop,
+    };
+
+    console.log(generationConfig)
+    // Access your API key
+    const genAI = new GoogleGenerativeAI(googleApiKey);
+
+    // Define the model name
+    const model = genAI.getGenerativeModel({ model: remoteName[modelName], generationConfig });
+
+    // Call the model's generate function with the provided config
+    try {
+      const result = await model.generateContentStream(fullText);
+      let text = '';
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        console.log(chunkText);
+        text += chunkText;
+      }
+      resolve(text);
+    } catch (error) {
+      console.error('Error calling Google Generative AI:', error);
+      reject(error);
+    }
+  });
 }
 
 function processApiResponse(fullText, response, modelName) {
@@ -215,7 +249,7 @@ function healTokens(text) {
   text = text.replace(/ +$/, "").replace(/^ +/, "");
 
   const lastChar = text[text.length - 1];
-  punctuation = ".!?}]);:,";
+  const punctuation = ".!?}]);:,";
   if (punctuation.includes(lastChar)) {
     return text;
   }

@@ -13,6 +13,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"></script>
 <!-- Load uuid library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
+<script type="importmap">
+  {
+    "imports": {
+      "@google/generative-ai": "https://esm.run/@google/generative-ai"
+    }
+  }
+</script>
 <style>
 
 #mynetwork {
@@ -346,7 +353,14 @@
         </div>
     </div>
 </div>
-<script>
+<script type='module'>
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+var togetherApiKey = "";
+var openaiApiKey = "";
+var mistralApiKey = "";
+var googleApiKey = "";
+
 // On page load, retrieve the API key from localStorage
 document.addEventListener("DOMContentLoaded", function () {
   // Load the editor size
@@ -1116,6 +1130,7 @@ function calculateScores(algorithmName) {
     throw new Error(`Scoring algorithm "${algorithmName}" not found.`);
   }
 }
+  // Add your additional code here to interact with the model
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
@@ -1204,93 +1219,126 @@ function generateText(fullText, parentId, modelName, customConfig) {
     Authorization: "Bearer " + togetherApiKey,
   };
 
-  // Check if the model is for OpenAI and set the appropriate API URL and headers
-  if (modelName.startsWith("gpt")) {
-    headers = {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + openaiApiKey,
-    };
-    // OpenAI expects the prompt in a different format
-    config = {
-      messages: [
-        {
-          role: "user",
-          content: prePrompt + fullText,
-        },
-      ],
-      max_tokens: config.max_tokens,
-      temperature: config.temperature,
-      top_p: config.top_p,
-      stop: config.stop,
-      model: remoteName[modelName],
-    };
-  }
-
-  // Check if the model is for Mistral and set the appropriate API URL and headers
-  if (modelName.includes("mistral-large")) {
-    headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: "Bearer " + mistralApiKey,
-    };
-    config = {
-      messages: [
-        {
-          role: "user",
-          content: fullText,
-        },
-      ],
-      temperature: config.temperature,
-      top_p: config.top_p,
-      max_tokens: config.max_tokens,
-      model: remoteName[modelName],
-    };
-  }
-
-  // Check if the model is for Google's Gemini and set the appropriate API URL and headers
+  // Determine which API to call based on the model name
+  let apiCall;
   if (modelName.includes("gemini")) {
-    headers = {
-      "Content-Type": "application/json",
-    };
-    apiUrl = `${apiUrl}/${modelName}:generateContent?key=${googleApiKey}`;
-    config = {
-      contents: [
-        {
-          parts: [{ text: fullText }],
-        },
-      ],
-      generationConfig: {
-        stopSequences: config.stop,
+    // Call Google's API
+    apiCall = callGoogleAPI(fullText, modelName, config);
+  } else {
+    // Set headers for axios call
+    if (modelName.startsWith("gpt")) {
+      headers = {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + openaiApiKey,
+      };
+      // OpenAI expects the prompt in a different format
+      config = {
+        messages: [
+          {
+            role: "user",
+            content: prePrompt + fullText,
+          },
+        ],
+        max_tokens: config.max_tokens,
         temperature: config.temperature,
-        maxOutputTokens: config.max_tokens,
-        topP: config.top_p,
-        topK: config.top_k,
-      },
-    };
+        top_p: config.top_p,
+        stop: config.stop,
+        model: remoteName[modelName],
+      };
+    } else if (modelName.includes("mistral-large")) {
+      headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: "Bearer " + mistralApiKey,
+      };
+      config = {
+        messages: [
+          {
+            role: "user",
+            content: fullText,
+          },
+        ],
+        temperature: config.temperature,
+        top_p: config.top_p,
+        max_tokens: config.max_tokens,
+        model: remoteName[modelName],
+      };
+    }
+
+    // Remove the 'n' parameter as it's not supported by the axios call
+    delete config.n;
+    apiCall = axios({
+      method: "post",
+      url: apiUrl,
+      data: config,
+      headers: headers,
+      responseType: "text",
+    });
   }
 
-  // Remove the 'n' parameter as it's not supported by the axios call
-  delete config.n;
-  axios({
-    method: "post",
-    url: apiUrl,
-    data: config,
-    headers: headers,
-    responseType: "text",
+// Process the API call
+apiCall
+  .then((result) => {
+    let newText;
+    // Check if the result is a string (from Google API) or an object (from axios)
+    if (typeof result === 'string') {
+      // If it's a string, it's the text returned directly from the Google API
+      newText = result;
+    } else {
+      // If it's an object, process the axios response to extract the text
+      newText = processApiResponse(fullText, result, modelName);
+    }
+    console.log(newText)
+    // Create a new node with the generated text
+    createNodeIfTextChanged(
+      fullText,
+      fullText + newText,
+      parentId,
+      modelName,
+    );
   })
-    .then((response) => {
-      // Process the response and create a new node with the generated text
-      const newText = processApiResponse(fullText, response, modelName);
-      createNodeIfTextChanged(
-        fullText,
-        fullText + newText,
-        parentId,
-        modelName,
-      );
-    })
-    .catch((error) => {
-      console.error("Error during API call:", error);
-    });
+  .catch((error) => {
+    console.error("Error during API call:", error);
+  });
+}
+
+// Function to call Google's Generative AI API
+function callGoogleAPI(fullText, modelName, config) {
+  return new Promise(async (resolve, reject) => {
+    if (!googleApiKey) {
+      return reject(new Error('API key for Google Generative AI not found.'));
+    }
+
+    const generationConfig = {
+      maxOutputTokens: config.max_tokens,
+      temperature: config.temperature,
+      topP: config.top_p,
+      topK: config.top_k,
+      stopSequences: config.stop,
+    };
+
+    console.log(generationConfig)
+    // Access your API key
+    const genAI = new GoogleGenerativeAI(googleApiKey);
+
+    // Define the model name
+    const model = genAI.getGenerativeModel({ model: remoteName[modelName], generationConfig });
+
+    // Call the model's generate function with the provided config
+    try {
+      const result = await model.generateContentStream(fullText);
+      let text = '';
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        console.log(chunkText);
+        text += chunkText;
+      }
+      resolve(text);
+    } catch (error) {
+      console.error('Error calling Google Generative AI:', error);
+      reject(error);
+    }
+  });
 }
 
 function processApiResponse(fullText, response, modelName) {
@@ -1333,7 +1381,7 @@ function healTokens(text) {
   text = text.replace(/ +$/, "").replace(/^ +/, "");
 
   const lastChar = text[text.length - 1];
-  punctuation = ".!?}]);:,";
+  const punctuation = ".!?}]);:,";
   if (punctuation.includes(lastChar)) {
     return text;
   }
@@ -1355,7 +1403,7 @@ document
 
 network.on("click", function (params) {
   if (params.nodes.length > 0) {
-    nodeId = params.nodes[0];
+    const nodeId = params.nodes[0];
     const textEditor = document.getElementById("textEditor");
     // Check if the text editor is open
     if (textEditor.style.display === "block") {
@@ -1726,18 +1774,26 @@ window.addEventListener("keydown", function (event) {
   // If the tab key is pressed, prevent the default action and focus on the network
   if (event.key === "Tab" || event.keyCode === 9) {
     // Check if textEdit is both open and focussed
-    fullTextElement = document.getElementById("fullText");
-    networkElement = document.getElementById("mynetwork");
+    const fullTextElement = document.getElementById("fullText");
+    const networkElement = document.getElementById("mynetwork");
+    const textEditor = document.getElementById("textEditor");
+    console.log(document.activeElement)
+    console.log(fullTextElement)
+    console.log(textEditor.style.display)
+
     if (
-      document.getElementById("textEditor").style.display === "block" &&
+      textEditor.style.display === "block" &&
       fullTextElement == document.activeElement
     ) {
+      console.log("focusing on network")
       networkElement.focus();
+      fullTextElement.blur();
       event.preventDefault();
     } else if (
-      document.getElementById("textEditor").style.display === "block" &&
+      textEditor.style.display === "block" &&
       networkElement == document.activeElement
     ) {
+      console.log("focusing on text editor")
       fullTextElement.focus();
       event.preventDefault();
     }
@@ -2007,7 +2063,7 @@ function loadModelConfigFromLocalStorage(modelName) {
     if (document.getElementById(`enable-${modelName}`)) {
       document.getElementById(`enable-${modelName}`).checked = config.is_active;
     }
-    toggleVisibility(
+    toggleConfigVisibility(
       modelName,
       document.getElementById(`model-config-${modelName}`),
     );
@@ -2051,11 +2107,11 @@ function createModelConfigElement(modelName, isDefault = false) {
       saveModelConfigToLocalStorage(modelName),
     );
   });
-  toggleVisibility(modelName, configSection);
+  toggleConfigVisibility(modelName, configSection);
   return configSection;
 }
 
-function toggleVisibility(modelName, configSection) {
+function toggleConfigVisibility(modelName, configSection) {
   const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
   const configFields = configSection.querySelector(".model-config-fields");
   if (enableCheckbox) {

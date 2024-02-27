@@ -12,7 +12,7 @@ document
 
 network.on("click", function (params) {
   if (params.nodes.length > 0) {
-    nodeId = params.nodes[0];
+    const nodeId = params.nodes[0];
     const textEditor = document.getElementById("textEditor");
     // Check if the text editor is open
     if (textEditor.style.display === "block") {
@@ -378,28 +378,36 @@ document.getElementById("deleteNode").addEventListener("click", function () {
   contextMenu.style.display = "none";
 });
 
-// Event listener for tab to swtich focus between fullText and network
-window.addEventListener("keydown", function (event) {
-  // If the tab key is pressed, prevent the default action and focus on the network
-  if (event.key === "Tab" || event.keyCode === 9) {
-    // Check if textEdit is both open and focussed
-    fullTextElement = document.getElementById("fullText");
-    networkElement = document.getElementById("mynetwork");
-    if (
-      document.getElementById("textEditor").style.display === "block" &&
-      fullTextElement == document.activeElement
-    ) {
-      networkElement.focus();
-      event.preventDefault();
-    } else if (
-      document.getElementById("textEditor").style.display === "block" &&
-      networkElement == document.activeElement
-    ) {
-      fullTextElement.focus();
-      event.preventDefault();
-    }
-  }
-});
+// // Event listener for tab to swtich focus between fullText and network
+// window.addEventListener("keydown", function (event) {
+//   // If the tab key is pressed, prevent the default action and focus on the network
+//   if (event.key === "Tab" || event.keyCode === 9) {
+//     // Check if textEdit is both open and focussed
+//     const fullTextElement = document.getElementById("fullText");
+//     const networkElement = document.getElementById("mynetwork");
+//     const textEditor = document.getElementById("textEditor");
+//     console.log(document.activeElement)
+//     console.log(fullTextElement)
+//     console.log(textEditor.style.display)
+//
+//     if (
+//       textEditor.style.display === "block" &&
+//       fullTextElement == document.activeElement
+//     ) {
+//       console.log("focusing on network")
+//       networkElement.focus();
+//       fullTextElement.blur();
+//       event.preventDefault();
+//     } else if (
+//       textEditor.style.display === "block" &&
+//       networkElement == document.activeElement
+//     ) {
+//       console.log("focusing on text editor")
+//       fullTextElement.focus();
+//       event.preventDefault();
+//     }
+//   }
+// });
 
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
 window.addEventListener("keydown", function (event) {
