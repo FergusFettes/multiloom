@@ -46,37 +46,51 @@ var modelConfig = {
 };
 
 function saveModelConfigToLocalStorage(modelName) {
-    const config = {
-        max_tokens: document.getElementById(`max-tokens-input-${modelName}`).value,
-        temperature: document.getElementById(`temperature-input-${modelName}`).value,
-        top_p: document.getElementById(`top-p-input-${modelName}`).value,
-        top_k: document.getElementById(`top-k-input-${modelName}`).value,
-        repetition_penalty: document.getElementById(`repetition-penalty-input-${modelName}`).value,
-        stop: document.getElementById(`stop-sequence-input-${modelName}`).value.split(", "),
-        n: document.getElementById(`completions-input-${modelName}`).value,
-        pin_to_default: document.getElementById(`pin-default-${modelName}`) ? document.getElementById(`pin-default-${modelName}`).checked : false,
-        is_active: document.getElementById(`enable-${modelName}`) ? document.getElementById(`enable-${modelName}`).checked : true
-    };
-    localStorage.setItem(`modelConfig-${modelName}`, JSON.stringify(config));
+  const config = {
+    max_tokens: document.getElementById(`max-tokens-input-${modelName}`).value,
+    temperature: document.getElementById(`temperature-input-${modelName}`)
+      .value,
+    top_p: document.getElementById(`top-p-input-${modelName}`).value,
+    top_k: document.getElementById(`top-k-input-${modelName}`).value,
+    repetition_penalty: document.getElementById(
+      `repetition-penalty-input-${modelName}`,
+    ).value,
+    stop: document
+      .getElementById(`stop-sequence-input-${modelName}`)
+      .value.split(", "),
+    n: document.getElementById(`completions-input-${modelName}`).value,
+    pin_to_default: document.getElementById(`pin-default-${modelName}`)
+      ? document.getElementById(`pin-default-${modelName}`).checked
+      : false,
+    is_active: document.getElementById(`enable-${modelName}`)
+      ? document.getElementById(`enable-${modelName}`).checked
+      : true,
+  };
+  localStorage.setItem(`modelConfig-${modelName}`, JSON.stringify(config));
 }
 
 function loadModelConfigFromLocalStorage(modelName) {
-    const config = JSON.parse(localStorage.getItem(`modelConfig-${modelName}`));
-    if (config) {
-        document.getElementById(`max-tokens-input-${modelName}`).value = config.max_tokens;
-        document.getElementById(`temperature-input-${modelName}`).value = config.temperature;
-        document.getElementById(`top-p-input-${modelName}`).value = config.top_p;
-        document.getElementById(`top-k-input-${modelName}`).value = config.top_k;
-        document.getElementById(`repetition-penalty-input-${modelName}`).value = config.repetition_penalty;
-        document.getElementById(`stop-sequence-input-${modelName}`).value = config.stop.join(", ");
-        document.getElementById(`completions-input-${modelName}`).value = config.n;
-        if (document.getElementById(`pin-default-${modelName}`)) {
-            document.getElementById(`pin-default-${modelName}`).checked = config.pin_to_default;
-        }
-        if (document.getElementById(`enable-${modelName}`)) {
-            document.getElementById(`enable-${modelName}`).checked = config.is_active;
-        }
+  const config = JSON.parse(localStorage.getItem(`modelConfig-${modelName}`));
+  if (config) {
+    document.getElementById(`max-tokens-input-${modelName}`).value =
+      config.max_tokens;
+    document.getElementById(`temperature-input-${modelName}`).value =
+      config.temperature;
+    document.getElementById(`top-p-input-${modelName}`).value = config.top_p;
+    document.getElementById(`top-k-input-${modelName}`).value = config.top_k;
+    document.getElementById(`repetition-penalty-input-${modelName}`).value =
+      config.repetition_penalty;
+    document.getElementById(`stop-sequence-input-${modelName}`).value =
+      config.stop.join(", ");
+    document.getElementById(`completions-input-${modelName}`).value = config.n;
+    if (document.getElementById(`pin-default-${modelName}`)) {
+      document.getElementById(`pin-default-${modelName}`).checked =
+        config.pin_to_default;
     }
+    if (document.getElementById(`enable-${modelName}`)) {
+      document.getElementById(`enable-${modelName}`).checked = config.is_active;
+    }
+  }
 }
 
 function createModelConfigElement(modelName, isDefault = false) {
@@ -110,11 +124,13 @@ function createModelConfigElement(modelName, isDefault = false) {
             }
         </div>
     `;
-    // Attach event listeners to save config on change
-    configSection.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', () => saveModelConfigToLocalStorage(modelName));
-    });
-    return configSection;
+  // Attach event listeners to save config on change
+  configSection.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("change", () =>
+      saveModelConfigToLocalStorage(modelName),
+    );
+  });
+  return configSection;
 }
 
 window.addEventListener("DOMContentLoaded", function () {
