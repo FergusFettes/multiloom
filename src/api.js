@@ -5,19 +5,46 @@ var apiKey = "";
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
   // Collect all active models and their configurations
-  const activeModels = Array.from(document.querySelectorAll(".model-enable-checkbox:checked")).map((checkbox) => {
+  const activeModels = Array.from(
+    document.querySelectorAll(".model-enable-checkbox:checked"),
+  ).map((checkbox) => {
     const modelName = checkbox.id.replace("enable-", "");
-    const isPinnedToDefault = document.getElementById(`pin-default-${modelName}`).checked;
-    const modelConfigElement = document.getElementById(`model-config-${modelName}`);
-    const customModelConfig = isPinnedToDefault ? modelConfig : {
-      max_tokens: parseInt(modelConfigElement.querySelector(`#max-tokens-input-${modelName}`).value),
-      temperature: parseFloat(modelConfigElement.querySelector(`#temperature-input-${modelName}`).value),
-      top_p: parseFloat(modelConfigElement.querySelector(`#top-p-input-${modelName}`).value),
-      top_k: parseInt(modelConfigElement.querySelector(`#top-k-input-${modelName}`).value),
-      repetition_penalty: parseFloat(modelConfigElement.querySelector(`#repetition-penalty-input-${modelName}`).value),
-      stop: modelConfigElement.querySelector(`#stop-sequence-input-${modelName}`).value.split(", "),
-      n: parseInt(modelConfigElement.querySelector(`#completions-input-${modelName}`).value),
-    };
+    const isPinnedToDefault = document.getElementById(
+      `pin-default-${modelName}`,
+    ).checked;
+    const modelConfigElement = document.getElementById(
+      `model-config-${modelName}`,
+    );
+    const customModelConfig = isPinnedToDefault
+      ? modelConfig
+      : {
+          max_tokens: parseInt(
+            modelConfigElement.querySelector(`#max-tokens-input-${modelName}`)
+              .value,
+          ),
+          temperature: parseFloat(
+            modelConfigElement.querySelector(`#temperature-input-${modelName}`)
+              .value,
+          ),
+          top_p: parseFloat(
+            modelConfigElement.querySelector(`#top-p-input-${modelName}`).value,
+          ),
+          top_k: parseInt(
+            modelConfigElement.querySelector(`#top-k-input-${modelName}`).value,
+          ),
+          repetition_penalty: parseFloat(
+            modelConfigElement.querySelector(
+              `#repetition-penalty-input-${modelName}`,
+            ).value,
+          ),
+          stop: modelConfigElement
+            .querySelector(`#stop-sequence-input-${modelName}`)
+            .value.split(", "),
+          n: parseInt(
+            modelConfigElement.querySelector(`#completions-input-${modelName}`)
+              .value,
+          ),
+        };
     return {
       model: modelName,
       config: customModelConfig,
@@ -96,7 +123,12 @@ function generateText(fullText, parentId, modelName, customConfig) {
     .then((response) => {
       // Process the response and create a new node with the generated text
       const newText = processApiResponse(fullText, response, modelName);
-      createNodeIfTextChanged(fullText, fullText + newText, parentId, modelName);
+      createNodeIfTextChanged(
+        fullText,
+        fullText + newText,
+        parentId,
+        modelName,
+      );
     })
     .catch((error) => {
       console.error("Error during API call:", error);
