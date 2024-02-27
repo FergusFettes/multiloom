@@ -112,7 +112,7 @@ function generateText(fullText, parentId, modelName, customConfig) {
   if (modelName.includes("mistral-large")) {
     headers = {
       "Content-Type": "application/json",
-      "Accept": "application/json",
+      Accept: "application/json",
       Authorization: "Bearer " + mistralApiKey,
     };
     config = {
@@ -136,18 +136,18 @@ function generateText(fullText, parentId, modelName, customConfig) {
     };
     apiUrl = `${apiUrl}/${modelName}:generateContent?key=${googleApiKey}`;
     config = {
-      contents: [{
-        parts: [
-          { text: fullText }
-        ]
-      }],
+      contents: [
+        {
+          parts: [{ text: fullText }],
+        },
+      ],
       generationConfig: {
         stopSequences: config.stop,
         temperature: config.temperature,
         maxOutputTokens: config.max_tokens,
         topP: config.top_p,
-        topK: config.top_k
-      }
+        topK: config.top_k,
+      },
     };
   }
 
@@ -182,7 +182,11 @@ function processApiResponse(fullText, response, modelName) {
   var newText = "";
   if (modelName.includes("gemini")) {
     // Google's Gemini returns the response in a different format
-    newText = healTokens(jsonResponse.candidates[0].content.parts.map(part => part.text).join(''));
+    newText = healTokens(
+      jsonResponse.candidates[0].content.parts
+        .map((part) => part.text)
+        .join(""),
+    );
   } else if (modelName.includes("mistral-large")) {
     // Mistral returns the response in a different format
     newText = healTokens(jsonResponse[0].content);

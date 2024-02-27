@@ -96,7 +96,10 @@ function loadModelConfigFromLocalStorage(modelName) {
     if (document.getElementById(`enable-${modelName}`)) {
       document.getElementById(`enable-${modelName}`).checked = config.is_active;
     }
-    toggleVisibility(modelName, document.getElementById(`model-config-${modelName}`));
+    toggleVisibility(
+      modelName,
+      document.getElementById(`model-config-${modelName}`),
+    );
   }
 }
 
@@ -142,15 +145,15 @@ function createModelConfigElement(modelName, isDefault = false) {
 }
 
 function toggleVisibility(modelName, configSection) {
-    const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
-    const configFields = configSection.querySelector('.model-config-fields');
-    if (enableCheckbox) {
-        enableCheckbox.addEventListener('change', () => {
-            configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
-        });
-        // Set initial visibility based on checkbox state
-        configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
-    }
+  const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
+  const configFields = configSection.querySelector(".model-config-fields");
+  if (enableCheckbox) {
+    enableCheckbox.addEventListener("change", () => {
+      configFields.style.display = enableCheckbox.checked ? "block" : "none";
+    });
+    // Set initial visibility based on checkbox state
+    configFields.style.display = enableCheckbox.checked ? "block" : "none";
+  }
 }
 
 window.addEventListener("DOMContentLoaded", function () {

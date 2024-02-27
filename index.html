@@ -1116,9 +1116,6 @@ function calculateScores(algorithmName) {
     throw new Error(`Scoring algorithm "${algorithmName}" not found.`);
   }
 }
-// Global variable to store the API key
-var apiKey = "";
-
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
