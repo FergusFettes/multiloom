@@ -1230,7 +1230,7 @@ function generateText(fullText, parentId, modelName, customConfig) {
   if (modelName.includes("mistral-large")) {
     headers = {
       "Content-Type": "application/json",
-      "Accept": "application/json",
+      Accept: "application/json",
       Authorization: "Bearer " + mistralApiKey,
     };
     config = {
@@ -1254,18 +1254,18 @@ function generateText(fullText, parentId, modelName, customConfig) {
     };
     apiUrl = `${apiUrl}/${modelName}:generateContent?key=${googleApiKey}`;
     config = {
-      contents: [{
-        parts: [
-          { text: fullText }
-        ]
-      }],
+      contents: [
+        {
+          parts: [{ text: fullText }],
+        },
+      ],
       generationConfig: {
         stopSequences: config.stop,
         temperature: config.temperature,
         maxOutputTokens: config.max_tokens,
         topP: config.top_p,
-        topK: config.top_k
-      }
+        topK: config.top_k,
+      },
     };
   }
 
@@ -1300,7 +1300,11 @@ function processApiResponse(fullText, response, modelName) {
   var newText = "";
   if (modelName.includes("gemini")) {
     // Google's Gemini returns the response in a different format
-    newText = healTokens(jsonResponse.candidates[0].content.parts.map(part => part.text).join(''));
+    newText = healTokens(
+      jsonResponse.candidates[0].content.parts
+        .map((part) => part.text)
+        .join(""),
+    );
   } else if (modelName.includes("mistral-large")) {
     // Mistral returns the response in a different format
     newText = healTokens(jsonResponse[0].content);
@@ -2003,7 +2007,10 @@ function loadModelConfigFromLocalStorage(modelName) {
     if (document.getElementById(`enable-${modelName}`)) {
       document.getElementById(`enable-${modelName}`).checked = config.is_active;
     }
-    toggleVisibility(modelName, document.getElementById(`model-config-${modelName}`));
+    toggleVisibility(
+      modelName,
+      document.getElementById(`model-config-${modelName}`),
+    );
   }
 }
 
@@ -2049,15 +2056,15 @@ function createModelConfigElement(modelName, isDefault = false) {
 }
 
 function toggleVisibility(modelName, configSection) {
-    const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
-    const configFields = configSection.querySelector('.model-config-fields');
-    if (enableCheckbox) {
-        enableCheckbox.addEventListener('change', () => {
-            configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
-        });
-        // Set initial visibility based on checkbox state
-        configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
-    }
+  const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
+  const configFields = configSection.querySelector(".model-config-fields");
+  if (enableCheckbox) {
+    enableCheckbox.addEventListener("change", () => {
+      configFields.style.display = enableCheckbox.checked ? "block" : "none";
+    });
+    // Set initial visibility based on checkbox state
+    configFields.style.display = enableCheckbox.checked ? "block" : "none";
+  }
 }
 
 window.addEventListener("DOMContentLoaded", function () {
