@@ -1,34 +1,40 @@
 const modelSanitized = [
   "gemma-7b",
-  "mistral-7b-instruct-v0.2",
-  "mixtral-8x7b-instruct-v0.1",
-  "mixtral-8x7b-v0.1",
+  "mistral-7b-instruct",
+  "mistral-7b",
+  "mixtral-8x7b-instruct",
+  "mixtral-8x7b",
   "llama-2-70b",
-  "mistral-7b-v0.1",
-  "gpt-3.5-turbo",
-  "gpt-4-turbo-preview",
+  "mistral-large",
+  "gpt-35-turbo",
+  "gpt-4-turbo",
+  "gemini-pro",
 ];
 
 const remoteName = {
   "gemma-7b": "google/gemma-7b",
-  "mistral-7b-instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-8x7b-instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  "mixtral-8x7b-v0.1": "mistralai/Mixtral-8x7B-v0.1",
+  "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
+  "mistral-7b": "mistralai/Mistral-7B-v0.1",
+  "mixtral-8x7b-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  "mixtral-8x7b": "mistralai/Mixtral-8x7B-v0.1",
   "llama-2-70b": "togethercomputer/llama-2-70b",
-  "mistral-7b-v0.1": "mistralai/Mistral-7B-v0.1",
-  "gpt-3.5-turbo": "gpt-3.5-turbo",
-  "gpt-4-turbo-preview": "gpt-4-turbo-preview",
+  "gpt-35-turbo": "gpt-3.5-turbo",
+  "gpt-4-turbo": "gpt-4-turbo-preview",
+  "mistral-large": "mistral-large-latest",
+  "gemini-pro": "gemini-pro",
 };
 
 const modelUrl = {
   "gemma-7b": "https://api.together.xyz/v1/completions",
-  "mistral-7b-instruct-v0.2": "https://api.together.xyz/v1/completions",
-  "mixtral-8x7b-instruct-v0.1": "https://api.together.xyz/v1/completions",
-  "mixtral-8x7b-v0.1": "https://api.together.xyz/v1/completions",
+  "mistral-7b-instruct": "https://api.together.xyz/v1/completions",
+  "mistral-7b": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b-instruct": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b": "https://api.together.xyz/v1/completions",
   "llama-2-70b": "https://api.together.xyz/v1/completions",
-  "mistral-7b-v0.1": "https://api.together.xyz/v1/completions",
-  "gpt-3.5-turbo": "https://api.openai.com/v1/chat/completions",
-  "gpt-4-turbo-preview": "https://api.openai.com/v1/chat/completions",
+  "gpt-35-turbo": "https://api.openai.com/v1/chat/completions",
+  "gpt-4-turbo": "https://api.openai.com/v1/chat/completions",
+  "mistral-large": "https://api.mistral.ai/v1/chat/completions",
+  "gemini-pro": "https://generativelanguage.googleapis.com/v1beta/models/",
 };
 
 // Model configuration
@@ -90,6 +96,7 @@ function loadModelConfigFromLocalStorage(modelName) {
     if (document.getElementById(`enable-${modelName}`)) {
       document.getElementById(`enable-${modelName}`).checked = config.is_active;
     }
+    toggleVisibility(modelName, document.getElementById(`model-config-${modelName}`));
   }
 }
 
@@ -130,7 +137,20 @@ function createModelConfigElement(modelName, isDefault = false) {
       saveModelConfigToLocalStorage(modelName),
     );
   });
+  toggleVisibility(modelName, configSection);
   return configSection;
+}
+
+function toggleVisibility(modelName, configSection) {
+    const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
+    const configFields = configSection.querySelector('.model-config-fields');
+    if (enableCheckbox) {
+        enableCheckbox.addEventListener('change', () => {
+            configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
+        });
+        // Set initial visibility based on checkbox state
+        configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
+    }
 }
 
 window.addEventListener("DOMContentLoaded", function () {

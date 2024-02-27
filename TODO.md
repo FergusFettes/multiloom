@@ -1,2 +1,2 @@
 - tab for switching between text editor and graph editor
-- clean up the model configs
+- make it so the model config exit buttom works. and add an exit button for settings

@@ -222,3 +222,7 @@
 #default-params-container h3 {
     margin-top: 0;
 }
+
+.model-config-toggle {
+    margin-left: 10px;
+}

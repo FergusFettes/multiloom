@@ -216,6 +216,34 @@ document
       input.style.backgroundColor = "pink";
     }
   });
+// Event listener for Google API key input to change background color
+document
+  .getElementById("google-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    googleApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (googleApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("googleApiKey", googleApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
+// Event listener for Mistral API key input to change background color
+document
+  .getElementById("mistral-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    mistralApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (mistralApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("mistralApiKey", mistralApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
 
 // Event listener for API key input to change background color
 document

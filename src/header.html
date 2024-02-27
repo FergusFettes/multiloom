@@ -8,6 +8,16 @@
 <div id="model-config-modal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
+        <div id="api-keys-dropdown" class="dropdown">
+            <button id="api-keys-dropdown-btn" class="dropbtn">API Keys</button>
+            <div id="api-keys-container" class="dropdown-content">
+                <input type="password" id="together-api-key-input" placeholder="Together.AI API Key" class="api-key-input">
+                <input type="password" id="openai-api-key-input" placeholder="OpenAI API Key" class="api-key-input">
+                <input type="password" id="huggingface-token-input" placeholder="Huggingface Token" class="api-key-input">
+                <input type="password" id="mistral-api-key-input" placeholder="Mistral API Key" class="api-key-input">
+                <input type="password" id="google-api-key-input" placeholder="Google API Key" class="api-key-input">
+            </div>
+        </div>
         <h2>Model Configuration</h2>
         <div id="default-params-container">
             <h3>Default Parameters</h3>
@@ -16,14 +26,6 @@
         <div id="model-params-container">
             <h3>Model Parameters</h3>
             <!-- Default parameters will be displayed and editable here -->
-        </div>
-        <div id="api-keys-dropdown" class="dropdown">
-            <button id="api-keys-dropdown-btn" class="dropbtn">API Keys</button>
-            <div id="api-keys-container" class="dropdown-content">
-                <input type="password" id="together-api-key-input" placeholder="Together.AI API Key" class="api-key-input">
-                <input type="password" id="openai-api-key-input" placeholder="OpenAI API Key" class="api-key-input">
-                <input type="password" id="huggingface-token-input" placeholder="Huggingface Token" class="api-key-input">
-            </div>
         </div>
         <button id="save-model-config-btn">Save Configuration</button>
     </div>

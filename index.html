@@ -238,7 +238,10 @@
 #default-params-container h3 {
     margin-top: 0;
 }
-</style>
+
+.model-config-toggle {
+    margin-left: 10px;
+}</style>
 </head>
 <body>
 <div id="nodeContextMenu" class="context-menu">
@@ -251,6 +254,16 @@
 <div id="model-config-modal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
+        <div id="api-keys-dropdown" class="dropdown">
+            <button id="api-keys-dropdown-btn" class="dropbtn">API Keys</button>
+            <div id="api-keys-container" class="dropdown-content">
+                <input type="password" id="together-api-key-input" placeholder="Together.AI API Key" class="api-key-input">
+                <input type="password" id="openai-api-key-input" placeholder="OpenAI API Key" class="api-key-input">
+                <input type="password" id="huggingface-token-input" placeholder="Huggingface Token" class="api-key-input">
+                <input type="password" id="mistral-api-key-input" placeholder="Mistral API Key" class="api-key-input">
+                <input type="password" id="google-api-key-input" placeholder="Google API Key" class="api-key-input">
+            </div>
+        </div>
         <h2>Model Configuration</h2>
         <div id="default-params-container">
             <h3>Default Parameters</h3>
@@ -259,14 +272,6 @@
         <div id="model-params-container">
             <h3>Model Parameters</h3>
             <!-- Default parameters will be displayed and editable here -->
-        </div>
-        <div id="api-keys-dropdown" class="dropdown">
-            <button id="api-keys-dropdown-btn" class="dropbtn">API Keys</button>
-            <div id="api-keys-container" class="dropdown-content">
-                <input type="password" id="together-api-key-input" placeholder="Together.AI API Key" class="api-key-input">
-                <input type="password" id="openai-api-key-input" placeholder="OpenAI API Key" class="api-key-input">
-                <input type="password" id="huggingface-token-input" placeholder="Huggingface Token" class="api-key-input">
-            </div>
         </div>
         <button id="save-model-config-btn">Save Configuration</button>
     </div>
@@ -379,6 +384,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const apiKeyInput = document.getElementById("openai-api-key-input");
     apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
     openaiApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
+  savedApiKey = localStorage.getItem("mistralApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("mistral-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    mistralApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
+  savedApiKey = localStorage.getItem("googleApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("google-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    googleApiKey = apiKeyInput.value;
     apiKeyInput.style.backgroundColor = "green";
   }
 });
@@ -1179,7 +1198,7 @@ Prompt:
 function generateText(fullText, parentId, modelName, customConfig) {
   // Use custom config if provided, else clone the default modelConfig object
   var config = customConfig || Object.assign({}, modelConfig);
-  const apiUrl = modelUrl[modelName];
+  var apiUrl = modelUrl[modelName];
 
   config.prompt = fullText;
   config.model = remoteName[modelName];
@@ -1206,7 +1225,50 @@ function generateText(fullText, parentId, modelName, customConfig) {
       temperature: config.temperature,
       top_p: config.top_p,
       stop: config.stop,
-      model: modelName,
+      model: remoteName[modelName],
+    };
+  }
+
+  // Check if the model is for Mistral and set the appropriate API URL and headers
+  if (modelName.includes("mistral-large")) {
+    headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: "Bearer " + mistralApiKey,
+    };
+    config = {
+      messages: [
+        {
+          role: "user",
+          content: fullText,
+        },
+      ],
+      temperature: config.temperature,
+      top_p: config.top_p,
+      max_tokens: config.max_tokens,
+      model: remoteName[modelName],
+    };
+  }
+
+  // Check if the model is for Google's Gemini and set the appropriate API URL and headers
+  if (modelName.includes("gemini")) {
+    headers = {
+      "Content-Type": "application/json",
+    };
+    apiUrl = `${apiUrl}/${modelName}:generateContent?key=${googleApiKey}`;
+    config = {
+      contents: [{
+        parts: [
+          { text: fullText }
+        ]
+      }],
+      generationConfig: {
+        stopSequences: config.stop,
+        temperature: config.temperature,
+        maxOutputTokens: config.max_tokens,
+        topP: config.top_p,
+        topK: config.top_k
+      }
     };
   }
 
@@ -1239,7 +1301,13 @@ function processApiResponse(fullText, response, modelName) {
   const responseData = response.data.replace(/^data: /, "");
   const jsonResponse = JSON.parse(responseData);
   var newText = "";
-  if (modelName.startsWith("gpt")) {
+  if (modelName.includes("gemini")) {
+    // Google's Gemini returns the response in a different format
+    newText = healTokens(jsonResponse.candidates[0].content.parts.map(part => part.text).join(''));
+  } else if (modelName.includes("mistral-large")) {
+    // Mistral returns the response in a different format
+    newText = healTokens(jsonResponse[0].content);
+  } else if (modelName.startsWith("gpt")) {
     // OpenAI returns the response in a different format
     newText = healTokens(jsonResponse.choices[0].message.content);
   } else {
@@ -1485,6 +1553,34 @@ document
     if (togetherApiKey !== "") {
       // Save the API key to localStorage
       localStorage.setItem("togetherApiKey", togetherApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
+// Event listener for Google API key input to change background color
+document
+  .getElementById("google-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    googleApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (googleApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("googleApiKey", googleApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
+// Event listener for Mistral API key input to change background color
+document
+  .getElementById("mistral-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    mistralApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (mistralApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("mistralApiKey", mistralApiKey);
       input.style.backgroundColor = "green";
     } else {
       input.style.backgroundColor = "pink";
@@ -1814,35 +1910,41 @@ function dragElement(elmnt) {
 dragElement(document.getElementById("textEditor"));
 const modelSanitized = [
   "gemma-7b",
-  "mistral-7b-instruct-v0.2",
-  "mixtral-8x7b-instruct-v0.1",
-  "mixtral-8x7b-v0.1",
+  "mistral-7b-instruct",
+  "mistral-7b",
+  "mixtral-8x7b-instruct",
+  "mixtral-8x7b",
   "llama-2-70b",
-  "mistral-7b-v0.1",
-  "gpt-3.5-turbo",
-  "gpt-4-turbo-preview",
+  "mistral-large",
+  "gpt-35-turbo",
+  "gpt-4-turbo",
+  "gemini-pro",
 ];
 
 const remoteName = {
   "gemma-7b": "google/gemma-7b",
-  "mistral-7b-instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
-  "mixtral-8x7b-instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-  "mixtral-8x7b-v0.1": "mistralai/Mixtral-8x7B-v0.1",
+  "mistral-7b-instruct": "mistralai/Mistral-7B-Instruct-v0.2",
+  "mistral-7b": "mistralai/Mistral-7B-v0.1",
+  "mixtral-8x7b-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  "mixtral-8x7b": "mistralai/Mixtral-8x7B-v0.1",
   "llama-2-70b": "togethercomputer/llama-2-70b",
-  "mistral-7b-v0.1": "mistralai/Mistral-7B-v0.1",
-  "gpt-3.5-turbo": "gpt-3.5-turbo",
-  "gpt-4-turbo-preview": "gpt-4-turbo-preview",
+  "gpt-35-turbo": "gpt-3.5-turbo",
+  "gpt-4-turbo": "gpt-4-turbo-preview",
+  "mistral-large": "mistral-large-latest",
+  "gemini-pro": "gemini-pro",
 };
 
 const modelUrl = {
   "gemma-7b": "https://api.together.xyz/v1/completions",
-  "mistral-7b-instruct-v0.2": "https://api.together.xyz/v1/completions",
-  "mixtral-8x7b-instruct-v0.1": "https://api.together.xyz/v1/completions",
-  "mixtral-8x7b-v0.1": "https://api.together.xyz/v1/completions",
+  "mistral-7b-instruct": "https://api.together.xyz/v1/completions",
+  "mistral-7b": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b-instruct": "https://api.together.xyz/v1/completions",
+  "mixtral-8x7b": "https://api.together.xyz/v1/completions",
   "llama-2-70b": "https://api.together.xyz/v1/completions",
-  "mistral-7b-v0.1": "https://api.together.xyz/v1/completions",
-  "gpt-3.5-turbo": "https://api.openai.com/v1/chat/completions",
-  "gpt-4-turbo-preview": "https://api.openai.com/v1/chat/completions",
+  "gpt-35-turbo": "https://api.openai.com/v1/chat/completions",
+  "gpt-4-turbo": "https://api.openai.com/v1/chat/completions",
+  "mistral-large": "https://api.mistral.ai/v1/chat/completions",
+  "gemini-pro": "https://generativelanguage.googleapis.com/v1beta/models/",
 };
 
 // Model configuration
@@ -1904,6 +2006,7 @@ function loadModelConfigFromLocalStorage(modelName) {
     if (document.getElementById(`enable-${modelName}`)) {
       document.getElementById(`enable-${modelName}`).checked = config.is_active;
     }
+    toggleVisibility(modelName, document.getElementById(`model-config-${modelName}`));
   }
 }
 
@@ -1944,7 +2047,20 @@ function createModelConfigElement(modelName, isDefault = false) {
       saveModelConfigToLocalStorage(modelName),
     );
   });
+  toggleVisibility(modelName, configSection);
   return configSection;
+}
+
+function toggleVisibility(modelName, configSection) {
+    const enableCheckbox = configSection.querySelector(`#enable-${modelName}`);
+    const configFields = configSection.querySelector('.model-config-fields');
+    if (enableCheckbox) {
+        enableCheckbox.addEventListener('change', () => {
+            configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
+        });
+        // Set initial visibility based on checkbox state
+        configFields.style.display = enableCheckbox.checked ? 'block' : 'none';
+    }
 }
 
 window.addEventListener("DOMContentLoaded", function () {

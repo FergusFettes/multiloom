@@ -37,6 +37,20 @@ document.addEventListener("DOMContentLoaded", function () {
     openaiApiKey = apiKeyInput.value;
     apiKeyInput.style.backgroundColor = "green";
   }
+  savedApiKey = localStorage.getItem("mistralApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("mistral-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    mistralApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
+  savedApiKey = localStorage.getItem("googleApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("google-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    googleApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
 });
 
 // Initialize data object to store nodes and edges

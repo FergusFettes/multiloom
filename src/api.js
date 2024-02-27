@@ -1,6 +1,3 @@
-// Global variable to store the API key
-var apiKey = "";
-
 // Function to generate new output based on the given text and parent ID
 function generateNewOutput(parentId) {
   const fullText = renderFullTextFromPatches(parentId);
@@ -80,7 +77,7 @@ Prompt:
 function generateText(fullText, parentId, modelName, customConfig) {
   // Use custom config if provided, else clone the default modelConfig object
   var config = customConfig || Object.assign({}, modelConfig);
-  const apiUrl = modelUrl[modelName];
+  var apiUrl = modelUrl[modelName];
 
   config.prompt = fullText;
   config.model = remoteName[modelName];
@@ -107,7 +104,50 @@ function generateText(fullText, parentId, modelName, customConfig) {
       temperature: config.temperature,
       top_p: config.top_p,
       stop: config.stop,
-      model: modelName,
+      model: remoteName[modelName],
+    };
+  }
+
+  // Check if the model is for Mistral and set the appropriate API URL and headers
+  if (modelName.includes("mistral-large")) {
+    headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: "Bearer " + mistralApiKey,
+    };
+    config = {
+      messages: [
+        {
+          role: "user",
+          content: fullText,
+        },
+      ],
+      temperature: config.temperature,
+      top_p: config.top_p,
+      max_tokens: config.max_tokens,
+      model: remoteName[modelName],
+    };
+  }
+
+  // Check if the model is for Google's Gemini and set the appropriate API URL and headers
+  if (modelName.includes("gemini")) {
+    headers = {
+      "Content-Type": "application/json",
+    };
+    apiUrl = `${apiUrl}/${modelName}:generateContent?key=${googleApiKey}`;
+    config = {
+      contents: [{
+        parts: [
+          { text: fullText }
+        ]
+      }],
+      generationConfig: {
+        stopSequences: config.stop,
+        temperature: config.temperature,
+        maxOutputTokens: config.max_tokens,
+        topP: config.top_p,
+        topK: config.top_k
+      }
     };
   }
 
@@ -140,7 +180,13 @@ function processApiResponse(fullText, response, modelName) {
   const responseData = response.data.replace(/^data: /, "");
   const jsonResponse = JSON.parse(responseData);
   var newText = "";
-  if (modelName.startsWith("gpt")) {
+  if (modelName.includes("gemini")) {
+    // Google's Gemini returns the response in a different format
+    newText = healTokens(jsonResponse.candidates[0].content.parts.map(part => part.text).join(''));
+  } else if (modelName.includes("mistral-large")) {
+    // Mistral returns the response in a different format
+    newText = healTokens(jsonResponse[0].content);
+  } else if (modelName.startsWith("gpt")) {
     // OpenAI returns the response in a different format
     newText = healTokens(jsonResponse.choices[0].message.content);
   } else {
