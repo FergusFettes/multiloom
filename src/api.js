@@ -149,7 +149,7 @@ function generateText(fullText, parentId, modelName, customConfig) {
       // Check if the result is a string (from Google API) or an object (from axios)
       if (typeof result === "string") {
         // If it's a string, it's the text returned directly from the Google API
-        newText = addSpace(healTokens(result));
+        newText = addSpace(healTokens(result), fullText);
       } else {
         // If it's an object, process the axios response to extract the text
         newText = processApiResponse(fullText, result, modelName);
