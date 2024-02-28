@@ -140,6 +140,13 @@ function toggleVisibility(nodeId) {
     );
   }
   localStorage.setItem("data", JSON.stringify(data));
+
+  // Check out the parent node and set it as selected
+  const parentNodeId = findParentNode(nodeId);
+  if (parentNodeId) {
+    network.selectNodes([parentNodeId]);
+    localStorage.setItem("checkedOutNodeId", parentNodeId);
+  }
 }
 
 // Function to delete a node and all its descendants
