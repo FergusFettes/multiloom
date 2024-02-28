@@ -70,13 +70,13 @@ function processNodesByLevel(nodesToProcess, chunkSize) {
       updateNodeInVisualization(node); // Process only visible nodes
     });
 
-    // If the total length of new nodes is > 100, fit the view to the network
-    if (nodesToProcess.length > 100) {
-      network.fit({ animation: true, locked: false });
-    }
+    // // If the total length of new nodes is > 100, fit the view to the network
+    // if (nodesToProcess.length > 10) {
+    //   network.fit({ animation: true, locked: false });
+    // }
 
     if (queue.length > 0) {
-      setTimeout(processNextLevel, 0); // Schedule the next level
+      setTimeout(processNextLevel, 100); // Schedule the next level
     }
 
     // Reset the chunk for the next iteration
@@ -91,7 +91,10 @@ function updateVisualization(newNodes) {
   if (newNodes.length === 0) {
     return;
   }
-  const chunkSize = 20; // Define the chunk size
+  const chunkSize = 1; // Define the chunk size
   // Assuming newNodes contains the root nodes, otherwise find them
   processNodesByLevel(newNodes, chunkSize);
+  // if (newNodes.length > 10) {
+  //   network.fit({ animation: true, locked: false });
+  // }
 }

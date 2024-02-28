@@ -96,7 +96,10 @@ if (Object.keys(data.nodes).length) {
 
   // Check out the node with the latest lastRead value
   const lastRead = Object.values(data.nodes).find(
-    (node) => !node.lastRead || node.lastRead === Math.max(...Object.values(data.nodes).map((n) => n.lastRead)),
+    (node) =>
+      !node.lastRead ||
+      node.lastRead ===
+        Math.max(...Object.values(data.nodes).map((n) => n.lastRead)),
   );
   // Or the root if it doesn't exist
   if (lastRead) {
