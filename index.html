@@ -79,6 +79,7 @@ body {
     top: 10%;
     width: 80%;
     height: 80%;
+    padding: 10px;
     background-color: rgba(255, 255, 255, 0.9); /* white with 90% opacity */
     border: 1px solid #ccc;
     overflow: auto;
@@ -124,6 +125,7 @@ body {
 #infoModal {
     display: none;
     position: fixed;
+    padding: 10px;
     z-index: 10;
     left: 10%;
     top: 10%;
@@ -1478,7 +1480,7 @@ document
       document.getElementById("background-text").style.display = "none";
       document.getElementById("textEditor").style.display = "block";
       document.getElementById("fullText").value =
-        "(Right click to save and the editor!\nEscape to close without saving!)";
+        "(Right click to save and close the editor!\nEscape to close without saving!)";
     }
   });
 
@@ -1536,68 +1538,60 @@ function renderFullText(nodeId) {
   fullTextElement.setAttribute("data-node-id", nodeId);
 }
 
-// Event listener for the 'e' key to open the editor
+// Add a tab event listener for opening and closing the editor
 window.addEventListener("keydown", function (event) {
-  if (event.key === "e" || event.keyCode === 69) {
-    const textEditor = document.getElementById("textEditor");
-    if (
-      textEditor.style.display === "block" ||
-      document.getElementById("settingsModal").style.display === "block" ||
-      document.getElementById("model-config-modal").style.display === "block"
-    ) {
-      return; // Do nothing if the editor is already open
-    }
-
-    document.getElementById("background-text").style.display = "none";
-
-    // Get the selected node
-    const selectedNodeId = network.getSelectedNodes()[0];
-    if (selectedNodeId) {
-      renderFullText(selectedNodeId);
-      document.getElementById("textEditor").style.display = "block";
-    } else {
-      const fullTextElement = document.getElementById("fullText");
-      fullTextElement.setAttribute("data-node-id", selectedNodeId);
-      document.getElementById("textEditor").style.display = "block";
-    }
-
-    // Focus on the full text element
-    document.getElementById("fullText").focus();
-
-    // Prevent the default action of the 'e' key
-    event.preventDefault();
-  }
-});
-
-// Modify the event listener for the modal to call createNodeIfTextChanged with human type
-window.addEventListener("contextmenu", function (event) {
   const textEditor = document.getElementById("textEditor");
   const fullTextElement = document.getElementById("fullText");
-  if (event.target === textEditor || event.target === fullTextElement) {
-    // Get the current text from the modal
-    const newText = fullTextElement.value.replace(/ +$/, "");
-    // Set the trimmed text back to the modal
-    fullTextElement.value = newText;
-    var nodeId = fullTextElement.getAttribute("data-node-id");
 
-    // If nodeId is null or NaN
-    if (nodeId === null || isNaN(nodeId)) {
-      nodeId = localStorage.getItem("checkedOutNodeId");
-    }
+  if (event.key === "Tab" || event.keyCode === 9) {
+    if (document.getElementById("settingsModal").style.display === "block") {
+      document.getElementById("settingsModal").style.display = "none";
+    } else if (document.getElementById("model-config-modal").style.display === "block") {
+      document.getElementById("model-config-modal").style.display = "none";
+    } else if (document.getElementById("infoModal").style.display === "block") {
+      document.getElementById("infoModal").style.display = "none";
+    } else if (textEditor.style.display === "block") {
+      // Get the current text from the modal
+      const newText = fullTextElement.value.replace(/ +$/, "");
+      // Set the trimmed text back to the modal
+      fullTextElement.value = newText;
+      var nodeId = fullTextElement.getAttribute("data-node-id");
 
-    const originalText = renderFullTextFromPatches(nodeId);
+      // If nodeId is null or NaN
+      if (nodeId === null || isNaN(nodeId)) {
+        nodeId = localStorage.getItem("checkedOutNodeId");
+      }
 
-    // Create a new node if the text has changed with type as 'human'
-    createNodeIfTextChanged(originalText, newText, nodeId, "human");
+      const originalText = renderFullTextFromPatches(nodeId);
 
-    // Ensure the text editor scrolls to the bottom after updates
-    requestAnimationFrame(() => {
+      // Create a new node if the text has changed with type as 'human'
+      createNodeIfTextChanged(originalText, newText, nodeId, "human");
+
+      // Ensure the text editor scrolls to the bottom after updates
+      requestAnimationFrame(() => {
+        fullTextElement.scrollTop = fullTextElement.scrollHeight;
+      });
+
+      // Close the modal
+      textEditor.style.display = "none";
       fullTextElement.scrollTop = fullTextElement.scrollHeight;
-    });
+    } else {
+      document.getElementById("background-text").style.display = "none";
 
-    // Close the modal
-    textEditor.style.display = "none";
-    fullTextElement.scrollTop = fullTextElement.scrollHeight;
+      // Get the selected node
+      const selectedNodeId = network.getSelectedNodes()[0];
+      if (selectedNodeId) {
+        renderFullText(selectedNodeId);
+        document.getElementById("textEditor").style.display = "block";
+      } else {
+        const fullTextElement = document.getElementById("fullText");
+        fullTextElement.setAttribute("data-node-id", selectedNodeId);
+        document.getElementById("textEditor").style.display = "block";
+      }
+
+      // Focus on the full text element
+      document.getElementById("fullText").focus();
+    }
     event.preventDefault(); // Prevent the default context menu from showing
   }
 });
@@ -1830,14 +1824,6 @@ document
   .getElementById("import-json-btn")
   .addEventListener("click", importJSON);
 
-// Event listener for right-click on the settings modal to close it
-document
-  .getElementById("settingsModal")
-  .addEventListener("contextmenu", function (event) {
-    this.style.display = "none";
-    event.preventDefault(); // Prevent the default context menu
-  });
-
 // Attach context menu to the network
 network.on("oncontext", function (params) {
   // Prevent default context menu from appearing
@@ -1886,37 +1872,6 @@ document.getElementById("deleteNode").addEventListener("click", function () {
   }
   contextMenu.style.display = "none";
 });
-
-// // Event listener for tab to swtich focus between fullText and network
-// window.addEventListener("keydown", function (event) {
-//   // If the tab key is pressed, prevent the default action and focus on the network
-//   if (event.key === "Tab" || event.keyCode === 9) {
-//     // Check if textEdit is both open and focussed
-//     const fullTextElement = document.getElementById("fullText");
-//     const networkElement = document.getElementById("mynetwork");
-//     const textEditor = document.getElementById("textEditor");
-//     console.log(document.activeElement)
-//     console.log(fullTextElement)
-//     console.log(textEditor.style.display)
-//
-//     if (
-//       textEditor.style.display === "block" &&
-//       fullTextElement == document.activeElement
-//     ) {
-//       console.log("focusing on network")
-//       networkElement.focus();
-//       fullTextElement.blur();
-//       event.preventDefault();
-//     } else if (
-//       textEditor.style.display === "block" &&
-//       networkElement == document.activeElement
-//     ) {
-//       console.log("focusing on text editor")
-//       fullTextElement.focus();
-//       event.preventDefault();
-//     }
-//   }
-// });
 
 // Event listener for the 'w', 'a', 'd', and 's' keys for navigation
 window.addEventListener("keydown", function (event) {
