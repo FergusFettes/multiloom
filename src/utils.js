@@ -101,9 +101,6 @@ function findLastReadOrRandomChildNode(parentNodeId) {
     (node) => !node.hidden && node.parent === parentNodeId,
   );
 
-  console.log("Children");
-  console.log(childNodes);
-
   if (childNodes.length === 0) {
     return null; // Return null if there are no child nodes
   }

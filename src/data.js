@@ -22,9 +22,9 @@ document.addEventListener("DOMContentLoaded", function () {
     textEditor.style.display = "none";
   }
 
-  // Load data from localStorage on page load
+  // Load data from localStorage on page load, unless 'data' is already popuplated
   var savedData = localStorage.getItem("data");
-  if (savedData) {
+  if (savedData && !Object.keys(data.nodes).length) {
     data = JSON.parse(savedData);
     updateVisualization(Object.values(data.nodes));
   }
@@ -88,6 +88,10 @@ function importJSON() {
   const jsonData = document.getElementById("json-data-textarea").value;
   try {
     const parsedData = JSON.parse(jsonData);
+    if (!parsedData.nodes) {
+      throw new Error("Invalid JSON data.");
+    }
+    data = parsedData;
     const newNodes = {};
     const idMapping = {};
 
@@ -107,16 +111,35 @@ function importJSON() {
       }
     });
 
-    document.getElementById("background-text").style.display = "none";
     clearData();
     data.nodes = newNodes; // Replace old nodes object with new one using UUIDs as keys
     localStorage.setItem("data", JSON.stringify(data));
+
+    updateVisualization(Object.values(data.nodes));
+
+    // Check out the node with the latest lastRead value
+    const lastRead = Object.values(data.nodes).find(
+      (node) => !node.lastRead || node.lastRead === Math.max(...Object.values(data.nodes).map((n) => n.lastRead)),
+    );
+    // Or the root if it doesn't exist
+    if (lastRead) {
+      network.selectNodes([lastRead.id]);
+      localStorage.setItem("checkedOutNodeId", lastRead.id);
+    } else {
+      rootId = Object.values(data.nodes).find((node) => !node.parent).id;
+      network.selectNodes([rootId]);
+      localStorage.setItem("checkedOutNodeId", rootId);
+    }
+
+    // Hide the background text if there are nodes
+    if (Object.keys(parsedData.nodes).length > 0) {
+      document.getElementById("background-text").style.display = "none";
+    }
 
     document.getElementById("json-data-textarea").value = "";
     document.getElementById("textEditor").style.display = "none";
     document.getElementById("settingsModal").style.display = "none";
     document.getElementById("background-text").style.display = "none";
-    updateVisualization(Object.values(data.nodes));
   } catch (error) {
     console.error("Error parsing JSON:", error);
     alert("Invalid JSON data.");

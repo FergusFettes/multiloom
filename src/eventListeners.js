@@ -488,7 +488,6 @@ window.addEventListener("keydown", function (event) {
     localStorage.setItem("checkedOutNodeId", targetNodeId); // Save the new checked-out node ID
     const targetNode = data.nodes[targetNodeId];
     targetNode.lastRead = Date.now();
-    console.log(targetNodeId);
   }
 });
 

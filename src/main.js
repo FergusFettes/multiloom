@@ -9,8 +9,6 @@ window.edges = edges;
 // Get the value from the toffle-model-colors checkbox
 var useModelColors = document.getElementById("toggle-model-colors").checked;
 
-updateVisualization(Object.values(data.nodes));
-
 function getNodeBorderColor(nodeType) {
   if (!useModelColors) {
     return "black"; // Return black when model colors are disabled
@@ -91,6 +89,26 @@ const options = {
 };
 const network = new vis.Network(container, visData, options);
 updateTreeLayout();
+
+// If data was already set, update the visualization
+if (Object.keys(data.nodes).length) {
+  updateVisualization(Object.values(data.nodes));
+
+  // Check out the node with the latest lastRead value
+  const lastRead = Object.values(data.nodes).find(
+    (node) => !node.lastRead || node.lastRead === Math.max(...Object.values(data.nodes).map((n) => n.lastRead)),
+  );
+  // Or the root if it doesn't exist
+  if (lastRead) {
+    network.selectNodes([lastRead.id]);
+    localStorage.setItem("checkedOutNodeId", lastRead.id);
+  } else {
+    rootId = Object.values(data.nodes).find((node) => !node.parent).id;
+    network.selectNodes([rootId]);
+    localStorage.setItem("checkedOutNodeId", rootId);
+  }
+}
+
 // Set the background color from local storage if it exists
 const backgroundColor = localStorage.getItem("backgroundColor");
 if (backgroundColor) {

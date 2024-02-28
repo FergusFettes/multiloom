@@ -208,8 +208,8 @@ function callGoogleAPI(fullText, modelName, config) {
     // Define the model name
     const model = genAI.getGenerativeModel({
       model: remoteName[modelName],
-      generationConfig,
       safetySettings,
+      generationConfig,
     });
 
     // Call the model's generate function with the provided config

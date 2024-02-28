@@ -159,16 +159,13 @@ function toggleConfigVisibility(modelName, configSection) {
   );
   const configFields = configSection.querySelector(".model-config-fields");
   if (enableCheckbox) {
-    console.log("Adding event listener");
     enableCheckbox.addEventListener("change", () => {
-      console.log("triggered event listener");
       configFields.style.display =
         enableCheckbox.checked && !pinnedCheckbox.checked ? "block" : "none";
       pinnedCheckbox.style.display = enableCheckbox.checked ? "inline" : "none";
       pinnedLabel.style.display = enableCheckbox.checked ? "inline" : "none";
     });
     pinnedCheckbox.addEventListener("change", () => {
-      console.log("triggered event listener");
       configFields.style.display =
         enableCheckbox.checked && !pinnedCheckbox.checked ? "block" : "none";
     });
