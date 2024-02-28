@@ -1546,7 +1546,9 @@ window.addEventListener("keydown", function (event) {
   if (event.key === "Tab" || event.keyCode === 9) {
     if (document.getElementById("settingsModal").style.display === "block") {
       document.getElementById("settingsModal").style.display = "none";
-    } else if (document.getElementById("model-config-modal").style.display === "block") {
+    } else if (
+      document.getElementById("model-config-modal").style.display === "block"
+    ) {
       document.getElementById("model-config-modal").style.display = "none";
     } else if (document.getElementById("infoModal").style.display === "block") {
       document.getElementById("infoModal").style.display = "none";
