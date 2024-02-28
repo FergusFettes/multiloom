@@ -669,7 +669,10 @@ function updateVisualization(newNodes) {
   if (newNodes.length === 0) {
     return;
   }
-  const chunkSize = 1; // Define the chunk size
+  var chunkSize = 50; // Define the chunk size
+  if (newNodes.length > 150) {
+    chunkSize = 1; // Define the chunk size
+  }
   // Assuming newNodes contains the root nodes, otherwise find them
   processNodesByLevel(newNodes, chunkSize);
   // if (newNodes.length > 10) {
