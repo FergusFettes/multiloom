@@ -6,7 +6,7 @@ document
       document.getElementById("background-text").style.display = "none";
       document.getElementById("textEditor").style.display = "block";
       document.getElementById("fullText").value =
-        "(Right click to save and close the editor!\nEscape to close without saving!)";
+        "(Tab to save and close the editor!\nEscape to close without saving!)";
     }
   });
 
