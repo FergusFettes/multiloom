@@ -186,10 +186,30 @@ function callGoogleAPI(fullText, modelName, config) {
     // Access your API key
     const genAI = new GoogleGenerativeAI(googleApiKey);
 
+    const safetySettings = [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+    ];
+
     // Define the model name
     const model = genAI.getGenerativeModel({
       model: remoteName[modelName],
       generationConfig,
+      safetySettings
     });
 
     // Call the model's generate function with the provided config
