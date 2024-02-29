@@ -62,14 +62,12 @@ Return only the completion. If the prompt requires creativity, be creative.
 DO NOT SAY 'here are some possible completions'. Just return the completion.
 
 Examples:
-Prompt:
-The quick brown fox
+Prompt: The quick brown fox
 Completion: jumps over the lazy dog.
-Prompt:
-The capital of France is
+Prompt: The capital of France is
 Completion: Paris.
 
-Prompt:
+Only return the completion, not the word 'Completion'!
 `;
 
 // Function to make an API call for text generation
@@ -101,8 +99,12 @@ function generateText(fullText, parentId, modelName, customConfig) {
       config = {
         messages: [
           {
+            role: "system",
+            content: prePrompt,
+          },
+          {
             role: "user",
-            content: prePrompt + fullText,
+            content: fullText,
           },
         ],
         max_tokens: config.max_tokens,
@@ -120,8 +122,12 @@ function generateText(fullText, parentId, modelName, customConfig) {
       config = {
         messages: [
           {
+            role: "system",
+            content: prePrompt,
+          },
+          {
             role: "user",
-            content: prePrompt + fullText,
+            content: fullText,
           },
         ],
         temperature: config.temperature,
@@ -220,11 +226,9 @@ function callGoogleAPI(fullText, modelName, config) {
         const chunkText = chunk.text();
         text += chunkText;
       }
-
       resolve(text);
     } catch (error) {
       console.error("Error calling Google Generative AI:", error);
-      reject(error);
     }
   });
 }
