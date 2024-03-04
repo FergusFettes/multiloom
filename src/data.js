@@ -62,6 +62,17 @@ document.addEventListener("DOMContentLoaded", function () {
     googleApiKey = apiKeyInput.value;
     apiKeyInput.style.backgroundColor = "green";
   }
+
+  document.getElementById("level-separation-input").value = localStorage.getItem(
+    "levelSeparation",
+  ) || 400;
+  document.getElementById("node-spacing-input").value = localStorage.getItem(
+    "nodeSpacing",
+  ) || 250;
+  document.getElementById("direction-select").value = localStorage.getItem(
+    "direction",
+  ) || "UD";
+
 });
 
 // Initialize data object to store nodes and edges

@@ -294,6 +294,7 @@ document
     document.getElementById("mynetwork").style.backgroundColor = color;
     localStorage.setItem("backgroundColor", color);
   });
+
 // Event listener for the tree layout settings inputs
 document
   .getElementById("level-separation-input")
@@ -426,20 +427,38 @@ window.addEventListener("keydown", function (event) {
   const defaultTemperature = document.getElementById(
     "temperature-input-default",
   );
+
   const defaultTokens = document.getElementById("max-tokens-input-default");
+  const direction = document.getElementById("direction-select");
   let targetNodeId = null;
   switch (event.key) {
     case "w":
-      targetNodeId = findParentNode(checkedOutNodeId);
+      if (direction.value === "UD") {
+        targetNodeId = findParentNode(checkedOutNodeId);
+      } else {
+        targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
+      }
       break;
     case "a":
-      targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
+      if (direction.value === "UD") {
+        targetNodeId = findSiblingNodes(checkedOutNodeId).leftSibling;
+      } else {
+        targetNodeId = findParentNode(checkedOutNodeId);
+      }
       break;
     case "d":
-      targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
+      if (direction.value === "UD") {
+        targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
+      } else {
+        targetNodeId = findLastReadOrRandomChildNode(checkedOutNodeId);
+      }
       break;
     case "s":
-      targetNodeId = findLastReadOrRandomChildNode(checkedOutNodeId);
+      if (direction.value === "UD") {
+        targetNodeId = findLastReadOrRandomChildNode(checkedOutNodeId);
+      } else {
+        targetNodeId = findSiblingNodes(checkedOutNodeId).rightSibling;
+      }
       break;
     case "W":
       defaultTokens.value = parseInt(defaultTokens.value) + 20;
