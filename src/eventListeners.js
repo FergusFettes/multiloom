@@ -2,6 +2,12 @@
 document
   .getElementById("background-text")
   .addEventListener("click", function () {
+    // Check if the settings or configs are open, do nothing
+    if (
+      document.getElementById("settingsModal").style.display === "block" ||
+      document.getElementById("model-config-modal").style.display === "block"
+    ) { return; }
+
     if (!hasNonDataNodes()) {
       document.getElementById("background-text").style.display = "none";
       document.getElementById("textEditor").style.display = "block";
@@ -14,6 +20,13 @@ network.on("click", function (params) {
   if (params.nodes.length > 0) {
     const nodeId = params.nodes[0];
     const textEditor = document.getElementById("textEditor");
+
+    // Check if the settings or configs are open, do nothing
+    if (
+      document.getElementById("settingsModal").style.display === "block" ||
+      document.getElementById("model-config-modal").style.display === "block"
+    ) { return; }
+
     // Check if the text editor is open
     if (textEditor.style.display === "block") {
       const fullText = renderFullTextFromPatches(nodeId);
@@ -269,12 +282,6 @@ document.querySelectorAll(".model-checkbox").forEach((checkbox) => {
 // Event listener for the 'Clear Data' button
 document.getElementById("clear-data-btn").addEventListener("click", clearData);
 
-// Event listener for the settings button to toggle the settings modal
-document.getElementById("btn-settings").addEventListener("click", function () {
-  const settingsModal = document.getElementById("settingsModal");
-  settingsModal.style.display =
-    settingsModal.style.display === "block" ? "none" : "block";
-});
 // Event listener for the background color input
 document
   .getElementById("background-color-input")
