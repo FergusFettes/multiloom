@@ -6,7 +6,9 @@ document
     if (
       document.getElementById("settingsModal").style.display === "block" ||
       document.getElementById("model-config-modal").style.display === "block"
-    ) { return; }
+    ) {
+      return;
+    }
 
     if (!hasNonDataNodes()) {
       document.getElementById("background-text").style.display = "none";
@@ -25,7 +27,9 @@ network.on("click", function (params) {
     if (
       document.getElementById("settingsModal").style.display === "block" ||
       document.getElementById("model-config-modal").style.display === "block"
-    ) { return; }
+    ) {
+      return;
+    }
 
     // Check if the text editor is open
     if (textEditor.style.display === "block") {
