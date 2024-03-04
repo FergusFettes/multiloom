@@ -59,16 +59,17 @@ function generateNewOutput(parentId) {
 
 const prePrompt = `Return to completion mode. Complete the given sentence as best you can, with no commentary.
 Return only the completion. If the prompt requires creativity, be creative.
-DO NOT SAY 'here are some possible completions'. Just return the completion.
+DO NOT SAY 'here are some possible completions'. Just return the completion. If the completion expects you to respond as the user, respond as the user.
 
 Examples:
-Prompt: The quick brown fox
-Completion: jumps over the lazy dog.
-Prompt: The capital of France is
-Completion: Paris.
+Prompt: 'The quick brown fox'
+Completion: 'jumps over the lazy dog.'
+Prompt: 'The capital of France is'
+Completion: 'Paris.'
+Prompt: 'User: How are you today?\nHermes: I'm good, and you?'
+Completion: '\nUser: I'm good too thanks!'
 
-Only return the completion, not the word 'Completion'!
-`;
+Only return the completion, not the word 'Completion'!`;
 
 // Function to make an API call for text generation
 function generateText(fullText, parentId, modelName, customConfig) {
