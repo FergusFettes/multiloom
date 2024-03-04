@@ -54,18 +54,27 @@ window.modelConfig = modelConfig;
 
 function saveModelConfigToLocalStorage(modelName) {
   const config = {
-    max_tokens: parseInt(document.getElementById(`max-tokens-input-${modelName}`).value),
-    temperature: parseFloat(document.getElementById(`temperature-input-${modelName}`)
-      .value),
-    top_p: parseFloat(document.getElementById(`top-p-input-${modelName}`).value),
-    top_k: parseFloat(document.getElementById(`top-k-input-${modelName}`).value),
-    repetition_penalty: parseFloat(document.getElementById(
-      `repetition-penalty-input-${modelName}`,
-    ).value),
+    max_tokens: parseInt(
+      document.getElementById(`max-tokens-input-${modelName}`).value,
+    ),
+    temperature: parseFloat(
+      document.getElementById(`temperature-input-${modelName}`).value,
+    ),
+    top_p: parseFloat(
+      document.getElementById(`top-p-input-${modelName}`).value,
+    ),
+    top_k: parseFloat(
+      document.getElementById(`top-k-input-${modelName}`).value,
+    ),
+    repetition_penalty: parseFloat(
+      document.getElementById(`repetition-penalty-input-${modelName}`).value,
+    ),
     stop: document
       .getElementById(`stop-sequence-input-${modelName}`)
       .value.split(", "),
-    n: parseInt(document.getElementById(`completions-input-${modelName}`).value),
+    n: parseInt(
+      document.getElementById(`completions-input-${modelName}`).value,
+    ),
     pin_to_default: document.getElementById(`pin-default-${modelName}`)
       ? document.getElementById(`pin-default-${modelName}`).checked
       : false,
@@ -74,9 +83,9 @@ function saveModelConfigToLocalStorage(modelName) {
       : true,
   };
   // If model name contains 'default', dont save to local storage, update the default config
-  console.log(modelName)
+  console.log(modelName);
   if (modelName.includes("default")) {
-    console.log("updating default config")
+    console.log("updating default config");
     modelConfig = { ...modelConfig, ...config };
     updateDefaultConfigDisplay();
     return;
