@@ -5,6 +5,7 @@ const modelSanitized = [
   "mixtral-8x7b-instruct",
   "mixtral-8x7b",
   "llama-2-70b",
+  "solar",
   "mistral-large",
   "gpt-35-turbo",
   "gpt-4-turbo",
@@ -18,6 +19,7 @@ const remoteName = {
   "mixtral-8x7b-instruct": "mistralai/Mixtral-8x7B-Instruct-v0.1",
   "mixtral-8x7b": "mistralai/Mixtral-8x7B-v0.1",
   "llama-2-70b": "togethercomputer/llama-2-70b",
+  "solar": "upstage/SOLAR-10.7B-Instruct-v1.0",
   "gpt-35-turbo": "gpt-3.5-turbo",
   "gpt-4-turbo": "gpt-4-turbo-preview",
   "mistral-large": "mistral-large-latest",
@@ -31,6 +33,7 @@ const modelUrl = {
   "mixtral-8x7b-instruct": "https://api.together.xyz/v1/completions",
   "mixtral-8x7b": "https://api.together.xyz/v1/completions",
   "llama-2-70b": "https://api.together.xyz/v1/completions",
+  "solar": "https://api.together.xyz/v1/completions",
   "gpt-35-turbo": "https://api.openai.com/v1/chat/completions",
   "gpt-4-turbo": "https://api.openai.com/v1/chat/completions",
   "mistral-large": "https://api.mistral.ai/v1/chat/completions",
@@ -83,9 +86,7 @@ function saveModelConfigToLocalStorage(modelName) {
       : true,
   };
   // If model name contains 'default', dont save to local storage, update the default config
-  console.log(modelName);
   if (modelName.includes("default")) {
-    console.log("updating default config");
     modelConfig = { ...modelConfig, ...config };
     updateDefaultConfigDisplay();
     return;
@@ -206,6 +207,7 @@ window.addEventListener("DOMContentLoaded", function () {
     // Load model configuration from localStorage
     loadModelConfigFromLocalStorage(model);
   });
+  loadModelConfigFromLocalStorage("default");
   updateDefaultConfigDisplay();
 });
 

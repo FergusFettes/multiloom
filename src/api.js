@@ -138,7 +138,8 @@ function generateText(fullText, parentId, modelName, customConfig) {
       };
     }
 
-    // Remove the 'n' parameter as it's not supported by the axios call
+    // Create a local copy of the config and delete n from it
+    config = Object.assign({}, config);
     delete config.n;
     apiCall = axios({
       method: "post",
@@ -161,7 +162,6 @@ function generateText(fullText, parentId, modelName, customConfig) {
         // If it's an object, process the axios response to extract the text
         newText = processApiResponse(fullText, result, modelName);
       }
-      console.log(modelName, newText);
       // Create a new node with the generated text
       createNodeIfTextChanged(
         fullText,
