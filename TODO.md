@@ -1,6 +1,3 @@
-- load and save config on page reload
-- number of completions not working?
-
 - when bookmarking, the tree layout gets all messed up
 - three cycle tab! one press you view the editor, two presses you edit, three presses, back to the network. with shift-tab as well!
 - add child number to the end of the text editor
