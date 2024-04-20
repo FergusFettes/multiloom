@@ -9,7 +9,7 @@ const modelSanitized = [
   "llama-3-70b-chat",
   "solar",
   "dbrx",
-  "qwen72b"
+  "qwen72b",
   "mistral-large",
   "gpt-35-turbo",
   "gpt-4-turbo",
