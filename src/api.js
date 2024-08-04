@@ -89,7 +89,7 @@ function generateText(fullText, parentId, modelName, customConfig) {
   if (modelName.includes("gemini")) {
     // Call Google's API
     apiCall = callGoogleAPI(fullText, modelName, config);
-  } else if (modelName === "meta-llama/llama-3.1-405b") {
+  } else if (modelName === "llama-3-405b") {
     headers = {
       "Content-Type": "application/json",
       Authorization: "Bearer " + openaiApiKey,
@@ -107,6 +107,7 @@ function generateText(fullText, parentId, modelName, customConfig) {
       top_p: config.top_p,
       stop: config.stop,
     };
+  } else {
     // Set headers for axios call
     if (modelName.startsWith("gpt")) {
       headers = {
