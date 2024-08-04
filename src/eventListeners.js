@@ -17,6 +17,7 @@ document
         "(Tab to save and close the editor!\nEscape to close without saving!)";
     }
   });
+
 document
   .getElementById("openrouter-api-key-input")
   .addEventListener("input", function (event) {
@@ -281,6 +282,20 @@ document
     if (openaiApiKey !== "") {
       // Save the API key to localStorage
       localStorage.setItem("openaiApiKey", openaiApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
+
+document
+  .getElementById("openrouter-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    openrouterApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (openrouterApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("openrouterApiKey", openrouterApiKey);
       input.style.backgroundColor = "green";
     } else {
       input.style.backgroundColor = "pink";

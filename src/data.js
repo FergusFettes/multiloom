@@ -6,6 +6,7 @@ import {
 
 var togetherApiKey = "";
 var openaiApiKey = "";
+var openrouterApiKey = "";
 var mistralApiKey = "";
 var googleApiKey = "";
 
@@ -46,6 +47,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const apiKeyInput = document.getElementById("openai-api-key-input");
     apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
     openaiApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
+  savedApiKey = localStorage.getItem("openrouterApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("openrouter-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    openrouterApiKey = apiKeyInput.value;
     apiKeyInput.style.backgroundColor = "green";
   }
   savedApiKey = localStorage.getItem("mistralApiKey");

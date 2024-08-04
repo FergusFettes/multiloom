@@ -16,7 +16,8 @@
 <script type="importmap">
   {
     "imports": {
-      "@google/generative-ai": "https://esm.run/@google/generative-ai"
+      "@google/generative-ai": "https://esm.run/@google/generative-ai",
+      "@openrouter/meta-llama": "https://esm.run/@openrouter/meta-llama"
     }
   }
 </script>
@@ -300,6 +301,7 @@ body {
                 <input type="password" id="openai-api-key-input" placeholder="OpenAI API Key" class="api-key-input">
                 <input type="password" id="mistral-api-key-input" placeholder="Mistral API Key" class="api-key-input">
                 <input type="password" id="google-api-key-input" placeholder="Google API Key" class="api-key-input">
+                <input type="password" id="openrouter-api-key-input" placeholder="OpenRouter API Key" class="api-key-input">
             </div>
         </div>
         <h2>Model Configuration</h2>
@@ -412,6 +414,7 @@ import {
 
 var togetherApiKey = "";
 var openaiApiKey = "";
+var openrouterApiKey = "";
 var mistralApiKey = "";
 var googleApiKey = "";
 
@@ -452,6 +455,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const apiKeyInput = document.getElementById("openai-api-key-input");
     apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
     openaiApiKey = apiKeyInput.value;
+    apiKeyInput.style.backgroundColor = "green";
+  }
+  savedApiKey = localStorage.getItem("openrouterApiKey");
+  if (savedApiKey) {
+    const apiKeyInput = document.getElementById("openrouter-api-key-input");
+    apiKeyInput.value = savedApiKey.trim().replace(/^"|"$/g, "");
+    openrouterApiKey = apiKeyInput.value;
     apiKeyInput.style.backgroundColor = "green";
   }
   savedApiKey = localStorage.getItem("mistralApiKey");
@@ -1422,6 +1432,24 @@ function generateText(fullText, parentId, modelName, customConfig) {
         max_tokens: config.max_tokens,
         model: remoteName[modelName],
       };
+    } else if (modelName === "llama-3-405b") {
+      headers = {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + openrouterApiKey,
+      };
+      config = {
+        model: "meta-llama/llama-3.1-405b",
+        messages: [
+          {
+            role: "user",
+            content: fullText,
+          },
+        ],
+        max_tokens: config.max_tokens,
+        temperature: config.temperature,
+        top_p: config.top_p,
+        stop: config.stop,
+      };
     }
 
     // Create a local copy of the config and delete n from it
@@ -1528,7 +1556,7 @@ function processApiResponse(fullText, response, modelName) {
   if (modelName.includes("mistral-large")) {
     // Mistral returns the response in a different format
     newText = healTokens(jsonResponse.choices[0].message.content);
-  } else if (modelName.startsWith("gpt")) {
+  } else if (modelName.startsWith("gpt") || modelName === "llama-3-405b") {
     // OpenAI returns the response in a different format
     newText = healTokens(jsonResponse.choices[0].message.content);
   } else {
@@ -1582,6 +1610,20 @@ document
       document.getElementById("textEditor").style.display = "block";
       document.getElementById("fullText").value =
         "(Tab to save and close the editor!\nEscape to close without saving!)";
+    }
+  });
+
+document
+  .getElementById("openrouter-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    openrouterApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (openrouterApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("openrouterApiKey", openrouterApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
     }
   });
 
@@ -1835,6 +1877,20 @@ document
     if (openaiApiKey !== "") {
       // Save the API key to localStorage
       localStorage.setItem("openaiApiKey", openaiApiKey);
+      input.style.backgroundColor = "green";
+    } else {
+      input.style.backgroundColor = "pink";
+    }
+  });
+
+document
+  .getElementById("openrouter-api-key-input")
+  .addEventListener("input", function (event) {
+    const input = event.target;
+    openrouterApiKey = input.value.trim().replace(/^"|"$/g, "");
+    if (openrouterApiKey !== "") {
+      // Save the API key to localStorage
+      localStorage.setItem("openrouterApiKey", openrouterApiKey);
       input.style.backgroundColor = "green";
     } else {
       input.style.backgroundColor = "pink";
@@ -2198,6 +2254,7 @@ const modelSanitized = [
   "mixtral-8x22b",
   "llama-2-70b",
   "llama-3-70b-chat",
+  "llama-3-405b",
   "solar",
   "dbrx",
   "qwen72b",
@@ -2216,6 +2273,7 @@ const remoteName = {
   "mixtral-8x22b": "mistralai/Mixtral-8x22B",
   "llama-2-70b": "togethercomputer/llama-2-70b",
   "llama-3-70b-chat": "meta-llama/Llama-3-70b-chat-hf",
+  "llama-3-405b": "meta-llama/llama-3.1-405b",
   solar: "upstage/SOLAR-10.7B-Instruct-v1.0",
   dbrx: "databricks/dbrx-instruct",
   qwen72b: "Qwen/Qwen1.5-72B",
@@ -2234,6 +2292,7 @@ const modelUrl = {
   "mixtral-8x22b": "https://api.together.xyz/v1/completions",
   "llama-2-70b": "https://api.together.xyz/v1/completions",
   "llama-3-70b-chat": "https://api.together.xyz/v1/completions",
+  "llama-3-405b": "https://openrouter.ai/api/v1/chat/completions",
   solar: "https://api.together.xyz/v1/completions",
   dbrx: "https://api.together.xyz/v1/completions",
   qwen72b: "https://api.together.xyz/v1/completions",
